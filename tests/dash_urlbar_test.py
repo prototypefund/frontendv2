@@ -11,7 +11,7 @@ from dash.dependencies import Input, Output
 app = dash.Dash()
 
 app.layout = html.Div(
-        style={'backgroundColor': "#eee","padding":10}, 
+        style={'backgroundColor': "#eee","padding":10,"font-family":"monospace"}, 
         children=[
             dcc.Location(id='url', refresh=False),
             html.H1(
@@ -21,12 +21,8 @@ app.layout = html.Div(
                 }
             ),
             dcc.Markdown("""
-                **Datenauswahl**
-                
-                Change the Urlbar, e.g. add [/banana](banana) or [/whatever](whatever) to the end
-                Mouse over values in the map.
+                Change the Urlbar, e.g. add [/banana](banana) or [/whatever](whatever) to the end. And move that slider around!
             """),
-            html.Div(id='page-content',style={"font-weight":"bold","color":"red"}),
             dcc.Slider(
                 id='slider',
                 min=0,
@@ -34,7 +30,8 @@ app.layout = html.Div(
                 step=1,
                 value=10,
             ),
-            #dcc.Link('Roll the dice!', href='/page-2'),
+            html.H2(["Output"]),
+            html.Div(id='page-content',style={"font-weight":"bold","color":"green","background":"#ddd","padding":20}),
             ]
 
         )

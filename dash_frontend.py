@@ -4,7 +4,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import pandas as pd
 from influxdb_client import InfluxDBClient
-import numpy as np
+from math import isnan
 
 def get_credentials():
     with open('credentials.txt','r') as f:
@@ -28,11 +28,47 @@ def load_metadata():
     geo_table = tables[["_field","_value","station_id"]]
     geo_table = geo_table.pivot(index='station_id', columns='_field', values='_value')
     geo_table = round(geo_table,5)
+    
+    trend=load_trend()
+    tables = tables.set_index("station_id").join(trend).reset_index()
+    
     geo_dict = geo_table.to_dict("index")
 
-    info_table = tables[['station_id','ags', 'bundesland', 'city', 'landkreis', 'name']]
+    info_table = tables[['station_id','ags', 'bundesland', 'city', 'landkreis', 'name','trend']]
     info_dict = info_table.set_index("station_id").drop_duplicates().to_dict("index")
     return geo_dict,info_dict
+
+def load_trend():
+    # calculate trend 
+    # value of 0.2 means 20% more acitivity than 7 days ago
+    query = '''
+    from(bucket: "test-hystreet")
+      |> range(start: -8d, stop:-7d)
+      |> filter(fn: (r) => r["_measurement"] == "hystreet")
+      |> filter(fn: (r) => r["_field"] == "pedestrians_count")
+      |> first()
+    '''
+    lastweek = query_api.query_data_frame(query)
+    query = '''
+    from(bucket: "test-hystreet")
+      |> range(start: -2d, stop:-0d)
+      |> filter(fn: (r) => r["_measurement"] == "hystreet")
+      |> filter(fn: (r) => r["_field"] == "pedestrians_count")
+      |> last()
+    '''
+    current = query_api.query_data_frame(query)
+    current=current[["station_id","_value"]].rename(columns={"_value":"current"}).set_index("station_id")
+    lastweek=lastweek[["station_id","_value"]].rename(columns={"_value":"lastweek"}).set_index("station_id")
+    df = current.join(lastweek)
+    def rate(current,lastweek):
+        delta = current-lastweek
+        if lastweek == 0:
+            return None
+        else:
+            return round(delta/lastweek,2)
+    df["trend"] = df.apply(lambda x: rate(x["current"],x["lastweek"]), axis=1)
+    #trend_dict = df[["trend"]].transpose().to_dict("records") # dict {station_id -> trend}
+    return df["trend"]
 
 def load_timeseries(station_id):
     query = '''
@@ -73,6 +109,19 @@ config_plots = dict(
     modeBarButtonsToRemove=['lasso2d','toggleSpikelines','toggleHover']
     )
 
+def trend2color(trendvalue):
+    if isnan(trendvalue):
+        return "#999999"
+    elif trendvalue > 3:
+        # red
+        return "#cc0000"
+    elif trendvalue < 0.5:
+        # green
+        return "#00cc22"
+    else:
+        # yellow
+        return "#ccaa00"
+
 #  Dash Map
 map=dcc.Graph(
     id='Karte',
@@ -87,7 +136,7 @@ map=dcc.Graph(
             mode='markers',
             marker=dict(
                 size=12, 
-                #color=list(df.apply(lambda x: colordict[x.Typ], 1))
+                color=[trend2color(info_dict[x]["trend"]) for x in station_ids]
                 ),
             #text=[info_dict[x]["city"]+" ("+info_dict[x]["name"]+")" for x in station_ids],
             text = ["<br>".join([key+": "+str(info_dict[station_id][key]) for key in info_dict[station_id].keys()]) for station_id in station_ids],
@@ -112,6 +161,17 @@ map=dcc.Graph(
     }
 )
 # LINE CHART
+
+chartlayout = dict(
+            autosize=True,
+            height=350,
+            width=600,
+            title="Wähle einen Messpunkt auf der Karte",
+            yaxis=dict(
+                title="Passanten"
+                )
+            )
+
 chart = dcc.Graph(
     id='chart',
     config=config_plots,
@@ -122,11 +182,7 @@ chart = dcc.Graph(
             "y" : [],
             "mode":'lines',
             }],
-        'layout': {
-            "autosize":True,
-            "height":300,
-            "width":600
-            }
+        'layout': chartlayout
     })
 
 # TEXTBOX
@@ -166,13 +222,9 @@ def display_hover_data(hoverData):
             "y" : values,
             "mode":'lines',
             }],
-        'layout': {
-            "autosize":True,
-            "height":350,
-            "width":600,
-            "title":title,
-            }
+        'layout': chartlayout
     }
+    figure["layout"]["title"]=title
     return figure
 
 

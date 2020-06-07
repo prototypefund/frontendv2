@@ -1,0 +1,19 @@
+
+
+#chart .svg-container, #Karte{
+    margin:auto;
+    margin-bottom:10px;
+    box-shadow:0px 1px 8px #ccc;
+    padding:1px;
+    text-align:center;
+    background:#fff;
+}
+
+.main-svg{
+    margin:auto;
+}
+
+body {
+    background:#efefef;
+}
+

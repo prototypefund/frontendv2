@@ -21,6 +21,7 @@ def load_metadata():
       |> range(start: -5d) 
       |> filter(fn: (r) => r["_measurement"] == "hystreet")
       |> filter(fn: (r) => r["_field"] == "lon" or r["_field"] == "lat")
+      |> drop(columns: ["unverified"])
       |> unique()
       |> yield(name: "unique")
       '''
@@ -46,6 +47,7 @@ def load_trend():
       |> range(start: -8d, stop:-7d)
       |> filter(fn: (r) => r["_measurement"] == "hystreet")
       |> filter(fn: (r) => r["_field"] == "pedestrians_count")
+      |> drop(columns: ["unverified"])
       |> first()
     '''
     lastweek = query_api.query_data_frame(query)
@@ -54,6 +56,7 @@ def load_trend():
       |> range(start: -2d, stop:-0d)
       |> filter(fn: (r) => r["_measurement"] == "hystreet")
       |> filter(fn: (r) => r["_field"] == "pedestrians_count")
+      |> drop(columns: ["unverified"])
       |> last()
     '''
     current = query_api.query_data_frame(query)
@@ -65,7 +68,7 @@ def load_trend():
         if lastweek == 0:
             return None
         else:
-            return round(delta/lastweek,2)
+            return 100*round(delta/lastweek,2)
     df["trend"] = df.apply(lambda x: rate(x["current"],x["lastweek"]), axis=1)
     #trend_dict = df[["trend"]].transpose().to_dict("records") # dict {station_id -> trend}
     return df["trend"]
@@ -77,8 +80,10 @@ def load_timeseries(station_id):
       |> filter(fn: (r) => r["_measurement"] == "hystreet")
       |> filter(fn: (r) => r["_field"] == "pedestrians_count")
       |> filter(fn: (r) => r["station_id"] == "{}")
+      |> drop(columns: ["unverified"])
       '''.format(station_id)
     tables = query_api.query_data_frame(query)
+    #print(tables)
     times  = tables["_time"]
     values = tables["_value"]
     return times, values
@@ -116,10 +121,10 @@ config_plots = dict(
 def trend2color(trendvalue):
     if isnan(trendvalue):
         return "#999999"
-    elif trendvalue > 3:
+    elif trendvalue > 300:
         # red
         return "#cc0000"
-    elif trendvalue < 0.5:
+    elif trendvalue < 50:
         # green
         return "#00cc22"
     else:

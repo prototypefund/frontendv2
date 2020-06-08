@@ -190,7 +190,7 @@ chart = dcc.Graph(
 
 # GEOIP BOX
 lookup_span_default = "?"
-geojs_lookup_div = html.Div([
+geojs_lookup_div = html.Div(className="lookup",children=[
     html.P('''
     Sie können Ihren Standort automatisch bestimmen lassen. Klicken Sie dazu "Meinen Standort bestimmen" und erlauben Sie Ihrem Browser auf Ihren Standort zuzugreifen.
     '''),
@@ -199,7 +199,7 @@ geojs_lookup_div = html.Div([
     ])
     
 # LOOKUP BOX
-nominatim_lookup_div = html.Div([
+nominatim_lookup_div = html.Div(className="lookup",children=[
     html.P('''
     Einen Ort suchen:
     '''),
@@ -208,6 +208,7 @@ nominatim_lookup_div = html.Div([
     html.P(children=[
         "Ihr Standort: ",
         html.Span(id="nominatim_lookup_span",children=lookup_span_default),
+        " ",
         html.Span(id="nominatim_lookup_span2",children=lookup_span_default),
         ]),
     ])
@@ -266,7 +267,6 @@ app.clientside_callback(
     function(x) {
         return getLocation();
     }
-    alert("Click!")
     var lat = 0;
     var lon = 0;
 

@@ -1,6 +1,8 @@
 
 
-#chart .svg-container, #Karte{
+#chart .svg-container, 
+#map,
+div.lookup{
     margin:auto;
     margin-bottom:10px;
     box-shadow:0px 1px 8px #ccc;
@@ -11,6 +13,10 @@
 
 .main-svg{
     margin:auto;
+}
+
+div.lookup {
+    max-width:600px;
 }
 
 body {

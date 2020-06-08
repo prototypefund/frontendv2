@@ -1,7 +1,7 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import pandas as pd
 from influxdb_client import InfluxDBClient
 from math import isnan
@@ -124,7 +124,7 @@ def trend2color(trendvalue):
 
 #  Dash Map
 map=dcc.Graph(
-    id='Karte',
+    id='map',
     config=config_plots,
     figure={
         'data': [dict(
@@ -161,12 +161,11 @@ map=dcc.Graph(
     }
 )
 # LINE CHART
-
 chartlayout = dict(
             autosize=True,
             height=350,
             width=600,
-            title="Wähle einen Messpunkt auf der Karte",
+            title="Wähle einen Messpunkt auf der map",
             yaxis=dict(
                 title="Passanten"
                 )
@@ -185,6 +184,16 @@ chart = dcc.Graph(
         'layout': chartlayout
     })
 
+# GEOIP BOX
+show_lat_lon_default = "?"
+locate_me_div = html.Div([
+    html.P('''
+    Sie können Ihren Standort automatisch bestimmen lassen. Klicken Sie dazu "Meinen Standort bestimmen" und erlauben Sie Ihrem Browser auf Ihren Standort zuzugreifen.
+    '''),
+    html.Button(id='locate_me_button', n_clicks=0, children='Meinen Standort bestimmen'),
+    html.P(children=["Ihr Standort: ",html.Span(id="show_lat_lon",children=show_lat_lon_default)]),
+    ])
+
 # TEXTBOX
 # textbox = html.Div(children=[
     # html.Div([
@@ -198,14 +207,20 @@ chart = dcc.Graph(
 # ])
 
 
+
+
+# CALLBACK FUNCTIONS
+# ==================
+
+# Hover over map > update timeline chart
 @app.callback(
     Output('chart', 'figure'),
-    [Input('Karte', 'hoverData')])
+    [Input('map', 'hoverData')])
 def display_hover_data(hoverData):
     #print("Hover",hoverData,type(hoverData))
     if hoverData==None:
         text = "Hover is NONE"
-        title="Wähle einen Datenpunkt auf der Karte!"
+        title="Wähle einen Datenpunkt auf der map!"
         times=[]
         values=[]
     else:
@@ -227,17 +242,69 @@ def display_hover_data(hoverData):
     figure["layout"]["title"]=title
     return figure
 
+# Click Button > get JS GeoIP position
+app.clientside_callback(
+    """
+    function(x) {
+        return getLocation();
+    }
+    alert("Click!")
+    var lat = 0;
+    var lon = 0;
 
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition);
+      } else { 
+        showPosition('error');
+      }
+      return lat+", "+lon;
+    }
+
+    function showPosition(position) {
+      if (position=='error') {
+        lat = -1;
+        lon = -1;
+      } else {
+        lat = position.coords.latitude;
+        lon = position.coords.longitude;
+      }
+    }
+    """,
+    Output(component_id='show_lat_lon', component_property='children'),
+    [Input(component_id='locate_me_button', component_property='n_clicks')]
+)
+
+# Update map on geolocation change
+@app.callback(
+    Output('map', 'figure'),
+    [Input('show_lat_lon', 'children')],
+    [State('map','figure')])
+def update_map(latlon_str,fig):
+    if latlon_str == show_lat_lon_default:
+        lat = 50,
+        lon = 10
+    else:
+        lat,lon = latlon_str.split(",")
+        lat=float(lat)
+        lon=float(lon)
+    fig["layout"]["mapbox"]["center"]["lat"]=lat
+    fig["layout"]["mapbox"]["center"]["lon"]=lon
+    return fig
+        
+
+# MAIN
+# ==================
 if __name__ == '__main__':
     print("Let's go")
     
     # start Dash webserver
     app.layout = html.Div([
         title,
+        locate_me_div,
         map,
         #textbox,
         chart
     ])
     app.run_server(debug=True, host="localhost")
-    
     

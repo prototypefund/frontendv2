@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 from influxdb_client import InfluxDBClient
 from math import isnan
+from geopy.geocoders import Nominatim
 
 def get_credentials():
     with open('credentials.txt','r') as f:
@@ -24,8 +25,7 @@ def load_metadata():
       |> yield(name: "unique")
       '''
     tables = query_api.query_data_frame(query)
-
-    geo_table = tables[["_field","_value","station_id"]]
+    geo_table = tables[["_field","_value","station_id"]].drop_duplicates()
     geo_table = geo_table.pivot(index='station_id', columns='_field', values='_value')
     geo_table = round(geo_table,5)
     
@@ -82,6 +82,10 @@ def load_timeseries(station_id):
     times  = tables["_time"]
     values = tables["_value"]
     return times, values
+
+# global
+LAT = 50
+LON = 10
 
 # set up InfluxDB query API
 url,token,org = get_credentials()
@@ -151,8 +155,8 @@ map=dcc.Graph(
                 style="carto-positron", # open-street-map, white-bg, carto-positron, carto-darkmatter, stamen-terrain, stamen-toner, stamen-watercolor
                 bearing=0, 
                 center=dict(
-                    lat=50,
-                    lon=10
+                    lat=LAT,
+                    lon=LON
                     ),
                 pitch=0,
                 zoom=6,
@@ -185,13 +189,27 @@ chart = dcc.Graph(
     })
 
 # GEOIP BOX
-show_lat_lon_default = "?"
-locate_me_div = html.Div([
+lookup_span_default = "?"
+geojs_lookup_div = html.Div([
     html.P('''
     Sie können Ihren Standort automatisch bestimmen lassen. Klicken Sie dazu "Meinen Standort bestimmen" und erlauben Sie Ihrem Browser auf Ihren Standort zuzugreifen.
     '''),
-    html.Button(id='locate_me_button', n_clicks=0, children='Meinen Standort bestimmen'),
-    html.P(children=["Ihr Standort: ",html.Span(id="show_lat_lon",children=show_lat_lon_default)]),
+    html.Button(id='geojs_lookup_button', n_clicks=0, children='Meinen Standort bestimmen'),
+    html.P(children=["Ihr Standort: ",html.Span(id="geojs_lookup_span",children=lookup_span_default)]),
+    ])
+    
+# LOOKUP BOX
+nominatim_lookup_div = html.Div([
+    html.P('''
+    Einen Ort suchen:
+    '''),
+    dcc.Input(id="nominatim_lookup_edit", type="text", placeholder="", debounce=True),
+    html.Button(id='nominatim_lookup_button', n_clicks=0, children='Suchen'),
+    html.P(children=[
+        "Ihr Standort: ",
+        html.Span(id="nominatim_lookup_span",children=lookup_span_default),
+        html.Span(id="nominatim_lookup_span2",children=lookup_span_default),
+        ]),
     ])
 
 # TEXTBOX
@@ -271,26 +289,49 @@ app.clientside_callback(
       }
     }
     """,
-    Output(component_id='show_lat_lon', component_property='children'),
-    [Input(component_id='locate_me_button', component_property='n_clicks')]
+    Output(component_id='geojs_lookup_span', component_property='children'),
+    [Input(component_id='geojs_lookup_button', component_property='n_clicks')]
 )
 
 # Update map on geolocation change
 @app.callback(
     Output('map', 'figure'),
-    [Input('show_lat_lon', 'children')],
+    [Input('geojs_lookup_span', 'children'),
+     Input('nominatim_lookup_span', 'children')],
     [State('map','figure')])
-def update_map(latlon_str,fig):
-    if latlon_str == show_lat_lon_default:
-        lat = 50,
-        lon = 10
+def update_map(geojs_str,nominatim_str,fig):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return fig
     else:
-        lat,lon = latlon_str.split(",")
-        lat=float(lat)
-        lon=float(lon)
-    fig["layout"]["mapbox"]["center"]["lat"]=lat
-    fig["layout"]["mapbox"]["center"]["lon"]=lon
+        input_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    if input_id=="geojs_lookup_span":
+        lat,lon = geojs_str.split(",")
+        LAT=float(lat)
+        LON=float(lon)
+    elif input_id=="nominatim_lookup_span":
+        lat,lon = nominatim_str.split(",")
+        LAT=float(lat)
+        LON=float(lon)
+    fig["layout"]["mapbox"]["center"]["lat"]=LAT
+    fig["layout"]["mapbox"]["center"]["lon"]=LON
     return fig
+
+@app.callback(
+    [Output('nominatim_lookup_span', 'children'),
+     Output('nominatim_lookup_span2', 'children')],
+    [Input('nominatim_lookup_button', 'n_clicks')],
+    [State('nominatim_lookup_edit','value')])
+def nominatim_lookup(button,query):
+    geolocator = Nominatim(user_agent="everyonecounts")
+    geoloc = geolocator.geocode(query,exactly_one=True)
+    if geoloc:
+        LAT=geoloc.latitude
+        LON=geoloc.longitude
+        address=geoloc.address
+    else:
+        address = ""
+    return (str(LAT)+", "+str(LON),address)
         
 
 # MAIN
@@ -301,7 +342,8 @@ if __name__ == '__main__':
     # start Dash webserver
     app.layout = html.Div([
         title,
-        locate_me_div,
+        geojs_lookup_div,
+        nominatim_lookup_div,
         map,
         #textbox,
         chart

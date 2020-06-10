@@ -3,9 +3,12 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import pandas as pd
+import geopandas as gpd
 from influxdb_client import InfluxDBClient
-from math import isnan
 from geopy.geocoders import Nominatim
+import datetime
+from math import radians, degrees, pi, cos, sin, asin, acos, sqrt, isnan
+from shapely.geometry import Polygon
 
 def get_credentials():
     with open('credentials.txt','r') as f:
@@ -18,7 +21,7 @@ def get_credentials():
 def load_metadata():
     query = '''
         from(bucket: "test-hystreet")
-      |> range(start: -5d) 
+      |> range(start: -10d) 
       |> filter(fn: (r) => r["_measurement"] == "hystreet")
       |> filter(fn: (r) => r["_field"] == "lon" or r["_field"] == "lat")
       |> drop(columns: ["unverified"])
@@ -33,32 +36,44 @@ def load_metadata():
     trend=load_trend()
     tables = tables.set_index("station_id").join(trend).reset_index()
     
-    geo_dict = geo_table.to_dict("index")
+    #geo_dict = geo_table.to_dict("index")
 
     info_table = tables[['station_id','ags', 'bundesland', 'city', 'landkreis', 'name','trend']]
     info_dict = info_table.set_index("station_id").drop_duplicates().to_dict("index")
-    return geo_dict,info_dict
+    return geo_table,info_dict
 
 def load_trend():
     # calculate trend 
     # value of 0.2 means 20% more acitivity than 7 days ago
+    
     query = '''
+    import "influxdata/influxdb/v1"
+    v1.tagValues(bucket: "test-hystreet", tag: "_time")
+    |> last()
+    '''
+    last_data_date = query_api.query_data_frame(query)["_value"][0]
+    last_data_date = last_data_date - datetime.timedelta(days=1)
+
+    last_data_date=datetime.datetime.fromtimestamp(last_data_date.timestamp())
+    lastweek_data_date = last_data_date - datetime.timedelta(days=7)
+    query='''
     from(bucket: "test-hystreet")
-      |> range(start: -8d, stop:-7d)
+      |> range(start: {})
       |> filter(fn: (r) => r["_measurement"] == "hystreet")
       |> filter(fn: (r) => r["_field"] == "pedestrians_count")
       |> drop(columns: ["unverified"])
       |> first()
-    '''
+    '''.format(lastweek_data_date.strftime("%Y-%m-%d"))
     lastweek = query_api.query_data_frame(query)
+    
     query = '''
     from(bucket: "test-hystreet")
-      |> range(start: -2d, stop:-0d)
+      |> range(start: {})
       |> filter(fn: (r) => r["_measurement"] == "hystreet")
       |> filter(fn: (r) => r["_field"] == "pedestrians_count")
       |> drop(columns: ["unverified"])
       |> last()
-    '''
+    '''.format(last_data_date.strftime("%Y-%m-%d"))
     current = query_api.query_data_frame(query)
     current=current[["station_id","_value"]].rename(columns={"_value":"current"}).set_index("station_id")
     lastweek=lastweek[["station_id","_value"]].rename(columns={"_value":"lastweek"}).set_index("station_id")
@@ -88,9 +103,48 @@ def load_timeseries(station_id):
     values = tables["_value"]
     return times, values
 
-# global
-LAT = 50
-LON = 10
+
+def get_bounding_box(lat=10,lon=52,radius_km=300):
+    """
+    Calculate a lat, lon bounding box around a
+    centeral point with a given half-side distance or radius.
+    Input and output lat/lon values specified in decimal degrees.
+    Output: [lat_min,lon_min,lat_max,lon_max]
+    """
+    r_earth_km = 6371 # earth radius
+    
+    # convert to radians
+    lat = radians(lat)
+    lon = radians(lon)
+    # everything is in radians from this point on
+        
+    # latitude
+    delta_lat = radius_km/r_earth_km
+    lat_max = lat+delta_lat
+    lat_min = lat-delta_lat
+    
+    #longitude
+    delta_lon = radius_km/(r_earth_km*cos(lat))
+    lon_max = lon+delta_lon
+    lon_min = lon-delta_lon
+    
+    return map(degrees,[lat_min,lon_min,lat_max,lon_max])
+
+def filter_by_radius(gdf,lat,lon,radius):
+    lat1,lon1,lat2,lon2=get_bounding_box(lat,lon,radius)
+    spatial_index = gdf.sindex
+    candidates = list(spatial_index.intersection([lon1,lat1,lon2,lat2]))
+    gdf_box=gdf.reset_index().loc[candidates]
+    dlat = lat1-lat2
+    dlon = lon1-lon2
+    x = [lat+sin(radians(2*x))*dlat/2 for x in range(0,180)]
+    y = [lon+cos(radians(2*x))*dlon/2 for x in range(0,180)]
+    p = Polygon([(b,a) for a,b in zip(x,y)])
+    return gdf_box[gdf_box.intersects(p)],p
+
+
+default_lat = 50
+default_lon = 10
 
 # set up InfluxDB query API
 url,token,org = get_credentials()
@@ -98,10 +152,13 @@ client = InfluxDBClient(url=url, token=token, org=org)
 query_api = client.query_api()
 
 # Get data
-geo_dict,info_dict = load_metadata()
-station_ids = list(geo_dict.keys())
+geo_table,info_dict = load_metadata()
+station_ids = list(geo_table.index)
 
 app = dash.Dash()
+
+# hidden div for lat, lon storage
+hidden_latlon = html.Div(id="hidden_latlon",style={"display":"none"})
 
 # Title
 title=html.H1(
@@ -132,25 +189,33 @@ def trend2color(trendvalue):
         return "#ccaa00"
 
 #  Dash Map
-map=dcc.Graph(
+mainmap=dcc.Graph(
     id='map',
     config=config_plots,
     figure={
-        'data': [dict(
-            type= "scattermapbox",
-            lat=[geo_dict[x]["lat"] for x in station_ids],
-            lon=[geo_dict[x]["lon"] for x in station_ids],
-            #lat = [40, 50, 60],
-            #lon = [10, 20, 30],
-            mode='markers',
-            marker=dict(
-                size=12, 
-                color=[trend2color(info_dict[x]["trend"]) for x in station_ids]
+        'data': [
+            dict(
+                type= "scattermapbox",
+                lat=list(geo_table["lat"]),
+                lon=list(geo_table["lon"]),
+                #lat = [40, 50, 60],
+                #lon = [10, 20, 30],
+                mode='markers',
+                marker=dict(
+                    size=12, 
+                    color=[trend2color(info_dict[x]["trend"]) for x in station_ids]
+                    ),
+                #text=[info_dict[x]["city"]+" ("+info_dict[x]["name"]+")" for x in station_ids],
+                text = ["<br>".join([key+": "+str(info_dict[station_id][key]) for key in info_dict[station_id].keys()]) for station_id in station_ids],
+                hoverinfo="text",
                 ),
-            #text=[info_dict[x]["city"]+" ("+info_dict[x]["name"]+")" for x in station_ids],
-            text = ["<br>".join([key+": "+str(info_dict[station_id][key]) for key in info_dict[station_id].keys()]) for station_id in station_ids],
-            hoverinfo="text",
-        )],
+            dict(
+                type= "scattermapbox",
+                lat=[50,52],
+                lon=[10,9],
+                mode='lines',
+                )
+        ],
         'layout': dict(
             autosize=True,
             hovermode='closest',
@@ -160,8 +225,8 @@ map=dcc.Graph(
                 style="carto-positron", # open-street-map, white-bg, carto-positron, carto-darkmatter, stamen-terrain, stamen-toner, stamen-watercolor
                 bearing=0, 
                 center=dict(
-                    lat=LAT,
-                    lon=LON
+                    lat=default_lat,
+                    lon=default_lon
                     ),
                 pitch=0,
                 zoom=6,
@@ -218,6 +283,27 @@ nominatim_lookup_div = html.Div(className="lookup",children=[
         ]),
     ])
 
+# AREA DIV
+SLIDER_MAX = 100
+area_div = html.Div(className="area",id="area",children=[
+    html.P('''
+    Wählen Sie einen Radius:
+    '''),
+    dcc.Slider(
+        id='radiusslider',
+        min=0,
+        max=SLIDER_MAX,
+        step=5,
+        value=60,
+        tooltip=dict(
+            always_visible = False,
+            placement = "top"
+        ),
+        marks = {20*x:str(20*x)+'km' for x in range(SLIDER_MAX//20+1)}
+    ),
+    html.Pre(id="area_output",children="")
+    ])
+
 # TEXTBOX
 # textbox = html.Div(children=[
     # html.Div([
@@ -244,7 +330,7 @@ def display_hover_data(hoverData):
     #print("Hover",hoverData,type(hoverData))
     if hoverData==None:
         text = "Hover is NONE"
-        title="Wähle einen Datenpunkt auf der map!"
+        title="Wähle einen Datenpunkt auf der Karte!"
         times=[]
         values=[]
     else:
@@ -298,29 +384,47 @@ app.clientside_callback(
     [Input(component_id='geojs_lookup_button', component_property='n_clicks')]
 )
 
-# Update map on geolocation change
+
+# Update hidden latlon div
 @app.callback(
-    Output('map', 'figure'),
+    Output('hidden_latlon','children'),
     [Input('geojs_lookup_span', 'children'),
-     Input('nominatim_lookup_span', 'children')],
-    [State('map','figure')])
-def update_map(geojs_str,nominatim_str,fig):
+     Input('nominatim_lookup_span', 'children')])
+def update_hidden_latlon(geojs_str,nominatim_str):
     ctx = dash.callback_context
     if not ctx.triggered:
-        return fig
+        return ""
     else:
         input_id = ctx.triggered[0]['prop_id'].split('.')[0]
     if input_id=="geojs_lookup_span":
-        lat,lon = geojs_str.split(",")
-        LAT=float(lat)
-        LON=float(lon)
+        return geojs_str
     elif input_id=="nominatim_lookup_span":
-        lat,lon = nominatim_str.split(",")
-        LAT=float(lat)
-        LON=float(lon)
-    fig["layout"]["mapbox"]["center"]["lat"]=LAT
-    fig["layout"]["mapbox"]["center"]["lon"]=LON
-    return fig
+        return nominatim_str
+# Update map on geolocation change
+@app.callback(
+    [Output('map', 'figure'),
+    Output('area_output','children')],
+    [Input('hidden_latlon', 'children'),
+     Input('radiusslider', 'value')],
+    [State('map','figure')])
+def update_map(hidden_latlon_str,radius,fig):
+    if hidden_latlon!="":
+        lat,lon = hidden_latlon_str.split(",")
+        lat = float(lat)
+        lon = float(lon)
+    else:
+        lat = default_lat
+        lon = default_lon
+    fig["layout"]["mapbox"]["center"]["lat"]=lat
+    fig["layout"]["mapbox"]["center"]["lon"]=lon
+    
+    gdf = gpd.GeoDataFrame(geo_table, geometry=gpd.points_from_xy(geo_table.lon, geo_table.lat))
+    gdf,poly=filter_by_radius(gdf,lat,lon,radius)
+    
+    x,y=poly.exterior.coords.xy
+    fig["data"][1]["lat"]=y
+    fig["data"][1]["lon"]=x
+    return fig,str(gdf)
 
 @app.callback(
     [Output('nominatim_lookup_span', 'children'),
@@ -331,12 +435,12 @@ def nominatim_lookup(button,query):
     geolocator = Nominatim(user_agent="everyonecounts")
     geoloc = geolocator.geocode(query,exactly_one=True)
     if geoloc:
-        LAT=geoloc.latitude
-        LON=geoloc.longitude
+        lat=geoloc.latitude
+        lon=geoloc.longitude
         address=geoloc.address
     else:
         address = ""
-    return (str(LAT)+", "+str(LON),address)
+    return (str(lat)+", "+str(lon),address)
         
 
 # MAIN
@@ -346,10 +450,12 @@ if __name__ == '__main__':
     
     # start Dash webserver
     app.layout = html.Div([
+        hidden_latlon,
         title,
         geojs_lookup_div,
         nominatim_lookup_div,
-        map,
+        area_div,
+        mainmap,
         #textbox,
         chart
     ])

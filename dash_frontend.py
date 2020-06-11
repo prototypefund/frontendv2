@@ -97,29 +97,64 @@ mainmap=dcc.Graph(
     }
 )
 # LINE CHART
+selectorOptions = dict(
+    buttons = [
+        {
+            "step": 'all',
+            "label": 'Gesamt'
+        },{
+            "step": 'year',
+            "stepmode": 'backward',
+            "count": 1,
+            "label": 'Jahr'
+        },{
+            "step": 'month',
+            "stepmode": 'backward',
+            "count": 3,
+            "label": '3 Monate'
+        },{
+            "step": 'month',
+            "stepmode": 'backward',
+            "count": 1,
+            "label": 'Monat'
+        },{
+            "step": 'day',
+            "stepmode": 'backward',
+            "count": 7,
+            "label": 'Woche'
+        }
+        ]
+    )
 chartlayout = dict(
-            autosize=True,
-            height=350,
-            width=600,
-            title="Wähle einen Messpunkt auf der map",
-            yaxis=dict(
-                title="Passanten"
-                )
-            )
+    autosize=True,
+    height=350,
+    width=600,
+    title="Wähle einen Messpunkt auf der map",
+    yaxis=dict(
+        title="Passanten"
+        ),
+    xaxis=dict(
+        title="Zeitpunkt",
+        rangeselector = selectorOptions,
+        )
+    )
 
-chart = dcc.Graph(
-    id='chart',
-    config=config_plots,
-    className="timeline-chart",
-    figure={
-        'data': [{
-            "x" : [],
-            "y" : [],
-            "mode":'lines',
-            }],
-        'layout': chartlayout
-    })
-
+chart = dcc.Loading(
+    type="default",
+    children=[
+        dcc.Graph(
+            id='chart',
+            config=config_plots,
+            className="timeline-chart",
+            figure={
+                'data': [{
+                    "x" : [],
+                    "y" : [],
+                    "mode":'lines+markers',
+                    }],
+                'layout': chartlayout
+            })
+        ])
 # GEOIP BOX
 lookup_span_default = "?"
 geojs_lookup_div = html.Div(className="lookup",children=[

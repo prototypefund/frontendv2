@@ -102,7 +102,7 @@ def load_trend(query_api):
 def load_timeseries(query_api,station_id):
     query = '''
     from(bucket: "test-hystreet")
-      |> range(start: -14d) 
+      |> range(start: -60d) 
       |> filter(fn: (r) => r["_measurement"] == "hystreet")
       |> filter(fn: (r) => r["_field"] == "pedestrians_count")
       |> filter(fn: (r) => r["station_id"] == "{}")

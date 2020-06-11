@@ -137,7 +137,7 @@ nominatim_lookup_div = html.Div(className="lookup",children=[
     html.P('''
     Einen Ort suchen:
     '''),
-    dcc.Input(id="nominatim_lookup_edit", type="text", placeholder="", debounce=True),
+    dcc.Input(id="nominatim_lookup_edit", type="text", placeholder="", debounce=False),
     html.Button(id='nominatim_lookup_button', n_clicks=0, children='Suchen'),
     html.P(children=[
         "Ihr Standort: ",
@@ -293,9 +293,10 @@ def update_map(hidden_latlon_str,radius,fig):
 @app.callback(
     [Output('nominatim_lookup_span', 'children'),
      Output('nominatim_lookup_span2', 'children')],
-    [Input('nominatim_lookup_button', 'n_clicks')],
+    [Input('nominatim_lookup_button', 'n_clicks'),
+     Input('nominatim_lookup_edit', 'n_submit')],
     [State('nominatim_lookup_edit','value')])
-def nominatim_lookup(button,query):
+def nominatim_lookup(button,submit,query):
     geolocator = Nominatim(user_agent="everyonecounts")
     geoloc = geolocator.geocode(query,exactly_one=True)
     if geoloc:

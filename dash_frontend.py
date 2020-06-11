@@ -42,10 +42,10 @@ config_plots = dict(
 def trend2color(trendvalue):
     if isnan(trendvalue):
         return "#999999"
-    elif trendvalue > 300:
+    elif trendvalue > 200:
         # red
         return "#cc0000"
-    elif trendvalue < 50:
+    elif trendvalue < 20:
         # green
         return "#00cc22"
     else:
@@ -202,7 +202,7 @@ def display_hover_data(hoverData):
         station_id = station_ids[i]
         text = str(info_dict[station_id])
         title = "{} ({})".format(info_dict[str(station_id)]["city"],info_dict[str(station_id)]["name"])
-        times, values = load_timeseries(query_api,station_id)
+        times, values = queries.load_timeseries(query_api,station_id)
         #times=[0,1,2]
         #values=[0,5,6]
     figure={

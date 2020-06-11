@@ -61,7 +61,7 @@ def load_trend(query_api):
       |> range(start: {})
       |> filter(fn: (r) => r["_measurement"] == "hystreet")
       |> filter(fn: (r) => r["_field"] == "pedestrians_count")
-      |> drop(columns: ["unverified"])
+      |> filter(fn: (r) => r["unverified"] == "False")
       |> first()
     '''.format(lastweek_data_date.strftime("%Y-%m-%d"))
     lastweek = query_api.query_data_frame(query)
@@ -71,7 +71,7 @@ def load_trend(query_api):
       |> range(start: {})
       |> filter(fn: (r) => r["_measurement"] == "hystreet")
       |> filter(fn: (r) => r["_field"] == "pedestrians_count")
-      |> drop(columns: ["unverified"])
+      |> filter(fn: (r) => r["unverified"] == "False")
       |> last()
     '''.format(last_data_date.strftime("%Y-%m-%d"))
     current = query_api.query_data_frame(query)
@@ -95,10 +95,10 @@ def load_timeseries(query_api,station_id):
       |> filter(fn: (r) => r["_measurement"] == "hystreet")
       |> filter(fn: (r) => r["_field"] == "pedestrians_count")
       |> filter(fn: (r) => r["station_id"] == "{}")
-      |> drop(columns: ["unverified"])
+      |> filter(fn: (r) => r["unverified"] == "False")
       '''.format(station_id)
-    tables = query_api.query_data_frame(query)
-    #print(tables)
+    #tables = query_api.query_data_frame(query)
+    print(tables[["name","station_id","_time","_value"]])
     times  = tables["_time"]
     values = tables["_value"]
     return times, values

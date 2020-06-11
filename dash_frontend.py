@@ -80,7 +80,8 @@ mainmap=dcc.Graph(
         'layout': dict(
             autosize=True,
             hovermode='closest',
-            height=400,
+            showlegend=False,
+            #height=400,
             margin = dict(l = 0, r = 0, t = 0, b = 0),
             mapbox=dict(
                 style="carto-positron", # open-street-map, white-bg, carto-positron, carto-darkmatter, stamen-terrain, stamen-toner, stamen-watercolor
@@ -146,7 +147,7 @@ nominatim_lookup_div = html.Div(className="lookup",children=[
 
 # AREA DIV
 SLIDER_MAX = 120
-area_div = html.Div(className="area",id="area",children=[
+area_div = html.Div(className="area lookup",id="area",children=[
     html.P('''
     Wählen Sie einen Radius:
     '''),

@@ -18,6 +18,9 @@ def get_query_api(credentialsfile='credentials.txt'):
     return client.query_api()
 
 def load_metadata(query_api):
+    """
+    Return a GeoDataFrame with all tags and latitude/longitude fields
+    """
     query = '''
         from(bucket: "test-hystreet")
       |> range(start: -10d) 
@@ -28,18 +31,27 @@ def load_metadata(query_api):
       |> yield(name: "unique")
       '''
     tables = query_api.query_data_frame(query)
+    
+    # pivot table so that the lat/lon fields become named columns
     geo_table = tables[["_field","_value","station_id"]].drop_duplicates()
     geo_table = geo_table.pivot(index='station_id', columns='_field', values='_value')
     geo_table = round(geo_table,5)
     
-    trend=load_trend(query_api)
-    tables = tables.set_index("station_id").join(trend).reset_index()
+    # get trend value for each station
+    trend  = load_trend(query_api)
     
-    #geo_dict = geo_table.to_dict("index")
-
-    info_table = tables[['station_id','ags', 'bundesland', 'city', 'landkreis', 'name','trend']]
-    info_dict = info_table.set_index("station_id").drop_duplicates().to_dict("index")
-    return geo_table,info_dict
+    # join everything together
+    tables = tables.set_index("station_id").join(trend).join(geo_table).reset_index()
+    
+    # drop unnecessary columns
+    for column in tables.columns:
+        if str(column).startswith("_") or str(column)=="result":
+            tables.drop(column,inplace=True,axis=1)
+    
+    # Convert into GeoDataFrame
+    tables = gpd.GeoDataFrame(tables, geometry=gpd.points_from_xy(tables.lon, tables.lat))
+            
+    return tables
 
 def load_trend(query_api):
     """ 
@@ -85,7 +97,6 @@ def load_trend(query_api):
         else:
             return 100*round(delta/lastweek,2)
     df["trend"] = df.apply(lambda x: rate(x["current"],x["lastweek"]), axis=1)
-    #trend_dict = df[["trend"]].transpose().to_dict("records") # dict {station_id -> trend}
     return df["trend"]
 
 def load_timeseries(query_api,station_id):
@@ -98,9 +109,7 @@ def load_timeseries(query_api,station_id):
       |> filter(fn: (r) => r["unverified"] == "False")
       '''.format(station_id)
     tables = query_api.query_data_frame(query)
-    #print(tables[["name","station_id","_time","_value"]])
     times  = list(tables["_time"])
-    #times  = [x.timestamp() for x in times]
     values = list(tables["_value"])
     return times, values
 

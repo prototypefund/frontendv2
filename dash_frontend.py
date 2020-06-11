@@ -16,8 +16,7 @@ default_lon = 10
 
 # Get data
 query_api= queries.get_query_api()
-geo_table,info_dict = queries.load_metadata(query_api)
-station_ids = list(geo_table.index)
+metadata = queries.load_metadata(query_api) # metadata is a GeoDataFrame
 
 app = dash.Dash()
 
@@ -77,17 +76,17 @@ mainmap=dcc.Graph(
                 # TRACE 1: Datapoints
                 name=main_map_name,
                 type= "scattermapbox",
-                lat=list(geo_table["lat"]),
-                lon=list(geo_table["lon"]),
+                lat=metadata["lat"],
+                lon=metadata["lon"],
                 #lat = [40, 50, 60],
                 #lon = [10, 20, 30],
                 mode='markers',
                 marker=dict(
                     size=20, 
-                    color=[trend2color(info_dict[x]["trend"]) for x in station_ids]
+                    color=metadata.apply(lambda x: trend2color(x["trend"]),axis=1)
                     ),
                 #text=[info_dict[x]["city"]+" ("+info_dict[x]["name"]+")" for x in station_ids],
-                text = ["<br>".join([key+": "+str(info_dict[station_id][key]) for key in info_dict[station_id].keys()]) for station_id in station_ids],
+                #text = ["<br>".join([key+": "+str(info_dict[station_id][key]) for key in info_dict[station_id].keys()]) for station_id in station_ids],
                 hoverinfo="text",
                 ),
         ],
@@ -212,8 +211,8 @@ def display_hover_data(hoverData,fig_chart,fig_map):
         curveNumber=hoverData["points"][0]['curveNumber']
         if fig_map["data"][curveNumber]["name"]==main_map_name:
             i=hoverData["points"][0]['pointIndex']
-            station_id = station_ids[i]
-            title = "{} ({})".format(info_dict[str(station_id)]["city"],info_dict[str(station_id)]["name"])
+            station_id = metadata.iloc[i]["station_id"]
+            title = metadata.apply(lambda x: x["city"]+" ("+x["name"]+")",axis=1)
             times, values = queries.load_timeseries(query_api,station_id)
             print(times)
     fig_chart["data"][0]["x"]=times
@@ -287,13 +286,12 @@ def update_map(hidden_latlon_str,radius,fig):
     fig["layout"]["mapbox"]["center"]["lat"]=lat
     fig["layout"]["mapbox"]["center"]["lon"]=lon
     
-    gdf = gpd.GeoDataFrame(geo_table, geometry=gpd.points_from_xy(geo_table.lon, geo_table.lat))
-    gdf,poly=filter_by_radius(gdf,lat,lon,radius)
+    filtered_metadata,poly=filter_by_radius(metadata,lat,lon,radius)
     
     x,y=poly.exterior.coords.xy
     fig["data"][0]["lat"]=y
     fig["data"][0]["lon"]=x
-    return fig,str(gdf)
+    return fig,str(filtered_metadata)
 
 @app.callback(
     [Output('nominatim_lookup_span', 'children'),

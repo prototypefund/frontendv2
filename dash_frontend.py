@@ -273,11 +273,13 @@ def update_map(hidden_latlon_str,radius,fig):
     fig["layout"]["mapbox"]["center"]["lon"]=lon
     
     filtered_metadata,poly=filter_by_radius(metadata,lat,lon,radius)
+    mean_trend = filtered_metadata["trend"].mean()
+    std_trend = filtered_metadata["trend"].std()
     
     x,y=poly.exterior.coords.xy
     fig["data"][0]["lat"]=y
     fig["data"][0]["lon"]=x
-    return fig,str(filtered_metadata)
+    return fig, f"TREND: {mean_trend:.2f} ± {std_trend:.2f}"
 
 @app.callback(
     [Output('nominatim_lookup_span', 'children'),

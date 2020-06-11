@@ -4,7 +4,7 @@ latitude/longitude point and a given radius
 """
 
 from math import radians, degrees, pi, cos, sin, asin, acos, sqrt
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, Point
 import pandas as pd
 import geopandas as gpd
 
@@ -42,10 +42,23 @@ def filter_by_radius(gdf,lat,lon,radius):
     lat1,lon1,lat2,lon2=get_bounding_box(lat,lon,radius)
     spatial_index = gdf.sindex
     candidates = list(spatial_index.intersection([lon1,lat1,lon2,lat2]))
-    gdf_box=gdf.reset_index().loc[candidates]
+    gdf_box=gdf.reset_index(drop=True).loc[candidates]
     dlat = lat1-lat2
     dlon = lon1-lon2
     x = [lat+sin(radians(2*x))*dlat/2 for x in range(0,180)]
     y = [lon+cos(radians(2*x))*dlon/2 for x in range(0,180)]
     p = Polygon([(b,a) for a,b in zip(x,y)])
     return gdf_box[gdf_box.intersects(p)],p
+    
+if __name__ == '__main__':
+    """ 
+    Test: create a dummy dataframe with 3 entries and filter it
+    Expected result: The filtered dataframe should consist of only 2 entries
+    """
+    print("== TEST ==")
+    dummygdf = gpd.GeoDataFrame({"data":["A","B","C"]},geometry=[Point(0,0),Point(3,3),Point(1,1)])
+    print("ORIGINAL GEODATAFRAME:")
+    print(dummygdf)
+    filtered,_=filter_by_radius(dummygdf,0,0,300)
+    print("\nFILTERED GEODATAFRAME:")
+    print(filtered)

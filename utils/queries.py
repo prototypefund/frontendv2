@@ -1,5 +1,5 @@
 '''
-utility functions for the frontend
+utility functions for the frontend that query the InfluxDB
 '''
 import datetime
 import pandas as pd

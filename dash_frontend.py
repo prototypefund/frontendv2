@@ -6,9 +6,9 @@ import pandas as pd
 import geopandas as gpd
 
 from geopy.geocoders import Nominatim
-from math import isnan
 
 from utils import queries
+from utils import helpers
 from utils.filter_by_radius import filter_by_radius
 
 default_lat = 50
@@ -37,19 +37,6 @@ config_plots = dict(
     locale="de-DE",
     modeBarButtonsToRemove=['lasso2d','toggleSpikelines','toggleHover']
     )
-
-def trend2color(trendvalue):
-    if isnan(trendvalue):
-        return "#999999"
-    elif trendvalue > 200:
-        # red
-        return "#cc0000"
-    elif trendvalue < 20:
-        # green
-        return "#00cc22"
-    else:
-        # yellow
-        return "#ccaa00"
 
 #  Dash Map
 main_map_name = "Messpunkte"
@@ -83,10 +70,10 @@ mainmap=dcc.Graph(
                 mode='markers',
                 marker=dict(
                     size=20, 
-                    color=metadata.apply(lambda x: trend2color(x["trend"]),axis=1)
+                    color=metadata.apply(lambda x: helpers.trend2color(x["trend"]),axis=1)
                     ),
-                #text=[info_dict[x]["city"]+" ("+info_dict[x]["name"]+")" for x in station_ids],
                 #text = ["<br>".join([key+": "+str(info_dict[station_id][key]) for key in info_dict[station_id].keys()]) for station_id in station_ids],
+                text = helpers.tooltiptext(metadata),
                 hoverinfo="text",
                 ),
         ],
@@ -214,7 +201,6 @@ def display_hover_data(hoverData,fig_chart,fig_map):
             station_id = metadata.iloc[i]["station_id"]
             title = metadata.apply(lambda x: x["city"]+" ("+x["name"]+")",axis=1)
             times, values = queries.load_timeseries(query_api,station_id)
-            print(times)
     fig_chart["data"][0]["x"]=times
     fig_chart["data"][0]["y"]=values
     fig_chart["layout"]["title"]=title

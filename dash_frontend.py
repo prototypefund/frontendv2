@@ -199,8 +199,9 @@ def display_hover_data(hoverData,fig_chart,fig_map):
         curveNumber=hoverData["points"][0]['curveNumber']
         if fig_map["data"][curveNumber]["name"]==main_map_name:
             i=hoverData["points"][0]['pointIndex']
+            title = f"{metadata.iloc[i]['city']} ({metadata.iloc[i]['name']})"
             station_id = metadata.iloc[i]["station_id"]
-            title = metadata.apply(lambda x: x["city"]+" ("+x["name"]+")",axis=1)
+            #title = metadata.apply(lambda x: x["city"]+" ("+x["name"]+")",axis=1)
             times, values = queries.load_timeseries(query_api,station_id)
     fig_chart["data"][0]["x"]=times
     fig_chart["data"][0]["y"]=values
@@ -255,6 +256,7 @@ def update_hidden_latlon(geojs_str,nominatim_str):
         return geojs_str
     elif input_id=="nominatim_lookup_span":
         return nominatim_str
+
 # Update map on geolocation change
 @app.callback(
     [Output('map', 'figure'),

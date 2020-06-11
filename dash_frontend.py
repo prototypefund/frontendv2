@@ -19,6 +19,7 @@ query_api= queries.get_query_api()
 metadata = queries.load_metadata(query_api) # metadata is a GeoDataFrame
 
 app = dash.Dash()
+app.title = 'EveryoneCounts'
 
 # hidden div for lat, lon storage
 hidden_latlon = html.Div(id="hidden_latlon",style={"display":"none"})

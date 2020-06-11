@@ -7,7 +7,7 @@
 div.lookup,h1,h2{
     margin:auto;
     margin-bottom:10px;
-    box-shadow:0px 1px 8px #ccc;
+    box-shadow:0px 1px 8px #aaa;
     padding:10px;
     text-align:center;
     background:#fff;
@@ -15,6 +15,7 @@ div.lookup,h1,h2{
     z-index:999;
     position:relative;
     border-radius:10px;
+    overflow:hidden;
 }
 
 .main-svg{
@@ -22,9 +23,10 @@ div.lookup,h1,h2{
 }
 
 
-
 body {
     background:#efefef;
+    font-family:Arial,Helvetica,sans-serif;
+    font-size:0.8em;
 }
 
 #map {
@@ -37,3 +39,11 @@ body {
     z-index:0;
 }
 
+#mean_trend_p{
+    font-size:20pt;
+    #width:50%;
+    margin:auto;
+    padding:20px;
+    border-radius:1000px;
+    display:inline-block;
+}

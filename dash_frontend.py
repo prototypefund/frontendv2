@@ -123,21 +123,18 @@ chart = dcc.Graph(
 # GEOIP BOX
 lookup_span_default = "?"
 geojs_lookup_div = html.Div(className="lookup",children=[
-    html.P('''
-    Sie können Ihren Standort automatisch bestimmen lassen. Klicken Sie dazu "Meinen Standort bestimmen" und erlauben Sie Ihrem Browser auf Ihren Standort zuzugreifen.
-    '''),
+    html.H3("Automatische Standortsuche"),
+    html.P('Sie können Ihren Standort automatisch bestimmen lassen. Klicken Sie dazu "Meinen Standort bestimmen" und erlauben Sie Ihrem Browser auf Ihren Standort zuzugreifen.'),
     html.Button(id='geojs_lookup_button', n_clicks=0, children='Meinen Standort bestimmen'),
-    html.P(children=["Ihr Standort: ",html.Span(id="geojs_lookup_span",children=lookup_span_default)]),
+    html.Pre(children=["Ihr Standort: ",html.Span(id="geojs_lookup_span",children=lookup_span_default)]),
     ])
     
 # LOOKUP BOX
 nominatim_lookup_div = html.Div(className="lookup",children=[
-    html.P('''
-    Einen Ort suchen:
-    '''),
+    html.H3("Manuelle Standortsuche"),
     dcc.Input(id="nominatim_lookup_edit", type="text", placeholder="", debounce=False),
     html.Button(id='nominatim_lookup_button', n_clicks=0, children='Suchen'),
-    html.P(children=[
+    html.Pre(children=[
         "Ihr Standort: ",
         html.Span(id="nominatim_lookup_span",children=lookup_span_default),
         " ",
@@ -148,9 +145,7 @@ nominatim_lookup_div = html.Div(className="lookup",children=[
 # AREA DIV
 SLIDER_MAX = 120
 area_div = html.Div(className="area lookup",id="area",children=[
-    html.P('''
-    Wählen Sie einen Radius:
-    '''),
+    html.H3("Wählen Sie einen Radius"),
     dcc.Slider(
         id='radiusslider',
         min=5,
@@ -163,7 +158,11 @@ area_div = html.Div(className="area lookup",id="area",children=[
         ),
         marks = {20*x:str(20*x)+'km' for x in range(SLIDER_MAX//20+1)}
     ),
-    html.Pre(id="area_output",children="")
+    html.H3("Durchnittlicher 7-Tage-Trend im gewählten Bereich:"),
+    html.P(id="mean_trend_p",style={},children=[
+        html.Span(id="mean_trend_span",children=""),
+        "%"
+        ])
     ])
 
 # TEXTBOX
@@ -260,7 +259,7 @@ def update_hidden_latlon(geojs_str,nominatim_str):
 # Update map on geolocation change
 @app.callback(
     [Output('map', 'figure'),
-    Output('area_output','children')],
+    Output('mean_trend_span','children')],
     [Input('hidden_latlon', 'children'),
      Input('radiusslider', 'value')],
     [State('map','figure')])
@@ -276,13 +275,21 @@ def update_map(hidden_latlon_str,radius,fig):
     fig["layout"]["mapbox"]["center"]["lon"]=lon
     
     filtered_metadata,poly=filter_by_radius(metadata,lat,lon,radius)
-    mean_trend = filtered_metadata["trend"].mean()
-    std_trend = filtered_metadata["trend"].std()
+    mean_trend = round(filtered_metadata["trend"].mean(),1)
+    #std_trend = filtered_metadata["trend"].std()
     
     x,y=poly.exterior.coords.xy
     fig["data"][0]["lat"]=y
     fig["data"][0]["lon"]=x
-    return fig, f"TREND: {mean_trend:.2f} ± {std_trend:.2f}"
+    return fig, str(mean_trend)
+
+
+@app.callback(
+    Output('mean_trend_p','style'),
+    [Input('mean_trend_span','children')])
+def style_mean_trend(mean_str):
+    color = helpers.trend2color(float(mean_str))
+    return dict(background=color)
 
 @app.callback(
     [Output('nominatim_lookup_span', 'children'),
@@ -311,9 +318,9 @@ if __name__ == '__main__':
     app.layout = html.Div([
         hidden_latlon,
         title,
-        geojs_lookup_div,
-        nominatim_lookup_div,
         area_div,
+        nominatim_lookup_div,
+        geojs_lookup_div,
         mainmap,
         #textbox,
         chart

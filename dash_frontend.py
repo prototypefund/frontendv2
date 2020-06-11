@@ -53,12 +53,29 @@ def trend2color(trendvalue):
         return "#ccaa00"
 
 #  Dash Map
+main_map_name = "Messpunkte"
 mainmap=dcc.Graph(
     id='map',
     config=config_plots,
     figure={
         'data': [
             dict(
+                # TRACE 0: radius selection marker
+                name="Filter radius",
+                type= "scattermapbox",
+                fill = "toself",
+                fillcolor = 'rgba(135, 206, 250, 0.3)',
+                marker=dict(
+                    color='rgba(135, 206, 250, 0.0)',
+                    ),
+                hoverinfo='skip',
+                lat=[],
+                lon=[],
+                mode='lines',
+                ),
+            dict(
+                # TRACE 1: Datapoints
+                name=main_map_name,
                 type= "scattermapbox",
                 lat=list(geo_table["lat"]),
                 lon=list(geo_table["lon"]),
@@ -66,19 +83,13 @@ mainmap=dcc.Graph(
                 #lon = [10, 20, 30],
                 mode='markers',
                 marker=dict(
-                    size=12, 
+                    size=20, 
                     color=[trend2color(info_dict[x]["trend"]) for x in station_ids]
                     ),
                 #text=[info_dict[x]["city"]+" ("+info_dict[x]["name"]+")" for x in station_ids],
                 text = ["<br>".join([key+": "+str(info_dict[station_id][key]) for key in info_dict[station_id].keys()]) for station_id in station_ids],
                 hoverinfo="text",
                 ),
-            dict(
-                type= "scattermapbox",
-                lat=[50,52],
-                lon=[10,9],
-                mode='lines',
-                )
         ],
         'layout': dict(
             autosize=True,
@@ -189,32 +200,26 @@ area_div = html.Div(className="area",id="area",children=[
 # Hover over map > update timeline chart
 @app.callback(
     Output('chart', 'figure'),
-    [Input('map', 'hoverData')])
-def display_hover_data(hoverData):
+    [Input('map', 'hoverData')],
+    [State('chart', 'figure'),
+     State('map', 'figure')])
+def display_hover_data(hoverData,fig_chart,fig_map):
     #print("Hover",hoverData,type(hoverData))
-    if hoverData==None:
-        text = "Hover is NONE"
-        title="Wähle einen Datenpunkt auf der Karte!"
-        times=[]
-        values=[]
-    else:
-        i=hoverData["points"][0]['pointIndex']
-        station_id = station_ids[i]
-        text = str(info_dict[station_id])
-        title = "{} ({})".format(info_dict[str(station_id)]["city"],info_dict[str(station_id)]["name"])
-        times, values = queries.load_timeseries(query_api,station_id)
-        #times=[0,1,2]
-        #values=[0,5,6]
-    figure={
-        'data': [{
-            "x" : times,
-            "y" : values,
-            "mode":'lines',
-            }],
-        'layout': chartlayout
-    }
-    figure["layout"]["title"]=title
-    return figure
+    title="Wähle einen Datenpunkt auf der Karte!"
+    times=[]
+    values=[]
+    if hoverData: #only for datapoints (trace 0), not for other elements
+        curveNumber=hoverData["points"][0]['curveNumber']
+        if fig_map["data"][curveNumber]["name"]==main_map_name:
+            i=hoverData["points"][0]['pointIndex']
+            station_id = station_ids[i]
+            title = "{} ({})".format(info_dict[str(station_id)]["city"],info_dict[str(station_id)]["name"])
+            times, values = queries.load_timeseries(query_api,station_id)
+            print(times)
+    fig_chart["data"][0]["x"]=times
+    fig_chart["data"][0]["y"]=values
+    fig_chart["layout"]["title"]=title
+    return fig_chart
 
 # Click Button > get JS GeoIP position
 app.clientside_callback(
@@ -286,8 +291,8 @@ def update_map(hidden_latlon_str,radius,fig):
     gdf,poly=filter_by_radius(gdf,lat,lon,radius)
     
     x,y=poly.exterior.coords.xy
-    fig["data"][1]["lat"]=y
-    fig["data"][1]["lon"]=x
+    fig["data"][0]["lat"]=y
+    fig["data"][0]["lon"]=x
     return fig,str(gdf)
 
 @app.callback(

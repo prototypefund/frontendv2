@@ -52,9 +52,9 @@ def load_trend(query_api):
     |> last()
     '''
     last_data_date = query_api.query_data_frame(query)["_value"][0]
+    last_data_date = datetime.datetime.fromtimestamp(last_data_date.timestamp())
+    
     last_data_date = last_data_date - datetime.timedelta(days=1)
-
-    last_data_date=datetime.datetime.fromtimestamp(last_data_date.timestamp())
     lastweek_data_date = last_data_date - datetime.timedelta(days=7)
     query='''
     from(bucket: "test-hystreet")
@@ -97,10 +97,11 @@ def load_timeseries(query_api,station_id):
       |> filter(fn: (r) => r["station_id"] == "{}")
       |> filter(fn: (r) => r["unverified"] == "False")
       '''.format(station_id)
-    #tables = query_api.query_data_frame(query)
-    print(tables[["name","station_id","_time","_value"]])
-    times  = tables["_time"]
-    values = tables["_value"]
+    tables = query_api.query_data_frame(query)
+    #print(tables[["name","station_id","_time","_value"]])
+    times  = list(tables["_time"])
+    #times  = [x.timestamp() for x in times]
+    values = list(tables["_value"])
     return times, values
 
 

@@ -4,155 +4,19 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import pandas as pd
 import geopandas as gpd
-from influxdb_client import InfluxDBClient
+
 from geopy.geocoders import Nominatim
-import datetime
-from math import radians, degrees, pi, cos, sin, asin, acos, sqrt, isnan
-from shapely.geometry import Polygon
+from math import isnan
 
-def get_credentials():
-    with open('credentials.txt','r') as f:
-        lines = f.readlines()
-        url   = lines[0].rstrip()
-        token = lines[1].rstrip()
-        org   = lines[2].rstrip()
-    return url,token,org
-
-def load_metadata():
-    query = '''
-        from(bucket: "test-hystreet")
-      |> range(start: -10d) 
-      |> filter(fn: (r) => r["_measurement"] == "hystreet")
-      |> filter(fn: (r) => r["_field"] == "lon" or r["_field"] == "lat")
-      |> drop(columns: ["unverified"])
-      |> unique()
-      |> yield(name: "unique")
-      '''
-    tables = query_api.query_data_frame(query)
-    geo_table = tables[["_field","_value","station_id"]].drop_duplicates()
-    geo_table = geo_table.pivot(index='station_id', columns='_field', values='_value')
-    geo_table = round(geo_table,5)
-    
-    trend=load_trend()
-    tables = tables.set_index("station_id").join(trend).reset_index()
-    
-    #geo_dict = geo_table.to_dict("index")
-
-    info_table = tables[['station_id','ags', 'bundesland', 'city', 'landkreis', 'name','trend']]
-    info_dict = info_table.set_index("station_id").drop_duplicates().to_dict("index")
-    return geo_table,info_dict
-
-def load_trend():
-    # calculate trend 
-    # value of 0.2 means 20% more acitivity than 7 days ago
-    
-    query = '''
-    import "influxdata/influxdb/v1"
-    v1.tagValues(bucket: "test-hystreet", tag: "_time")
-    |> last()
-    '''
-    last_data_date = query_api.query_data_frame(query)["_value"][0]
-    last_data_date = last_data_date - datetime.timedelta(days=1)
-
-    last_data_date=datetime.datetime.fromtimestamp(last_data_date.timestamp())
-    lastweek_data_date = last_data_date - datetime.timedelta(days=7)
-    query='''
-    from(bucket: "test-hystreet")
-      |> range(start: {})
-      |> filter(fn: (r) => r["_measurement"] == "hystreet")
-      |> filter(fn: (r) => r["_field"] == "pedestrians_count")
-      |> drop(columns: ["unverified"])
-      |> first()
-    '''.format(lastweek_data_date.strftime("%Y-%m-%d"))
-    lastweek = query_api.query_data_frame(query)
-    
-    query = '''
-    from(bucket: "test-hystreet")
-      |> range(start: {})
-      |> filter(fn: (r) => r["_measurement"] == "hystreet")
-      |> filter(fn: (r) => r["_field"] == "pedestrians_count")
-      |> drop(columns: ["unverified"])
-      |> last()
-    '''.format(last_data_date.strftime("%Y-%m-%d"))
-    current = query_api.query_data_frame(query)
-    current=current[["station_id","_value"]].rename(columns={"_value":"current"}).set_index("station_id")
-    lastweek=lastweek[["station_id","_value"]].rename(columns={"_value":"lastweek"}).set_index("station_id")
-    df = current.join(lastweek)
-    def rate(current,lastweek):
-        delta = current-lastweek
-        if lastweek == 0:
-            return None
-        else:
-            return 100*round(delta/lastweek,2)
-    df["trend"] = df.apply(lambda x: rate(x["current"],x["lastweek"]), axis=1)
-    #trend_dict = df[["trend"]].transpose().to_dict("records") # dict {station_id -> trend}
-    return df["trend"]
-
-def load_timeseries(station_id):
-    query = '''
-    from(bucket: "test-hystreet")
-      |> range(start: -14d) 
-      |> filter(fn: (r) => r["_measurement"] == "hystreet")
-      |> filter(fn: (r) => r["_field"] == "pedestrians_count")
-      |> filter(fn: (r) => r["station_id"] == "{}")
-      |> drop(columns: ["unverified"])
-      '''.format(station_id)
-    tables = query_api.query_data_frame(query)
-    #print(tables)
-    times  = tables["_time"]
-    values = tables["_value"]
-    return times, values
-
-
-def get_bounding_box(lat=10,lon=52,radius_km=300):
-    """
-    Calculate a lat, lon bounding box around a
-    centeral point with a given half-side distance or radius.
-    Input and output lat/lon values specified in decimal degrees.
-    Output: [lat_min,lon_min,lat_max,lon_max]
-    """
-    r_earth_km = 6371 # earth radius
-    
-    # convert to radians
-    lat = radians(lat)
-    lon = radians(lon)
-    # everything is in radians from this point on
-        
-    # latitude
-    delta_lat = radius_km/r_earth_km
-    lat_max = lat+delta_lat
-    lat_min = lat-delta_lat
-    
-    #longitude
-    delta_lon = radius_km/(r_earth_km*cos(lat))
-    lon_max = lon+delta_lon
-    lon_min = lon-delta_lon
-    
-    return map(degrees,[lat_min,lon_min,lat_max,lon_max])
-
-def filter_by_radius(gdf,lat,lon,radius):
-    lat1,lon1,lat2,lon2=get_bounding_box(lat,lon,radius)
-    spatial_index = gdf.sindex
-    candidates = list(spatial_index.intersection([lon1,lat1,lon2,lat2]))
-    gdf_box=gdf.reset_index().loc[candidates]
-    dlat = lat1-lat2
-    dlon = lon1-lon2
-    x = [lat+sin(radians(2*x))*dlat/2 for x in range(0,180)]
-    y = [lon+cos(radians(2*x))*dlon/2 for x in range(0,180)]
-    p = Polygon([(b,a) for a,b in zip(x,y)])
-    return gdf_box[gdf_box.intersects(p)],p
-
+from utils import queries
+from utils.filter_by_radius import filter_by_radius
 
 default_lat = 50
 default_lon = 10
 
-# set up InfluxDB query API
-url,token,org = get_credentials()
-client = InfluxDBClient(url=url, token=token, org=org)
-query_api = client.query_api()
-
 # Get data
-geo_table,info_dict = load_metadata()
+query_api= queries.get_query_api()
+geo_table,info_dict = queries.load_metadata(query_api)
 station_ids = list(geo_table.index)
 
 app = dash.Dash()
@@ -284,14 +148,14 @@ nominatim_lookup_div = html.Div(className="lookup",children=[
     ])
 
 # AREA DIV
-SLIDER_MAX = 100
+SLIDER_MAX = 120
 area_div = html.Div(className="area",id="area",children=[
     html.P('''
     Wählen Sie einen Radius:
     '''),
     dcc.Slider(
         id='radiusslider',
-        min=0,
+        min=5,
         max=SLIDER_MAX,
         step=5,
         value=60,
@@ -338,7 +202,7 @@ def display_hover_data(hoverData):
         station_id = station_ids[i]
         text = str(info_dict[station_id])
         title = "{} ({})".format(info_dict[str(station_id)]["city"],info_dict[str(station_id)]["name"])
-        times, values = load_timeseries(station_id)
+        times, values = load_timeseries(query_api,station_id)
         #times=[0,1,2]
         #values=[0,5,6]
     figure={

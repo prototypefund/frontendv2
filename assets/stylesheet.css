@@ -18,6 +18,17 @@ div.lookup,h1,h2{
     overflow:hidden;
 }
 
+#location_display{
+    text-align:left;
+    color:#999;
+    font-size:0.9em;
+}
+
+#nominatim_lookup_edit{
+    width:90%;
+    margin:5px;
+    padding:5px;
+}
 
 body {
     background:#efefef;
@@ -41,4 +52,9 @@ body {
     padding:20px;
     border-radius:1000px;
     display:inline-block;
+}
+
+button{
+    margin:5px;
+    padding:5px;
 }

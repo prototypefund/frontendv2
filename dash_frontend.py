@@ -170,24 +170,15 @@ chart = dcc.Loading(
         ])
 # GEOIP BOX
 lookup_span_default = "?"
-geojs_lookup_div = html.Div(className="lookup",children=[
-    html.H3("Automatische Standortsuche"),
-    html.P('Sie können Ihren Standort automatisch bestimmen lassen. Klicken Sie dazu "Meinen Standort bestimmen" und erlauben Sie Ihrem Browser auf Ihren Standort zuzugreifen.'),
-    html.Button(id='geojs_lookup_button', n_clicks=0, children='Meinen Standort bestimmen'),
-    html.Pre(children=["Ihr Standort: ",html.Span(id="geojs_lookup_span",children=lookup_span_default)]),
-    ])
-    
+   
 # LOOKUP BOX
-nominatim_lookup_div = html.Div(className="lookup",children=[
-    html.H3("Manuelle Standortsuche"),
+location_lookup_div = html.Div(className="lookup",children=[
+    html.H3("Standortsuche"),
     dcc.Input(id="nominatim_lookup_edit", type="text", placeholder="", debounce=False),
+    html.Br(),
     html.Button(id='nominatim_lookup_button', n_clicks=0, children='Suchen'),
-    html.Pre(children=[
-        "Ihr Standort: ",
-        html.Span(id="nominatim_lookup_span",children=lookup_span_default),
-        " ",
-        html.Span(id="nominatim_lookup_span_adress",children=lookup_span_default),
-        ]),
+    html.Button(id='geojs_lookup_button', n_clicks=0, children='Standort automatisch bestimmen'),
+    html.P(id="location_display",children=lookup_span_default),
     ])
 
 # AREA DIV
@@ -302,7 +293,9 @@ def update_latlon_local_storage(clientside_callback_storage,nominatim_storage,la
         return dash.no_update
     input_id = ctx.triggered[0]['prop_id'].split('.')[0]
     if input_id=="clientside_callback_storage":
-        return clientside_callback_storage
+        lat,lon,_ = clientside_callback_storage
+        addr=nominatim_reverse_lookup(lat,lon)
+        return (lat,lon,addr)
     elif input_id=="nominatim_storage" and nominatim_storage[2]!="":
         return nominatim_storage
     else:
@@ -312,7 +305,7 @@ def update_latlon_local_storage(clientside_callback_storage,nominatim_storage,la
 @app.callback(
     [Output('map', 'figure'),
     Output('mean_trend_span','children'),
-    Output('geojs_lookup_span','children')],
+    Output('location_display','children')],
     [Input('latlon_local_storage', 'data'),
      Input('radiusslider', 'value')],
     [State('map','figure')])
@@ -325,7 +318,11 @@ def update_map(latlon_local_storage,radius,fig):
         addr = "asdfg"
     fig["layout"]["mapbox"]["center"]["lat"]=lat
     fig["layout"]["mapbox"]["center"]["lon"]=lon
-    location_str = f"{lat:.4f}, {lat:.4f}<br>{addr}"
+    location_display = [
+        html.Span(["Koordinaten: ", f"{lat:.4f}, {lat:.4f}"]),
+        html.Br(),
+        html.Span(["Adresse: ", f"{addr}"]
+        )]
     
     filtered_metadata,poly=filter_by_radius(metadata,lat,lon,radius)
     mean_trend = round(filtered_metadata["trend"].mean(),1)
@@ -334,7 +331,7 @@ def update_map(latlon_local_storage,radius,fig):
     x,y=poly.exterior.coords.xy
     fig["data"][0]["lat"]=y
     fig["data"][0]["lon"]=x
-    return fig, str(mean_trend), location_str
+    return fig, str(mean_trend), location_display
 
 
 @app.callback(
@@ -352,8 +349,9 @@ def style_mean_trend(mean_str):
 def nominatim_lookup_callback(button,submit,query):
     return nominatim_lookup(query)
 
-#@cache.memoize(unless=DISABLE_CACHE) 
+@cache.memoize(unless=DISABLE_CACHE) 
 def nominatim_lookup(query):
+    # Location name --> lat,lon
     geolocator = Nominatim(user_agent="everyonecounts")
     geoloc = geolocator.geocode(query,exactly_one=True)
     if geoloc:
@@ -365,6 +363,18 @@ def nominatim_lookup(query):
         lat = default_lat
         lon = default_lon
     return (lat,lon,address)
+
+@cache.memoize(unless=DISABLE_CACHE)     
+def nominatim_reverse_lookup(lat,lon):
+    # lat,lon --> location name
+    geolocator = Nominatim(user_agent="everyonecounts")
+    query = f"{lat}, {lon}"
+    geoloc = geolocator.reverse(query,exactly_one=True)
+    if geoloc:
+        address=geoloc.address
+    else:
+        address = ""
+    return address
         
 
 # MAIN
@@ -377,8 +387,7 @@ if __name__ == '__main__':
         clientside_callback_storage,nominatim_storage,latlon_local_storage,
         title,
         area_div,
-        nominatim_lookup_div,
-        geojs_lookup_div,
+        location_lookup_div,
         mainmap,
         chart
     ])

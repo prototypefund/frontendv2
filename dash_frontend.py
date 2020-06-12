@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output, State
 from flask_caching import Cache
 import pandas as pd
 import geopandas as gpd
+import json
 
 from geopy.geocoders import Nominatim
 
@@ -30,8 +31,10 @@ cache = Cache(app.server, config={
     })
 DISABLE_CACHE = False # set to true to disable caching
     
-# hidden div for lat, lon storage
-hidden_latlon = html.Div(id="hidden_latlon",style={"display":"none"})
+# dcc Storage
+clientside_callback_storage=dcc.Store(id='clientside_callback_storage',storage_type='memory')
+nominatim_storage=dcc.Store(id='nominatim_storage',storage_type='memory')
+latlon_local_storage=dcc.Store(id='latlon_local_storage',storage_type='local')
 
 # Title
 title=html.H1(
@@ -267,7 +270,8 @@ app.clientside_callback(
       } else { 
         showPosition('error');
       }
-      return lat+", "+lon;
+      //return lat+","+lon;
+      return [lat,lon,""];
     }
 
     function showPosition(position) {
@@ -280,48 +284,48 @@ app.clientside_callback(
       }
     }
     """,
-    Output(component_id='geojs_lookup_span', component_property='children'),
+    Output(component_id='clientside_callback_storage', component_property='data'),
     [Input(component_id='geojs_lookup_button', component_property='n_clicks')]
 )
 
 
-# Update hidden latlon div
+# Update current position
 @app.callback(
-    Output('hidden_latlon','children'),
-    [Input('geojs_lookup_span', 'children'),
-     Input('nominatim_lookup_span', 'children')],
-    [State('hidden_latlon', 'children'),
-     State('nominatim_lookup_span_adress', 'children')]
+    Output('latlon_local_storage','data'),
+    [Input('clientside_callback_storage', 'data'),
+     Input('nominatim_storage', 'data')],
+    [State('latlon_local_storage', 'data')]
     )
-def update_hidden_latlon(geojs_str,nominatim_str,hidden_latlon,nom_adress):
+def update_latlon_local_storage(clientside_callback_storage,nominatim_storage,latlon_local_storage):
     ctx = dash.callback_context
     if not ctx.triggered:
-        return ""
+        return dash.no_update
     input_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    if input_id=="geojs_lookup_span":
-        return geojs_str
-    elif input_id=="nominatim_lookup_span" and nom_adress!="":
-        return nominatim_str
+    if input_id=="clientside_callback_storage":
+        return clientside_callback_storage
+    elif input_id=="nominatim_storage" and nominatim_storage[2]!="":
+        return nominatim_storage
     else:
-        return hidden_latlon # original value, don't change
+        return latlon_local_storage # original value, don't change
 
 # Update map on geolocation change
 @app.callback(
     [Output('map', 'figure'),
-    Output('mean_trend_span','children')],
-    [Input('hidden_latlon', 'children'),
+    Output('mean_trend_span','children'),
+    Output('geojs_lookup_span','children')],
+    [Input('latlon_local_storage', 'data'),
      Input('radiusslider', 'value')],
     [State('map','figure')])
-def update_map(hidden_latlon_str,radius,fig):
-    if hidden_latlon!="":
-        lat,lon = hidden_latlon_str.split(",")
-        lat = float(lat)
-        lon = float(lon)
+def update_map(latlon_local_storage,radius,fig):
+    if latlon_local_storage!=None:
+        lat,lon,addr = latlon_local_storage
     else:
         lat = default_lat
         lon = default_lon
+        addr = "asdfg"
     fig["layout"]["mapbox"]["center"]["lat"]=lat
     fig["layout"]["mapbox"]["center"]["lon"]=lon
+    location_str = f"{lat:.4f}, {lat:.4f}<br>{addr}"
     
     filtered_metadata,poly=filter_by_radius(metadata,lat,lon,radius)
     mean_trend = round(filtered_metadata["trend"].mean(),1)
@@ -330,7 +334,7 @@ def update_map(hidden_latlon_str,radius,fig):
     x,y=poly.exterior.coords.xy
     fig["data"][0]["lat"]=y
     fig["data"][0]["lon"]=x
-    return fig, str(mean_trend)
+    return fig, str(mean_trend), location_str
 
 
 @app.callback(
@@ -341,15 +345,14 @@ def style_mean_trend(mean_str):
     return dict(background=color)
 
 @app.callback(
-    [Output('nominatim_lookup_span', 'children'),
-     Output('nominatim_lookup_span_adress', 'children')],
+    Output('nominatim_storage', 'data'),
     [Input('nominatim_lookup_button', 'n_clicks'),
      Input('nominatim_lookup_edit', 'n_submit')],
     [State('nominatim_lookup_edit','value')])
 def nominatim_lookup_callback(button,submit,query):
     return nominatim_lookup(query)
 
-@cache.memoize(unless=DISABLE_CACHE) 
+#@cache.memoize(unless=DISABLE_CACHE) 
 def nominatim_lookup(query):
     geolocator = Nominatim(user_agent="everyonecounts")
     geoloc = geolocator.geocode(query,exactly_one=True)
@@ -361,7 +364,7 @@ def nominatim_lookup(query):
         address = ""
         lat = default_lat
         lon = default_lon
-    return (str(lat)+", "+str(lon),address)
+    return (lat,lon,address)
         
 
 # MAIN
@@ -370,14 +373,13 @@ if __name__ == '__main__':
     print("Let's go")
     
     # start Dash webserver
-    app.layout = html.Div([
-        hidden_latlon,
+    app.layout = html.Div(id="dash-layout",children=[
+        clientside_callback_storage,nominatim_storage,latlon_local_storage,
         title,
         area_div,
         nominatim_lookup_div,
         geojs_lookup_div,
         mainmap,
-        #textbox,
         chart
     ])
     app.run_server(debug=True, host="localhost")

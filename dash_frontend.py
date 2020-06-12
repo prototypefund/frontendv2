@@ -2,6 +2,7 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
+from flask_caching import Cache
 import pandas as pd
 import geopandas as gpd
 
@@ -20,7 +21,15 @@ metadata = queries.load_metadata(query_api) # metadata is a GeoDataFrame
 
 app = dash.Dash()
 app.title = 'EveryoneCounts'
-
+cache = Cache(app.server, config={
+    'CACHE_TYPE': 'filesystem',
+    'CACHE_DIR': 'cache',
+    'CACHE_THRESHOLD': 100, # max cache size in items
+    'CACHE_DEFAULT_TIMEOUT': 3600 # seconds
+    # see https://pythonhosted.org/Flask-Caching/
+    })
+DISABLE_CACHE = False # set to true to disable caching
+    
 # hidden div for lat, lon storage
 hidden_latlon = html.Div(id="hidden_latlon",style={"display":"none"})
 
@@ -174,7 +183,7 @@ nominatim_lookup_div = html.Div(className="lookup",children=[
         "Ihr Standort: ",
         html.Span(id="nominatim_lookup_span",children=lookup_span_default),
         " ",
-        html.Span(id="nominatim_lookup_span2",children=lookup_span_default),
+        html.Span(id="nominatim_lookup_span_adress",children=lookup_span_default),
         ]),
     ])
 
@@ -280,17 +289,21 @@ app.clientside_callback(
 @app.callback(
     Output('hidden_latlon','children'),
     [Input('geojs_lookup_span', 'children'),
-     Input('nominatim_lookup_span', 'children')])
-def update_hidden_latlon(geojs_str,nominatim_str):
+     Input('nominatim_lookup_span', 'children')],
+    [State('hidden_latlon', 'children'),
+     State('nominatim_lookup_span_adress', 'children')]
+    )
+def update_hidden_latlon(geojs_str,nominatim_str,hidden_latlon,nom_adress):
     ctx = dash.callback_context
     if not ctx.triggered:
         return ""
-    else:
-        input_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    input_id = ctx.triggered[0]['prop_id'].split('.')[0]
     if input_id=="geojs_lookup_span":
         return geojs_str
-    elif input_id=="nominatim_lookup_span":
+    elif input_id=="nominatim_lookup_span" and nom_adress!="":
         return nominatim_str
+    else:
+        return hidden_latlon # original value, don't change
 
 # Update map on geolocation change
 @app.callback(
@@ -329,11 +342,15 @@ def style_mean_trend(mean_str):
 
 @app.callback(
     [Output('nominatim_lookup_span', 'children'),
-     Output('nominatim_lookup_span2', 'children')],
+     Output('nominatim_lookup_span_adress', 'children')],
     [Input('nominatim_lookup_button', 'n_clicks'),
      Input('nominatim_lookup_edit', 'n_submit')],
     [State('nominatim_lookup_edit','value')])
-def nominatim_lookup(button,submit,query):
+def nominatim_lookup_callback(button,submit,query):
+    return nominatim_lookup(query)
+
+@cache.memoize(unless=DISABLE_CACHE) 
+def nominatim_lookup(query):
     geolocator = Nominatim(user_agent="everyonecounts")
     geoloc = geolocator.geocode(query,exactly_one=True)
     if geoloc:
@@ -342,6 +359,8 @@ def nominatim_lookup(button,submit,query):
         address=geoloc.address
     else:
         address = ""
+        lat = default_lat
+        lon = default_lon
     return (str(lat)+", "+str(lon),address)
         
 

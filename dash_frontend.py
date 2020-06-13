@@ -178,6 +178,7 @@ location_lookup_div = html.Div(className="lookup",children=[
     html.Br(),
     html.Button(id='nominatim_lookup_button', n_clicks=0, children='Suchen'),
     html.Button(id='geojs_lookup_button', n_clicks=0, children='Standort automatisch bestimmen'),
+    html.Button(id='currentposition_lookup_button', n_clicks=0, children='Aktueller Kartenmittelpunkt'),
     html.P(id="location_display",children=lookup_span_default),
     ])
 
@@ -281,19 +282,34 @@ app.clientside_callback(
 
 
 # Update current position
+# either from
+# - Nominatim lookup
+# - GeoJS position
+# - Center of map button
 @app.callback(
     Output('latlon_local_storage','data'),
     [Input('clientside_callback_storage', 'data'),
-     Input('nominatim_storage', 'data')],
-    [State('latlon_local_storage', 'data')]
+     Input('nominatim_storage', 'data'),
+     Input('currentposition_lookup_button','n_clicks')],
+    [State('latlon_local_storage', 'data'),
+     State('map','figure')]
     )
-def update_latlon_local_storage(clientside_callback_storage,nominatim_storage,latlon_local_storage):
+def update_latlon_local_storage(clientside_callback_storage,
+        nominatim_storage,
+        currentposition_lookup_button,
+        latlon_local_storage,
+        fig):
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update
     input_id = ctx.triggered[0]['prop_id'].split('.')[0]
     if input_id=="clientside_callback_storage":
         lat,lon,_ = clientside_callback_storage
+        addr=nominatim_reverse_lookup(lat,lon)
+        return (lat,lon,addr)
+    elif input_id=="currentposition_lookup_button":
+        lat = fig["layout"]["mapbox"]["center"]["lat"]
+        lon = fig["layout"]["mapbox"]["center"]["lon"]
         addr=nominatim_reverse_lookup(lat,lon)
         return (lat,lon,addr)
     elif input_id=="nominatim_storage" and nominatim_storage[2]!="":
@@ -319,7 +335,7 @@ def update_map(latlon_local_storage,radius,fig):
     fig["layout"]["mapbox"]["center"]["lat"]=lat
     fig["layout"]["mapbox"]["center"]["lon"]=lon
     location_display = [
-        html.Span(["Koordinaten: ", f"{lat:.4f}, {lat:.4f}"]),
+        html.Span(["Koordinaten: ", f"{lat:.4f}, {lon:.4f}"]),
         html.Br(),
         html.Span(["Adresse: ", f"{addr}"]
         )]

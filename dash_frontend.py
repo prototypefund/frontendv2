@@ -179,7 +179,7 @@ location_lookup_div = html.Div(className="lookup",children=[
     html.Button(id='nominatim_lookup_button', n_clicks=0, children='Suchen'),
     html.Button(id='geojs_lookup_button', n_clicks=0, children='Standort automatisch bestimmen'),
     html.Button(id='currentposition_lookup_button', n_clicks=0, children='Aktueller Kartenmittelpunkt'),
-    html.P(id="location_display",children=lookup_span_default),
+    html.P(id="location_text",children=lookup_span_default),
     ])
 
 # AREA DIV
@@ -321,7 +321,8 @@ def update_latlon_local_storage(clientside_callback_storage,
 @app.callback(
     [Output('map', 'figure'),
     Output('mean_trend_span','children'),
-    Output('location_display','children')],
+    Output('location_text','children'),
+    Output('url', 'search')],
     [Input('latlon_local_storage', 'data'),
      Input('radiusslider', 'value')],
     [State('map','figure')])
@@ -334,11 +335,12 @@ def update_map(latlon_local_storage,radius,fig):
         addr = "asdfg"
     fig["layout"]["mapbox"]["center"]["lat"]=lat
     fig["layout"]["mapbox"]["center"]["lon"]=lon
-    location_display = [
+    location_text = [
         html.Span(["Koordinaten: ", f"{lat:.4f}, {lon:.4f}"]),
         html.Br(),
         html.Span(["Adresse: ", f"{addr}"]
         )]
+    urlparam = f"?lat={lat}&lon={lon}&radius={radius}"
     
     filtered_metadata,poly=filter_by_radius(metadata,lat,lon,radius)
     mean_trend = round(filtered_metadata["trend"].mean(),1)
@@ -347,7 +349,7 @@ def update_map(latlon_local_storage,radius,fig):
     x,y=poly.exterior.coords.xy
     fig["data"][0]["lat"]=y
     fig["data"][0]["lon"]=x
-    return fig, str(mean_trend), location_display
+    return fig, str(mean_trend), location_text, urlparam
 
 
 @app.callback(
@@ -400,6 +402,7 @@ if __name__ == '__main__':
     
     # start Dash webserver
     app.layout = html.Div(id="dash-layout",children=[
+        dcc.Location(id='url', refresh=False),
         clientside_callback_storage,nominatim_storage,latlon_local_storage,
         title,
         area_div,

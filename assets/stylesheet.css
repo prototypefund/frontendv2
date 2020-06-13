@@ -18,7 +18,7 @@ div.lookup,h1,h2{
     overflow:hidden;
 }
 
-#location_display{
+#location_text{
     text-align:left;
     color:#999;
     font-size:0.9em;

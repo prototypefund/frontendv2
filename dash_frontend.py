@@ -8,6 +8,7 @@ import geopandas as gpd
 import json
 
 from geopy.geocoders import Nominatim
+from urllib.parse import parse_qs
 
 from utils import queries
 from utils import helpers
@@ -15,6 +16,8 @@ from utils.filter_by_radius import filter_by_radius
 
 default_lat = 50
 default_lon = 10
+default_radius = 60
+
 
 # Get data
 query_api= queries.get_query_api()
@@ -34,6 +37,7 @@ DISABLE_CACHE = False # set to true to disable caching
 # dcc Storage
 clientside_callback_storage=dcc.Store(id='clientside_callback_storage',storage_type='memory')
 nominatim_storage=dcc.Store(id='nominatim_storage',storage_type='memory')
+urlbar_storage=dcc.Store(id='urlbar_storage',storage_type='memory')
 latlon_local_storage=dcc.Store(id='latlon_local_storage',storage_type='local')
 
 # Title
@@ -178,8 +182,9 @@ location_lookup_div = html.Div(className="lookup",children=[
     html.Br(),
     html.Button(id='nominatim_lookup_button', n_clicks=0, children='Suchen'),
     html.Button(id='geojs_lookup_button', n_clicks=0, children='Standort automatisch bestimmen'),
-    html.Button(id='currentposition_lookup_button', n_clicks=0, children='Aktueller Kartenmittelpunkt'),
+    html.Button(id='mapposition_lookup_button', n_clicks=0, children='Aktueller Kartenmittelpunkt'),
     html.P(id="location_text",children=lookup_span_default),
+    html.P(html.A(id="permalink",children="Permalink",href="xyz")),
     ])
 
 # AREA DIV
@@ -280,49 +285,88 @@ app.clientside_callback(
     [Input(component_id='geojs_lookup_button', component_property='n_clicks')]
 )
 
-
+# Read data from url parameters:
+@app.callback(
+    [Output("urlbar_storage","data"),
+     Output("radiusslider","value")],
+    [Input("url","search")])
+def update_from_url(urlbar_str):
+    paramsdict = dict(
+        lat = default_lat,
+        lon = default_lon,
+        radius = default_radius)
+    if urlbar_str!=None:
+        urlparams=parse_qs(urlbar_str.replace("?",""))
+        for key in paramsdict:
+            try:
+                paramsdict[key]=float(urlparams[key][0])
+            except:
+                pass
+    return (paramsdict["lat"],paramsdict["lon"]),paramsdict["radius"]
+        
 # Update current position
 # either from
 # - Nominatim lookup
 # - GeoJS position
 # - Center of map button
+# - from urlbar parameters (on load)
 @app.callback(
     Output('latlon_local_storage','data'),
-    [Input('clientside_callback_storage', 'data'),
+    [Input('urlbar_storage', 'data'),
+     Input('clientside_callback_storage', 'data'),
      Input('nominatim_storage', 'data'),
-     Input('currentposition_lookup_button','n_clicks')],
+     Input('mapposition_lookup_button','n_clicks')],
     [State('latlon_local_storage', 'data'),
      State('map','figure')]
     )
-def update_latlon_local_storage(clientside_callback_storage,
+def update_latlon_local_storage(urlbar_storage,clientside_callback_storage,
         nominatim_storage,
-        currentposition_lookup_button,
+        mapposition_lookup_button,
         latlon_local_storage,
         fig):
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update
-    input_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    if input_id=="clientside_callback_storage":
-        lat,lon,_ = clientside_callback_storage
+    #print("CALLBACK:",ctx.triggered)
+    prop_ids = [x['prop_id'].split('.')[0] for x in ctx.triggered]
+    if "urlbar_storage" in prop_ids:
+        lat = urlbar_storage[0]
+        lon = urlbar_storage[1]
         addr=nominatim_reverse_lookup(lat,lon)
         return (lat,lon,addr)
-    elif input_id=="currentposition_lookup_button":
+    elif prop_ids[0]=="clientside_callback_storage":
+        lat,lon,_ = clientside_callback_storage
+        if (lat,lon)==(0,0):
+            return latlon_local_storage # original value, don't change
+        else:
+            addr=nominatim_reverse_lookup(lat,lon)
+            return (lat,lon,addr)
+    elif prop_ids[0]=="mapposition_lookup_button":
         lat = fig["layout"]["mapbox"]["center"]["lat"]
         lon = fig["layout"]["mapbox"]["center"]["lon"]
         addr=nominatim_reverse_lookup(lat,lon)
         return (lat,lon,addr)
-    elif input_id=="nominatim_storage" and nominatim_storage[2]!="":
+    elif prop_ids[0]=="nominatim_storage" and nominatim_storage[2]!="":
         return nominatim_storage
     else:
         return latlon_local_storage # original value, don't change
+
+# Update permalink
+@app.callback(
+    Output('permalink','href'),
+    [Input('latlon_local_storage', 'data'),
+     Input('radiusslider', 'value')])
+def update_permalink(latlon_local_storage,radius):
+    lat,lon,_ = latlon_local_storage
+    return f"?lat={lat}&lon={lon}&radius={radius}"
+
 
 # Update map on geolocation change
 @app.callback(
     [Output('map', 'figure'),
     Output('mean_trend_span','children'),
-    Output('location_text','children'),
-    Output('url', 'search')],
+    Output('location_text','children')],
+    #Output('url', 'search')],
     [Input('latlon_local_storage', 'data'),
      Input('radiusslider', 'value')],
     [State('map','figure')])
@@ -340,7 +384,7 @@ def update_map(latlon_local_storage,radius,fig):
         html.Br(),
         html.Span(["Adresse: ", f"{addr}"]
         )]
-    urlparam = f"?lat={lat}&lon={lon}&radius={radius}"
+    # urlparam = f"?lat={lat}&lon={lon}&radius={radius}"
     
     filtered_metadata,poly=filter_by_radius(metadata,lat,lon,radius)
     mean_trend = round(filtered_metadata["trend"].mean(),1)
@@ -349,7 +393,7 @@ def update_map(latlon_local_storage,radius,fig):
     x,y=poly.exterior.coords.xy
     fig["data"][0]["lat"]=y
     fig["data"][0]["lon"]=x
-    return fig, str(mean_trend), location_text, urlparam
+    return fig, str(mean_trend), location_text, #urlparam
 
 
 @app.callback(
@@ -403,7 +447,7 @@ if __name__ == '__main__':
     # start Dash webserver
     app.layout = html.Div(id="dash-layout",children=[
         dcc.Location(id='url', refresh=False),
-        clientside_callback_storage,nominatim_storage,latlon_local_storage,
+        clientside_callback_storage,nominatim_storage,latlon_local_storage,urlbar_storage,
         title,
         area_div,
         location_lookup_div,

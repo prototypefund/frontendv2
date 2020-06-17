@@ -146,7 +146,7 @@ chartlayout = dict(
     autosize=True,
     height=350,
     width=600,
-    title="Wähle einen Messpunkt auf der map",
+    title="Waehle einen Messpunkt auf der map",
     yaxis=dict(
         title="Passanten"
         ),

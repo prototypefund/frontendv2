@@ -16,15 +16,17 @@ from utils import queries
 from utils import helpers
 from utils.filter_by_radius import filter_by_radius
 
+# CONSTANTS
+# =============
 default_lat = 50
 default_lon = 10
 default_radius = 60
 
+DISABLE_CACHE = False # set to true to disable caching
+CLEAR_CACHE_ON_STARTUP = True # for testing
 
-# Get data
-query_api= queries.get_query_api()
-metadata = queries.load_metadata(query_api) # metadata is a GeoDataFrame
-
+# DASH SETUP
+# =======
 app = dash.Dash()
 app.title = 'EveryoneCounts'
 cache = Cache(app.server, config={
@@ -34,8 +36,37 @@ cache = Cache(app.server, config={
     'CACHE_DEFAULT_TIMEOUT': 3600 # seconds
     # see https://pythonhosted.org/Flask-Caching/
     })
-DISABLE_CACHE = False # set to true to disable caching
-    
+if CLEAR_CACHE_ON_STARTUP:
+    cache.clear()
+
+# WRAPPERS
+# ===============
+# Wrappers around some module functions so they can be cached
+# Note: using cache.cached instead of cache.memoize
+# yields "RuntimeError: Working outside of request context."
+
+@cache.memoize(unless=DISABLE_CACHE)
+def get_query_api():
+    return queries.get_query_api()
+
+@cache.memoize(unless=DISABLE_CACHE)
+def load_metadata(query_api):
+    return queries.load_metadata(query_api)
+
+@cache.memoize(unless=DISABLE_CACHE)
+def load_timeseries(query_api,station_id):
+    return queries.load_timeseries(query_api,station_id)
+
+
+# LOAD METADATA
+# ================
+query_api= get_query_api()
+metadata = load_metadata(query_api) # metadata is a GeoDataFrame
+
+
+# SET UP DASH ELEMENTS
+# ======================
+
 # dcc Storage
 clientside_callback_storage=dcc.Store(id='clientside_callback_storage',storage_type='memory')
 nominatim_storage=dcc.Store(id='nominatim_storage',storage_type='memory')
@@ -212,20 +243,6 @@ area_div = html.Div(className="area lookup",id="area",children=[
         ])
     ])
 
-# TEXTBOX
-# textbox = html.Div(children=[
-    # html.Div([
-        # dcc.Markdown("""
-            # **Datenauswahl**
-            
-            # Mouse over values in the map.
-        # """),
-        # html.Pre(id='textboxid')
-    # ])
-# ])
-
-
-
 
 # CALLBACK FUNCTIONS
 # ==================
@@ -248,7 +265,7 @@ def display_hover_data(hoverData,fig_chart,fig_map):
             title = f"{metadata.iloc[i]['city']} ({metadata.iloc[i]['name']})"
             station_id = metadata.iloc[i]["station_id"]
             #title = metadata.apply(lambda x: x["city"]+" ("+x["name"]+")",axis=1)
-            times, values = queries.load_timeseries(query_api,station_id)
+            times, values = load_timeseries(query_api,station_id)
     fig_chart["data"][0]["x"]=times
     fig_chart["data"][0]["y"]=values
     fig_chart["layout"]["title"]=title
@@ -439,7 +456,8 @@ def nominatim_reverse_lookup(lat,lon):
     else:
         address = ""
     return address
-        
+    
+
 
 # MAIN
 # ==================

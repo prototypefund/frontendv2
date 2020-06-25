@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#-*- coding:utf-8 -*-
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -474,5 +472,5 @@ if __name__ == '__main__':
         mainmap,
         chart
     ])
-    app.run_server(debug=True, host="localhost")
+    app.run_server(debug=True, host="0.0.0.0")
     

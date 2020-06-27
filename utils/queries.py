@@ -7,13 +7,8 @@ import geopandas as gpd
 from influxdb_client import InfluxDBClient
 
 
-def get_query_api(credentialsfile='credentials.txt'):
+def get_query_api(url,org,token):
     # set up InfluxDB query API
-    with open(credentialsfile,'r') as f:
-        lines = f.readlines()
-        url   = lines[0].rstrip()
-        token = lines[1].rstrip()
-        org   = lines[2].rstrip()
     client = InfluxDBClient(url=url, token=token, org=org)
     return client.query_api()
 

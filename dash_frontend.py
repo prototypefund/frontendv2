@@ -37,6 +37,11 @@ cache = Cache(app.server, config={
 if CLEAR_CACHE_ON_STARTUP:
     cache.clear()
 
+# READ CONFIG
+# ==========
+with open("config.json","r") as f:
+    CONFIG = json.load(f)
+
 # WRAPPERS
 # ===============
 # Wrappers around some module functions so they can be cached
@@ -45,7 +50,10 @@ if CLEAR_CACHE_ON_STARTUP:
 
 @cache.memoize(unless=DISABLE_CACHE)
 def get_query_api():
-    return queries.get_query_api()
+    url   = CONFIG["influx_url"]
+    org   = CONFIG["influx_org"]
+    token = CONFIG["influx_token"]
+    return queries.get_query_api(url,org,token)
 
 @cache.memoize(unless=DISABLE_CACHE)
 def load_metadata(query_api):
@@ -472,5 +480,5 @@ if __name__ == '__main__':
         mainmap,
         chart
     ])
-    app.run_server(debug=True, host="0.0.0.0")
+    app.run_server(debug=True, host=CONFIG["dash_host"])
     

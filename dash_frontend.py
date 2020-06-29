@@ -60,8 +60,8 @@ def load_metadata(query_api):
     return queries.load_metadata(query_api)
 
 @cache.memoize(unless=DISABLE_CACHE)
-def load_timeseries(query_api,station_id):
-    return queries.load_timeseries(query_api,station_id)
+def load_timeseries(query_api,_id):
+    return queries.load_timeseries(query_api,_id)
 
 
 # LOAD METADATA
@@ -128,7 +128,7 @@ mainmap=dcc.Graph(
                     size=20, 
                     color=metadata.apply(lambda x: helpers.trend2color(x["trend"]),axis=1)
                     ),
-                #text = ["<br>".join([key+": "+str(info_dict[station_id][key]) for key in info_dict[station_id].keys()]) for station_id in station_ids],
+                #text = ["<br>".join([key+": "+str(info_dict[_id][key]) for key in info_dict[_id].keys()]) for _id in _ids],
                 text = helpers.tooltiptext(metadata),
                 hoverinfo="text",
                 ),
@@ -269,9 +269,9 @@ def display_hover_data(hoverData,fig_chart,fig_map):
         if fig_map["data"][curveNumber]["name"]==main_map_name:
             i=hoverData["points"][0]['pointIndex']
             title = f"{metadata.iloc[i]['city']} ({metadata.iloc[i]['name']})"
-            station_id = metadata.iloc[i]["station_id"]
+            _id = metadata.iloc[i]["_id"]
             #title = metadata.apply(lambda x: x["city"]+" ("+x["name"]+")",axis=1)
-            times, values = load_timeseries(query_api,station_id)
+            times, values = load_timeseries(query_api,_id)
     fig_chart["data"][0]["x"]=times
     fig_chart["data"][0]["y"]=values
     fig_chart["layout"]["title"]=title

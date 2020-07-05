@@ -6,7 +6,9 @@ import pandas as pd
 import geopandas as gpd
 from influxdb_client import InfluxDBClient
 import json
+from utils import helpers
 
+CID_SEP = "$"  # separator symbol for compound index
 
 def get_query_api(url, org, token):
     # set up InfluxDB query API
@@ -40,7 +42,7 @@ def get_map_data(query_api, bucket="sdd"):
     '''
     tables = query_api.query_data_frame(query)
     tables.drop_duplicates(inplace=True)
-    tables["c_id"] = tables.apply(lambda x: x["_measurement"] + "_" + str(x["_id"]), axis=1)  # make compound index
+    tables["c_id"] = tables.apply(lambda x: x["_measurement"] + CID_SEP + str(x["_id"]), axis=1)  # make compound index
 
     # pivot table so that the lat/lon fields become named columns
     geo_table = tables[["_field", "_value", "c_id"]]
@@ -118,14 +120,22 @@ def load_trend(query_api, bucket="sdd"):
     return df["trend"]
 
 
-def load_timeseries(query_api, _id, bucket="sdd"):
+def load_timeseries(query_api, c_id, bucket="sdd"):
+    """
+    Load time series for a given compound index
+    """
+    _measurement, _id = c_id.split(CID_SEP, 1)
+    _field = helpers.measurement2field(_measurement)
+    extra_lines = ''
+    if _measurement=="hystreet":
+        extra_lines+='|> filter(fn: (r) => r["unverified"] == "False")\n'
     query = f'''
     from(bucket: "{bucket}")
       |> range(start: -60d) 
-      |> filter(fn: (r) => r["_measurement"] == "hystreet")
-      |> filter(fn: (r) => r["_field"] == "pedestrian_count")
+      |> filter(fn: (r) => r["_measurement"] == "{_measurement}")
+      |> filter(fn: (r) => r["_field"] == "{_field}")
       |> filter(fn: (r) => r["_id"] == "{_id}")
-      |> filter(fn: (r) => r["unverified"] == "False")
+      {extra_lines}
       '''
     tables = query_api.query_data_frame(query)
     times = list(tables["_time"])

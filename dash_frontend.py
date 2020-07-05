@@ -265,20 +265,20 @@ area_div = html.Div(className="area lookup", id="area", children=[
      State('map', 'figure')])
 def display_hover_data(hoverData, fig_chart, fig_map):
     # print("Hover",hoverData,type(hoverData))
-    title = "Wähle einen Datenpunkt auf der Karte!"
+    figtitle = "Wähle einen Datenpunkt auf der Karte!"
     times = []
     values = []
     if hoverData:  # only for datapoints (trace 0), not for other elements
         curveNumber = hoverData["points"][0]['curveNumber']
         if fig_map["data"][curveNumber]["name"] == main_map_name:
             i = hoverData["points"][0]['pointIndex']
-            title = f"{map_data.iloc[i]['city']} ({map_data.iloc[i]['name']})"
-            _id = map_data.iloc[i]["_id"]
+            figtitle = f"{map_data.iloc[i]['city']} ({map_data.iloc[i]['name']})"
+            c_id = map_data.iloc[i]["c_id"]
             # title = map_data.apply(lambda x: x["city"]+" ("+x["name"]+")",axis=1)
-            times, values = load_timeseries(query_api, _id)
+            times, values = load_timeseries(query_api, c_id)
     fig_chart["data"][0]["x"] = times
     fig_chart["data"][0]["y"] = values
-    fig_chart["layout"]["title"] = title
+    fig_chart["layout"]["title"] = figtitle
     return fig_chart
 
 

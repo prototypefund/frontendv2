@@ -54,10 +54,10 @@ def get_map_data(query_api, bucket="sdd"):
     geo_table = geo_table.join(metadata)
 
     # get trend value for each station
-    #trend = load_trend(query_api)
+    # trend = load_trend(query_api)
 
     # join everything together
-    #tables = tables.set_index("_id").join(trend).join(geo_table).reset_index()
+    # tables = tables.set_index("_id").join(trend).join(geo_table).reset_index()
 
     geo_table = geo_table.reset_index()
     geo_table["trend"] = 0  # TODO: Re-insert Trend!

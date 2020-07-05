@@ -4,10 +4,11 @@ utility functions for the frontend
 
 from math import isnan
 
+
 def trend2color(trendvalue):
-    '''
+    """
     return a color code for a given trend value
-    '''
+    """
     if isnan(trendvalue):
         return "#999999"
     elif trendvalue > 200:
@@ -19,16 +20,18 @@ def trend2color(trendvalue):
     else:
         # yellow
         return "#ccaa00"
-        
+
+
 def tooltiptext(df):
-    '''
+    """
     generate texts list for map hoverinfo
-    '''
+    """
     cols = sorted(df.columns)
+
     def make_string(df):
         s = ""
         for col in cols:
-            s += "{}: {}<br>".format(str(col).capitalize(),str(df[col]))
+            s += "{}: {}<br>".format(str(col).capitalize(), str(df[col]))
         return s
 
-    return list(df.apply(lambda x: make_string(x),axis=1))
+    return list(df.apply(lambda x: make_string(x), axis=1))

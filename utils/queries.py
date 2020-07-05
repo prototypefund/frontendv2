@@ -5,6 +5,7 @@ import datetime
 import pandas as pd
 import geopandas as gpd
 from influxdb_client import InfluxDBClient
+import json
 
 
 def get_query_api(url, org, token):
@@ -13,41 +14,58 @@ def get_query_api(url, org, token):
     return client.query_api()
 
 
-def load_metadata(query_api, bucket="sdd"):
+def get_map_data(query_api, bucket="sdd"):
     """
-    Return a GeoDataFrame with all tags and latitude/longitude fields
+    Load the data that is required for plotting the map.
+    Return a GeoDataFrame with all tags and latitude/longitude fields and the trend
     """
+    fields = ["_field",
+              "_value",
+              "_id",
+              "_measurement",
+              "name",
+              "ags",
+              "bundesland",
+              "landkreis",
+              "city",
+              "name",
+              "dictrictType",
+              "origin"]
     query = f'''
     from(bucket: "{bucket}")
     |> range(start: -10d) 
     |> filter(fn: (r) => r["_field"] == "lon" or r["_field"] == "lat")
     |> group(columns:["lat", "lon"])
-    |> keep(columns: ["_field","_value","_id","_measurement"])
-    |> unique()
+    |> keep(columns: {json.dumps(fields)})
     '''
     tables = query_api.query_data_frame(query)
+    tables.drop_duplicates(inplace=True)
+    tables["c_id"] = tables.apply(lambda x: x["_measurement"] + "_" + str(x["_id"]), axis=1)  # make compound index
 
     # pivot table so that the lat/lon fields become named columns
-    geo_table = tables[["_field", "_value", "_id","_measurement"]].drop_duplicates()
-    geo_table["_id"] = geo_table.apply(lambda x: x["_measurement"]+"_"+str(x["_id"]), axis=1)
-    geo_table = geo_table.pivot(index='_id', columns='_field', values='_value')
-    geo_table = round(geo_table, 5)
+    geo_table = tables[["_field", "_value", "c_id"]]
+    geo_table = geo_table.pivot(index='c_id', columns='_field', values='_value')
+    geo_table = round(geo_table, 6)
+    geo_table = gpd.GeoDataFrame(geo_table, geometry=gpd.points_from_xy(geo_table.lon, geo_table.lat))
+
+    # append metadata (name, ags, bundesland, etc...)
+    metadata = tables.drop(columns=["result", "table", "_value", "_field"], errors="ignore")
+    metadata = metadata.set_index("c_id").drop_duplicates()
+    geo_table = geo_table.join(metadata)
 
     # get trend value for each station
-    trend = load_trend(query_api)
+    #trend = load_trend(query_api)
 
     # join everything together
-    tables = tables.set_index("_id").join(trend).join(geo_table).reset_index()
+    #tables = tables.set_index("_id").join(trend).join(geo_table).reset_index()
 
-    # drop unnecessary columns
-    for column in tables.columns:
-        if str(column).startswith("_") or str(column) == "result":
-            tables.drop(column, inplace=True, axis=1)
+    geo_table = geo_table.reset_index()
+    geo_table["trend"] = 0  # TODO: Re-insert Trend!
 
-    # Convert into GeoDataFrame
-    tables = gpd.GeoDataFrame(tables, geometry=gpd.points_from_xy(tables.lon, tables.lat))
+    print("Result of 'get_map_data():")
+    print(geo_table["_measurement"].value_counts())
 
-    return tables
+    return geo_table
 
 
 def load_trend(query_api, bucket="sdd"):

@@ -20,8 +20,8 @@ default_lat = 50
 default_lon = 10
 default_radius = 60
 
-DISABLE_CACHE = False # set to true to disable caching
-CLEAR_CACHE_ON_STARTUP = True # for testing
+DISABLE_CACHE = True  # set to true to disable caching
+CLEAR_CACHE_ON_STARTUP = True  # for testing
 
 # DASH SETUP
 # =======
@@ -48,26 +48,29 @@ with open("config.json","r") as f:
 # Note: using cache.cached instead of cache.memoize
 # yields "RuntimeError: Working outside of request context."
 
+
 @cache.memoize(unless=DISABLE_CACHE)
 def get_query_api():
     url   = CONFIG["influx_url"]
     org   = CONFIG["influx_org"]
     token = CONFIG["influx_token"]
-    return queries.get_query_api(url,org,token)
+    return queries.get_query_api(url, org, token)
+
 
 @cache.memoize(unless=DISABLE_CACHE)
-def load_metadata(query_api):
-    return queries.load_metadata(query_api)
+def get_map_data(query_api):
+    return queries.get_map_data(query_api)
+
 
 @cache.memoize(unless=DISABLE_CACHE)
-def load_timeseries(query_api,_id):
-    return queries.load_timeseries(query_api,_id)
+def load_timeseries(query_api, _id):
+    return queries.load_timeseries(query_api, _id)
 
 
-# LOAD METADATA
+# LOAD MAP DATA
 # ================
-query_api= get_query_api()
-metadata = load_metadata(query_api) # metadata is a GeoDataFrame
+query_api = get_query_api()
+map_data = get_map_data(query_api)  # map_data is a GeoDataFrame
 
 
 # SET UP DASH ELEMENTS
@@ -119,17 +122,17 @@ mainmap=dcc.Graph(
                 # TRACE 1: Datapoints
                 name=main_map_name,
                 type= "scattermapbox",
-                lat=metadata["lat"],
-                lon=metadata["lon"],
+                lat=map_data["lat"],
+                lon=map_data["lon"],
                 #lat = [40, 50, 60],
                 #lon = [10, 20, 30],
                 mode='markers',
                 marker=dict(
                     size=20, 
-                    color=metadata.apply(lambda x: helpers.trend2color(x["trend"]),axis=1)
+                    color=map_data.apply(lambda x: helpers.trend2color(x["trend"]),axis=1)
                     ),
                 #text = ["<br>".join([key+": "+str(info_dict[_id][key]) for key in info_dict[_id].keys()]) for _id in _ids],
-                text = helpers.tooltiptext(metadata),
+                text = helpers.tooltiptext(map_data),
                 hoverinfo="text",
                 ),
         ],
@@ -268,9 +271,9 @@ def display_hover_data(hoverData,fig_chart,fig_map):
         curveNumber=hoverData["points"][0]['curveNumber']
         if fig_map["data"][curveNumber]["name"]==main_map_name:
             i=hoverData["points"][0]['pointIndex']
-            title = f"{metadata.iloc[i]['city']} ({metadata.iloc[i]['name']})"
-            _id = metadata.iloc[i]["_id"]
-            #title = metadata.apply(lambda x: x["city"]+" ("+x["name"]+")",axis=1)
+            title = f"{map_data.iloc[i]['city']} ({map_data.iloc[i]['name']})"
+            _id = map_data.iloc[i]["_id"]
+            #title = map_data.apply(lambda x: x["city"]+" ("+x["name"]+")",axis=1)
             times, values = load_timeseries(query_api,_id)
     fig_chart["data"][0]["x"]=times
     fig_chart["data"][0]["y"]=values
@@ -411,19 +414,19 @@ def update_map(latlon_local_storage,radius,fig):
         )]
     # urlparam = f"?lat={lat}&lon={lon}&radius={radius}"
     
-    filtered_metadata,poly=filter_by_radius(metadata,lat,lon,radius)
-    mean_trend = round(filtered_metadata["trend"].mean(),1)
-    #std_trend = filtered_metadata["trend"].std()
+    filtered_map_data, poly = filter_by_radius(map_data, lat, lon, radius)
+    mean_trend = round(filtered_map_data["trend"].mean(), 1)
+    #  std_trend = filtered_map_data["trend"].std()
     
-    x,y=poly.exterior.coords.xy
+    x, y=poly.exterior.coords.xy
     fig["data"][0]["lat"]=y
     fig["data"][0]["lon"]=x
-    return fig, str(mean_trend), location_text, #urlparam
+    return fig, str(mean_trend), location_text, #  urlparam
 
 
 @app.callback(
-    Output('mean_trend_p','style'),
-    [Input('mean_trend_span','children')])
+    Output('mean_trend_p', 'style'),
+    [Input('mean_trend_span', 'children')])
 def style_mean_trend(mean_str):
     color = helpers.trend2color(float(mean_str))
     return dict(background=color)

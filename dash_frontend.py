@@ -94,52 +94,80 @@ title = html.H1(
 
 config_plots = dict(
     locale="de-DE",
-    modeBarButtonsToRemove=['lasso2d', 'toggleSpikelines', 'toggleHover']
+    displaylogo=False,
+    modeBarButtonsToRemove=['lasso2d',
+                            'toggleSpikelines',
+                            'toggleHover',
+                            'select2d',
+                            'autoScale2d',
+                            'resetScale2d',
+                            'resetViewMapbox'],
+    displayModeBar=True
 )
 
 #  Dash Map
 main_map_name = "Messpunkte"
+traces = [dict(
+    # TRACE 0: radius selection marker
+    name="Filter radius",
+    type="scattermapbox",
+    fill="toself",
+    showlegend=False,
+    fillcolor="rgba(135, 206, 250, 0.3)",
+    marker=dict(
+        color="rgba(135, 206, 250, 0.0)",
+    ),
+    hoverinfo="skip",
+    lat=[],
+    lon=[],
+    mode="lines"
+    )]
+for measurement in map_data["_measurement"].unique():
+    filtered_map_data = map_data[map_data["_measurement"] == measurement]
+    trace = dict(
+        # TRACE 1...N: Datapoints
+        name=measurement,
+        type="scattermapbox",
+        lat=filtered_map_data["lat"],
+        lon=filtered_map_data["lon"],
+        # lat = [40, 50, 60],
+        # lon = [10, 20, 30],
+        mode='markers',
+        marker=dict(
+            size=20,
+            color=filtered_map_data.apply(lambda x: helpers.trend2color(x["trend"]), axis=1),
+            line=dict(width=2,
+                      color='DarkSlateGrey'),
+        ),
+        # text = ["<br>".join([key+": "+str(info_dict[_id][key]) for key in info_dict[_id].keys()]) for _id in _ids],
+        text=helpers.tooltiptext(map_data),
+        hoverinfo="text",
+    )
+    traces.append(trace)
 mainmap = dcc.Graph(
     id='map',
     config=config_plots,
     figure={
-        'data': [
-            dict(
-                # TRACE 0: radius selection marker
-                name="Filter radius",
-                type="scattermapbox",
-                fill="toself",
-                fillcolor='rgba(135, 206, 250, 0.3)',
-                marker=dict(
-                    color='rgba(135, 206, 250, 0.0)',
-                ),
-                hoverinfo='skip',
-                lat=[],
-                lon=[],
-                mode='lines',
-            ),
-            dict(
-                # TRACE 1: Datapoints
-                name=main_map_name,
-                type="scattermapbox",
-                lat=map_data["lat"],
-                lon=map_data["lon"],
-                # lat = [40, 50, 60],
-                # lon = [10, 20, 30],
-                mode='markers',
-                marker=dict(
-                    size=20,
-                    color=map_data.apply(lambda x: helpers.trend2color(x["trend"]), axis=1)
-                ),
-                # text = ["<br>".join([key+": "+str(info_dict[_id][key]) for key in info_dict[_id].keys()]) for _id in _ids],
-                text=helpers.tooltiptext(map_data),
-                hoverinfo="text",
-            ),
-        ],
+        'data': traces,
         'layout': dict(
             autosize=True,
             hovermode='closest',
-            showlegend=False,
+            showlegend=True,
+            legend_title_text='Datenquelle',
+            legend=dict(
+                x=0.5,
+                y=1,
+                traceorder="normal",
+                font=dict(
+                    family="sans-serif",
+                    size=14,
+                    color="black"
+                ),
+                bgcolor="#fff",
+                bgopacity=0.3,
+                bordercolor="#eee",
+                borderwidth=1
+            ),
             # height=400,
             margin=dict(l=0, r=0, t=0, b=0),
             mapbox=dict(
@@ -153,8 +181,8 @@ mainmap = dcc.Graph(
                 pitch=0,
                 zoom=6,
             )
-        )
-    }
+        ),
+    },
 )
 # LINE CHART
 selectorOptions = dict(

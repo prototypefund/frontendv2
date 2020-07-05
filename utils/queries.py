@@ -124,11 +124,12 @@ def load_timeseries(query_api, c_id, bucket="sdd"):
     """
     Load time series for a given compound index
     """
+    print("load_timeseries",c_id)
     _measurement, _id = c_id.split(CID_SEP, 1)
     _field = helpers.measurement2field(_measurement)
     extra_lines = ''
-    if _measurement=="hystreet":
-        extra_lines+='|> filter(fn: (r) => r["unverified"] == "False")\n'
+    if _measurement == "hystreet":
+        extra_lines += '|> filter(fn: (r) => r["unverified"] == "False")\n'
     query = f'''
     from(bucket: "{bucket}")
       |> range(start: -60d) 
@@ -138,6 +139,15 @@ def load_timeseries(query_api, c_id, bucket="sdd"):
       {extra_lines}
       '''
     tables = query_api.query_data_frame(query)
-    times = list(tables["_time"])
-    values = list(tables["_value"])
+    times = []
+    values = []
+    if isinstance(tables, list):
+        tables = tables[0]
+    if not isinstance(tables, pd.DataFrame):
+        print(f"Warning: tables type is not DataFrame but {type(tables)} (load_timeseries)")
+    elif tables.empty:
+        print(f"Warning: No data for {c_id} (load_timeseries)")
+    else:
+        times = list(tables["_time"])
+        values = list(tables["_value"])
     return times, values

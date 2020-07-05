@@ -3,7 +3,7 @@
     
 }
 
-#chart .svg-container, 
+#chart-box,
 div.lookup,h1,h2{
     margin:auto;
     margin-bottom:10px;
@@ -11,10 +11,12 @@ div.lookup,h1,h2{
     padding:10px;
     text-align:center;
     background:#fff;
-    max-width:600px;
     z-index:999;
     position:relative;
     border-radius:10px;
+}
+div.lookup,h1,h2 {
+    max-width:600px;
     overflow:hidden;
 }
 

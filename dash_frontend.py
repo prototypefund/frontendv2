@@ -122,7 +122,10 @@ traces = [dict(
     lon=[],
     mode="lines"
     )]
-for measurement in map_data["_measurement"].unique():
+
+# Split into traces by measurement, add column "trace_index" (important for data selection)
+for index, measurement in enumerate(map_data["_measurement"].unique()):
+    map_data.loc[map_data["_measurement"] == measurement, "trace_index"] = index+1
     filtered_map_data = map_data[map_data["_measurement"] == measurement]
     trace = dict(
         # TRACE 1...N: Datapoints
@@ -130,8 +133,6 @@ for measurement in map_data["_measurement"].unique():
         type="scattermapbox",
         lat=filtered_map_data["lat"],
         lon=filtered_map_data["lon"],
-        # lat = [40, 50, 60],
-        # lon = [10, 20, 30],
         mode='markers',
         marker=dict(
             size=20,
@@ -139,11 +140,12 @@ for measurement in map_data["_measurement"].unique():
             line=dict(width=2,
                       color='DarkSlateGrey'),
         ),
-        # text = ["<br>".join([key+": "+str(info_dict[_id][key]) for key in info_dict[_id].keys()]) for _id in _ids],
-        text=helpers.tooltiptext(map_data),
+        text=helpers.tooltiptext(filtered_map_data),
         hoverinfo="text",
     )
     traces.append(trace)
+map_data["trace_index"] = map_data["trace_index"].astype(int)
+
 mainmap = dcc.Graph(
     id='map',
     config=config_plots,
@@ -227,22 +229,27 @@ chartlayout = dict(
     )
 )
 
-chart = dcc.Loading(
-    type="default",
-    children=[
-        dcc.Graph(
-            id='chart',
-            config=config_plots,
-            className="timeline-chart",
-            figure={
-                'data': [{
-                    "x": [],
-                    "y": [],
-                    "mode": 'lines+markers',
-                }],
-                'layout': chartlayout
-            })
-    ])
+chart = html.Div(id="chart-box",children=[
+    dcc.Loading(
+        type="default",
+        children=[
+            dcc.Graph(
+                id='chart',
+                config=config_plots,
+                className="timeline-chart",
+                figure={
+                    'data': [{
+                        "x": [],
+                        "y": [],
+                        "mode": 'lines+markers',
+                    }],
+                    'layout': chartlayout
+                }
+            )
+        ]
+    ),
+    html.A(id="chart_origin", children="", href="")
+])
 # GEOIP BOX
 lookup_span_default = "?"
 
@@ -287,27 +294,38 @@ area_div = html.Div(className="area lookup", id="area", children=[
 
 # Hover over map > update timeline chart
 @app.callback(
-    Output('chart', 'figure'),
+    [Output('chart', 'figure'),
+     Output('chart_origin', 'children'),
+     Output('chart_origin', 'href')],
     [Input('map', 'hoverData')],
     [State('chart', 'figure'),
      State('map', 'figure')])
 def display_hover_data(hoverData, fig_chart, fig_map):
-    # print("Hover",hoverData,type(hoverData))
+    #  print("Hover", hoverData, type(hoverData))
     figtitle = "Wähle einen Datenpunkt auf der Karte!"
     times = []
     values = []
+    origin_str = ""
+    origin_url = ""
     if hoverData:  # only for datapoints (trace 0), not for other elements
         curveNumber = hoverData["points"][0]['curveNumber']
-        if fig_map["data"][curveNumber]["name"] == main_map_name:
+        if curveNumber > 0:  # exclude selection marker
             i = hoverData["points"][0]['pointIndex']
-            figtitle = f"{map_data.iloc[i]['city']} ({map_data.iloc[i]['name']})"
-            c_id = map_data.iloc[i]["c_id"]
-            # title = map_data.apply(lambda x: x["city"]+" ("+x["name"]+")",axis=1)
+            filtered_map_data = map_data[map_data["trace_index"] == curveNumber]
+            city = filtered_map_data.iloc[i]['city']
+            name = filtered_map_data.iloc[i]['name']
+            if city is None:
+                figtitle = f"{name}"
+            else:
+                figtitle = f"{city} ({name})"
+            c_id = filtered_map_data.iloc[i]["c_id"]
+            origin_url = filtered_map_data.iloc[i]["origin"]
+            origin_str = f"Datenquelle: {filtered_map_data.iloc[i]['_measurement']}"
             times, values = load_timeseries(query_api, c_id)
     fig_chart["data"][0]["x"] = times
     fig_chart["data"][0]["y"] = values
     fig_chart["layout"]["title"] = figtitle
-    return fig_chart
+    return fig_chart, origin_str, origin_url
 
 
 # Click Button > get JS GeoIP position

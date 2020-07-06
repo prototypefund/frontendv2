@@ -254,16 +254,15 @@ chart = html.Div(id="chart-box",children=[
 # LOOKUP BOX
 SLIDER_MAX = 120
 lookup_span_default = "?"
-location_lookup_div = html.Div(className="container", children=[
-    html.H3("Standortsuche"),
-    dcc.Input(id="nominatim_lookup_edit", type="text", placeholder="", debounce=False),
-    html.Br(),
-    html.Button(id='nominatim_lookup_button', n_clicks=0, children='Suchen'),
-    html.Button(id='geojs_lookup_button', n_clicks=0, children='Standort automatisch bestimmen'),
-    html.Button(id='mapposition_lookup_button', n_clicks=0, children='Aktueller Kartenmittelpunkt'),
-    #html.P(id="location_text", children=lookup_span_default),
-    html.P(html.A(id="permalink", children="Permalink", href="xyz")),
-    html.H3("Wählen Sie einen Radius"),
+location_lookup_div = html.Div(className="", children=[
+    html.H3("Mittelpunkt bestimmen:"),
+    html.Div(id="search-container", children=[
+        dcc.Input(id="nominatim_lookup_edit", type="text", placeholder="", debounce=False),
+        html.Button(id='nominatim_lookup_button', n_clicks=0, children='Suchen'),
+    ]),
+html.Button(id='geojs_lookup_button', n_clicks=0, children='Automatisch bestimmen'),
+    html.Button(id='mapposition_lookup_button', n_clicks=0, children='Kartenmittelpunkt verwenden'),
+    html.H3("Umkreis:"),
     dcc.Slider(
         id='radiusslider',
         min=5,
@@ -278,16 +277,40 @@ location_lookup_div = html.Div(className="container", children=[
     )
 ])
 
-area_control = dcc.Tabs(id='area_control_tabs', value='tab-1', children=[
-        dcc.Tab(label='Radius', value='tab-1'),
-        dcc.Tab(label='Landkreis', value='tab-2'),
-        dcc.Tab(label='Bundesland', value='tab-3'),
-    ])
 
-trend_container = html.Div(className="container", id="trend_container", children=[
+map_data["landkreis_label"] = map_data.apply(lambda x: x["landkreis"]+" "+str(x["districtType"]), 1)
+landkreis_options =  [{'label': x, 'value': x} for x in map_data["landkreis_label"].unique()]
+bundesland_options = [{'label': x, 'value': x} for x in map_data["bundesland"].unique()]
+region_container = html.Div(id="region_container", className="container", children=[
+    dcc.Tabs(id='region_tabs', className="", value='tab-1', children=[
+        dcc.Tab(label='Umkreis', value='tab-1', children=[
+            location_lookup_div
+        ]),
+        dcc.Tab(label='Landkreis', value='tab-2', children=[
+            html.H3("Wähle einen Landkreis:"),
+            dcc.Dropdown(
+                id='landkreis_dropdown',
+                options=landkreis_options,
+                value=landkreis_options[0]["value"],
+                clearable=False
+            ),
+        ]),
+        dcc.Tab(label='Bundesland', value='tab-3', children=[
+            html.H3("Wähle ein Bundesland:"),
+            dcc.Dropdown(
+                id='bundesland_dropdown',
+                options=bundesland_options,
+                value=bundesland_options[0]["value"],
+                clearable=False
+            ),
+        ]),
+    ])
+])
+
+trend_container = html.Div(id="trend_container", className="container", children=[
     dcc.Tabs(id='trend_tabs', value='tab-1', children=[
         dcc.Tab(label='Trend', value='tab-1', children=[
-            html.H3("Durchnittlicher 7-Tage-Trend im gewählten Bereich:"),
+            html.H3("7-Tage-Trend im gewählten Bereich:"),
             html.P(id="mean_trend_p", style={}, children=[
                 html.Span(id="mean_trend_span", children=""),
                 "%"
@@ -311,7 +334,8 @@ trend_container = html.Div(className="container", id="trend_container", children
         ],
         value=['hystreet', 'webcams', 'bikes', 'google_maps'],
         labelStyle={'display': 'block'}
-    )
+    ),
+    html.P(html.A(id="permalink", children="Permalink", href="xyz")),
 ])
 
 
@@ -323,7 +347,8 @@ app.layout = html.Div(id="dash-layout", children=[
     trend_container,
     #settings_container,
     #area_control,
-    location_lookup_div,
+    #location_lookup_div,
+    region_container,
     chart
 ])
 

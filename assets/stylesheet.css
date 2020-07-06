@@ -1,7 +1,7 @@
 body {
     background:#efefef;
     font-family:Arial,Helvetica,sans-serif;
-    font-size:0.8em;
+    font-size:0.9em;
 }
 
 
@@ -25,9 +25,6 @@ div.container,h1,h2, {
     max-width:600px;
     overflow:hidden;
 }
-input[type=checkbox]:checked +* {
-color:red;
-}
 
 #location_p{
     text-align:left;
@@ -38,8 +35,18 @@ color:red;
     font-size:0.9em;
 }
 
+#search-container {
+    width:100%;
+    flex-wrap: nowrap;
+    display: flex;
+}
+#search-container #nominatim_lookup_edit{
+    flex-grow: 4;
+}
+#search-container #nominatim_lookup_button{
+    flex-grow: 2;
+}
 #nominatim_lookup_edit{
-    width:90%;
     margin:5px;
     padding:5px;
 }
@@ -66,4 +73,16 @@ color:red;
 button{
     margin:5px;
     padding:5px;
+}
+
+.tab-content {
+    border-left: 1px solid #d6d6d6;
+    border-right: 1px solid #d6d6d6;
+    border-bottom: 1px solid #d6d6d6;
+    border-top: none;
+    padding: 10px;
+    border-radius:0px 0px 5px 5px;
+}
+.tab:not(.tab--selected){
+    color:#999;
 }

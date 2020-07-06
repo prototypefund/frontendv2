@@ -31,7 +31,7 @@ def get_map_data(query_api, bucket="sdd"):
               "landkreis",
               "city",
               "name",
-              "dictrictType",
+              "districtType",
               "origin"]
     query = f'''
     from(bucket: "{bucket}")
@@ -43,7 +43,6 @@ def get_map_data(query_api, bucket="sdd"):
     tables = query_api.query_data_frame(query)
     tables.drop_duplicates(inplace=True)
     tables["c_id"] = tables.apply(lambda x: x["_measurement"] + CID_SEP + str(x["_id"]), axis=1)  # make compound index
-
     # pivot table so that the lat/lon fields become named columns
     geo_table = tables[["_field", "_value", "c_id"]]
     geo_table = geo_table.pivot(index='c_id', columns='_field', values='_value')
@@ -65,7 +64,9 @@ def get_map_data(query_api, bucket="sdd"):
     geo_table["trend"] = 0  # TODO: Re-insert Trend!
 
     print("Result of 'get_map_data():")
+    print(geo_table.columns)
     print(geo_table["_measurement"].value_counts())
+
 
     return geo_table
 

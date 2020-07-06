@@ -576,6 +576,7 @@ def nominatim_lookup(query):
         lat = geoloc.latitude
         lon = geoloc.longitude
         address = geoloc.address
+        address = address.replace(", Deutschland","")
     else:
         address = ""
         lat = default_lat
@@ -589,10 +590,14 @@ def nominatim_reverse_lookup(lat, lon):
     geolocator = Nominatim(user_agent="everyonecounts")
     query = f"{lat}, {lon}"
     geoloc = geolocator.reverse(query, exactly_one=True)
+    address = ""
     if geoloc:
-        address = geoloc.address
-    else:
-        address = ""
+        addressparts = geoloc.raw["address"]
+        addresslist = []
+        for part in ['hamlet', 'village', 'city_district', 'city', 'county', 'state']:
+            if part in addressparts:
+                addresslist.append(addressparts[part])
+        address = ", ".join(addresslist[-4:])  # dont make name too long
     return address
 
 

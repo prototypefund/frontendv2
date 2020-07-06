@@ -250,24 +250,19 @@ chart = html.Div(id="chart-box",children=[
     ),
     html.A(id="chart_origin", children="", href="")
 ])
-# GEOIP BOX
-lookup_span_default = "?"
 
 # LOOKUP BOX
-location_lookup_div = html.Div(className="lookup", children=[
+SLIDER_MAX = 120
+lookup_span_default = "?"
+location_lookup_div = html.Div(className="container", children=[
     html.H3("Standortsuche"),
     dcc.Input(id="nominatim_lookup_edit", type="text", placeholder="", debounce=False),
     html.Br(),
     html.Button(id='nominatim_lookup_button', n_clicks=0, children='Suchen'),
     html.Button(id='geojs_lookup_button', n_clicks=0, children='Standort automatisch bestimmen'),
     html.Button(id='mapposition_lookup_button', n_clicks=0, children='Aktueller Kartenmittelpunkt'),
-    html.P(id="location_text", children=lookup_span_default),
+    #html.P(id="location_text", children=lookup_span_default),
     html.P(html.A(id="permalink", children="Permalink", href="xyz")),
-])
-
-# AREA DIV
-SLIDER_MAX = 120
-area_div = html.Div(className="area lookup", id="area", children=[
     html.H3("Wählen Sie einen Radius"),
     dcc.Slider(
         id='radiusslider',
@@ -280,14 +275,57 @@ area_div = html.Div(className="area lookup", id="area", children=[
             placement="top"
         ),
         marks={20 * x: str(20 * x) + 'km' for x in range(SLIDER_MAX // 20 + 1)}
-    ),
-    html.H3("Durchnittlicher 7-Tage-Trend im gewählten Bereich:"),
-    html.P(id="mean_trend_p", style={}, children=[
-        html.Span(id="mean_trend_span", children=""),
-        "%"
-    ])
+    )
 ])
 
+area_control = dcc.Tabs(id='area_control_tabs', value='tab-1', children=[
+        dcc.Tab(label='Radius', value='tab-1'),
+        dcc.Tab(label='Landkreis', value='tab-2'),
+        dcc.Tab(label='Bundesland', value='tab-3'),
+    ])
+
+trend_container = html.Div(className="container", id="trend_container", children=[
+    dcc.Tabs(id='trend_tabs', value='tab-1', children=[
+        dcc.Tab(label='Trend', value='tab-1', children=[
+            html.H3("Durchnittlicher 7-Tage-Trend im gewählten Bereich:"),
+            html.P(id="mean_trend_p", style={}, children=[
+                html.Span(id="mean_trend_span", children=""),
+                "%"
+            ]),
+        ]),
+        dcc.Tab(label='Graph', value='tab-2', children=["Platzhalter für graph"])
+    ]),
+    html.P(id="location_p", children=[
+        html.Span(children="Region: ", style={"fontWeight": "bold"}),
+        html.Span(id="location_text", children=lookup_span_default),
+        " ",
+        html.A(children="(Ändern)", style={"textDecoration": "underline"}),
+    ]),
+    dcc.Checklist(
+        options=[
+            {'label': 'Fußgänger (Hystreet)', 'value': 'hystreet'},
+            {'label': 'Fußgänger (Webcams)', 'value': 'webcams'},
+            {'label': 'Fahrradfahrer', 'value': 'bikes'},
+            {'label': 'Popularität (Google)', 'value': 'google_maps'},
+            {'label': 'Luftqualität', 'value': 'airquality'}
+        ],
+        value=['hystreet', 'webcams', 'bikes', 'google_maps'],
+        labelStyle={'display': 'block'}
+    )
+])
+
+
+app.layout = html.Div(id="dash-layout", children=[
+    dcc.Location(id='url', refresh=False),
+    clientside_callback_storage, nominatim_storage, latlon_local_storage, urlbar_storage,
+    title,
+    mainmap,
+    trend_container,
+    #settings_container,
+    #area_control,
+    location_lookup_div,
+    chart
+])
 
 # CALLBACK FUNCTIONS
 # ==================
@@ -458,12 +496,7 @@ def update_map(latlon_local_storage, radius, fig):
         addr = "asdfg"
     fig["layout"]["mapbox"]["center"]["lat"] = lat
     fig["layout"]["mapbox"]["center"]["lon"] = lon
-    location_text = [
-        html.Span(["Koordinaten: ", f"{lat:.4f}, {lon:.4f}"]),
-        html.Br(),
-        html.Span(["Adresse: ", f"{addr}"]
-                  )]
-    # urlparam = f"?lat={lat}&lon={lon}&radius={radius}"
+    location_text = f"{addr} ({radius}km Umkreis)"
 
     filtered_map_data, poly = filter_by_radius(map_data, lat, lon, radius)
     mean_trend = round(filtered_map_data["trend"].mean(), 1)
@@ -524,16 +557,6 @@ def nominatim_reverse_lookup(lat, lon):
 # MAIN
 # ==================
 if __name__ == '__main__':
-    print("Let's go")
-
     # start Dash webserver
-    app.layout = html.Div(id="dash-layout", children=[
-        dcc.Location(id='url', refresh=False),
-        clientside_callback_storage, nominatim_storage, latlon_local_storage, urlbar_storage,
-        title,
-        area_div,
-        location_lookup_div,
-        mainmap,
-        chart
-    ])
+    print("Let's go")
     app.run_server(debug=True, host=CONFIG["dash_host"])

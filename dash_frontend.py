@@ -229,7 +229,8 @@ chartlayout = dict(
     )
 )
 
-chart = html.Div(id="chart-box",children=[
+chart = html.Div(id="chart-container", style={'display': 'none'}, children=[
+    html.Button(id="chart-close", children=" × "),
     dcc.Loading(
         type="default",
         children=[
@@ -355,25 +356,41 @@ app.layout = html.Div(id="dash-layout", children=[
 # CALLBACK FUNCTIONS
 # ==================
 
-# Hover over map > update timeline chart
+# Show/hide timeline chart
+@app.callback(
+    Output('chart-container', 'style'),
+    [Input('map', 'clickData'),
+     Input('chart-close', 'n_clicks')])
+def show_hide_timeline(clickData, n_clicks):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return dash.no_update
+    # print("CALLBACK:",ctx.triggered)
+    prop_ids = [x['prop_id'].split('.')[0] for x in ctx.triggered]
+    if "map" in prop_ids:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+# Click map > update timeline chart
 @app.callback(
     [Output('chart', 'figure'),
      Output('chart_origin', 'children'),
      Output('chart_origin', 'href')],
-    [Input('map', 'hoverData')],
+    [Input('map', 'clickData')],
     [State('chart', 'figure'),
      State('map', 'figure')])
-def display_hover_data(hoverData, fig_chart, fig_map):
-    #  print("Hover", hoverData, type(hoverData))
+def display_click_data(clickData, fig_chart, fig_map):
+    #  print("Hover", clickData, type(clickData))
     figtitle = "Wähle einen Datenpunkt auf der Karte!"
     times = []
     values = []
     origin_str = ""
     origin_url = ""
-    if hoverData:  # only for datapoints (trace 0), not for other elements
-        curveNumber = hoverData["points"][0]['curveNumber']
+    if clickData:  # only for datapoints (trace 0), not for other elements
+        curveNumber = clickData["points"][0]['curveNumber']
         if curveNumber > 0:  # exclude selection marker
-            i = hoverData["points"][0]['pointIndex']
+            i = clickData["points"][0]['pointIndex']
             filtered_map_data = map_data[map_data["trace_index"] == curveNumber]
             city = filtered_map_data.iloc[i]['city']
             name = filtered_map_data.iloc[i]['name']

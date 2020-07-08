@@ -6,6 +6,7 @@ from flask_caching import Cache
 import pandas as pd
 import geopandas as gpd
 import json
+import requests
 
 from geopy.geocoders import Nominatim
 from urllib.parse import parse_qs
@@ -73,6 +74,11 @@ def load_timeseries(query_api, _id):
 query_api = get_query_api()
 map_data = get_map_data(query_api)  # map_data is a GeoDataFrame
 
+# LOAD BUNDESLAND AND LANKDREIS GEOJSON
+# =========================
+url_bl = "https://github.com/isellsoap/deutschlandGeoJSON/raw/master/2_bundeslaender/2_hoch.geo.json"
+geojson_bl = requests.get(url_bl).json()
+
 # SET UP DASH ELEMENTS
 # ======================
 
@@ -126,21 +132,21 @@ traces = [dict(
 # Split into traces by measurement, add column "trace_index" (important for data selection)
 for index, measurement in enumerate(map_data["_measurement"].unique()):
     map_data.loc[map_data["_measurement"] == measurement, "trace_index"] = index+1
-    filtered_map_data = map_data[map_data["_measurement"] == measurement]
+    measurement_map_data = map_data[map_data["_measurement"] == measurement]
     trace = dict(
         # TRACE 1...N: Datapoints
         name=measurement,
         type="scattermapbox",
-        lat=filtered_map_data["lat"],
-        lon=filtered_map_data["lon"],
+        lat=measurement_map_data["lat"],
+        lon=measurement_map_data["lon"],
         mode='markers',
         marker=dict(
             size=20,
-            color=filtered_map_data.apply(lambda x: helpers.trend2color(x["trend"]), axis=1),
+            color=measurement_map_data.apply(lambda x: helpers.trend2color(x["trend"]), axis=1),
             line=dict(width=2,
                       color='DarkSlateGrey'),
         ),
-        text=helpers.tooltiptext(filtered_map_data),
+        text=helpers.tooltiptext(measurement_map_data),
         hoverinfo="text",
     )
     traces.append(trace)
@@ -372,6 +378,7 @@ def show_hide_timeline(clickData, n_clicks):
     else:
         return {'display': 'none'}
 
+
 # Click map > update timeline chart
 @app.callback(
     [Output('chart', 'figure'),
@@ -485,8 +492,7 @@ def update_latlon_local_storage(urlbar_storage, clientside_callback_storage,
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update
-    # print("CALLBACK:",ctx.triggered)
-    prop_ids = [x['prop_id'].split('.')[0] for x in ctx.triggered]
+    prop_ids = helpers.dash_callback_get_prop_ids(ctx)
     if "urlbar_storage" in prop_ids:
         lat = urlbar_storage[0]
         lon = urlbar_storage[1]
@@ -527,26 +533,54 @@ def update_permalink(latlon_local_storage, radius):
      Output('location_text', 'children')],
     # Output('url', 'search')],
     [Input('latlon_local_storage', 'data'),
-     Input('radiusslider', 'value')],
+     Input('radiusslider', 'value'),
+     Input('bundesland_dropdown','value')],
     [State('map', 'figure')])
-def update_map(latlon_local_storage, radius, fig):
-    if latlon_local_storage != None:
-        lat, lon, addr = latlon_local_storage
+def update_on_region_change(latlon_local_storage, radius, bundesland, fig):
+    """
+    Based on selected region (radius+center or landkreis or bundesland) change the following:
+    - Region name
+    - Highlighted region on map
+    - Trend value (recalculate)
+    """
+    ctx = dash.callback_context
+    prop_ids = helpers.dash_callback_get_prop_ids(ctx) # origin of callback
+
+    if 'latlon_local_storage' in prop_ids or 'radiusslider' in prop_ids:
+        if latlon_local_storage is not None:
+            lat, lon, addr = latlon_local_storage
+        else:
+            lat = default_lat
+            lon = default_lon
+            addr = "asdfg"
+        fig["layout"]["mapbox"]["center"]["lat"] = lat
+        fig["layout"]["mapbox"]["center"]["lon"] = lon
+        location_text = f"{addr} ({radius}km Umkreis)"
+
+        filtered_map_data, poly = filter_by_radius(map_data, lat, lon, radius)
+
+
+        # highlight circle
+        highlight_x, highlight_y = poly.exterior.coords.xy
+
+        # draw highligth into trace0
+        fig["data"][0]["lat"] = highlight_y
+        fig["data"][0]["lon"] = highlight_x
+    elif "bundesland_dropdown" in prop_ids:
+        filtered_map_data = map_data[map_data["bundesland"] == bundesland]
+        location_text = bundesland
+        for feature in geojson_bl["features"]:
+            if feature ["properties"]["name"].lower() == bundesland.lower():
+                coords = feature["geometry"]["coordinates"][0]
+                highlight_x, highlight_y = list(zip(*coords))
+                fig["data"][0]["lat"] = highlight_y
+                fig["data"][0]["lon"] = highlight_x
+                break
     else:
-        lat = default_lat
-        lon = default_lon
-        addr = "asdfg"
-    fig["layout"]["mapbox"]["center"]["lat"] = lat
-    fig["layout"]["mapbox"]["center"]["lon"] = lon
-    location_text = f"{addr} ({radius}km Umkreis)"
-
-    filtered_map_data, poly = filter_by_radius(map_data, lat, lon, radius)
+        mean_trend = ""
+        location_text = ""
+        filtered_map_data = map_data
     mean_trend = round(filtered_map_data["trend"].mean(), 1)
-    #  std_trend = filtered_map_data["trend"].std()
-
-    x, y = poly.exterior.coords.xy
-    fig["data"][0]["lat"] = y
-    fig["data"][0]["lon"] = x
     return fig, str(mean_trend), location_text,  # urlparam
 
 

@@ -50,3 +50,12 @@ def measurement2field(measurement):
         "webcam": "personenzahl"
     }
     return fieldnames[measurement]
+
+
+def dash_callback_get_prop_ids(ctx):
+    """
+    needs dash dash.callback_context object aquired from a callback via ctx = dash.callback_context
+    returns list of prop_ids
+    see https://dash.plotly.com/advanced-callbacks for more info
+    """
+    return [x['prop_id'].split('.')[0] for x in ctx.triggered]

@@ -263,7 +263,7 @@ location_lookup_div = html.Div(className="", children=[
         dcc.Input(id="nominatim_lookup_edit", type="text", placeholder="", debounce=False),
         html.Button(id='nominatim_lookup_button', n_clicks=0, children='Suchen'),
     ]),
-html.Button(id='geojs_lookup_button', n_clicks=0, children='Automatisch bestimmen'),
+    html.Button(id='geojs_lookup_button', n_clicks=0, children='Automatisch bestimmen'),
     html.Button(id='mapposition_lookup_button', n_clicks=0, children='Kartenmittelpunkt verwenden'),
     html.H3("Umkreis:"),
     dcc.Slider(
@@ -282,14 +282,14 @@ html.Button(id='geojs_lookup_button', n_clicks=0, children='Automatisch bestimme
 
 
 map_data["landkreis_label"] = map_data.apply(lambda x: x["landkreis"]+" "+str(x["districtType"]), 1)
-landkreis_options =  [{'label': x, 'value': x} for x in map_data["landkreis_label"].unique()]
-bundesland_options = [{'label': x, 'value': x} for x in map_data["bundesland"].unique()]
+landkreis_options = [{'label': x, 'value': x} for x in sorted(map_data["landkreis_label"].unique())]
+bundesland_options = [{'label': x, 'value': x} for x in sorted(map_data["bundesland"].unique())]
 region_container = html.Div(id="region_container", className="container", children=[
-    dcc.Tabs(id='region_tabs', className="", value='tab-1', children=[
-        dcc.Tab(label='Umkreis', value='tab-1', children=[
+    dcc.Tabs(id='region_tabs', className="", value='tab-umkreis', children=[
+        dcc.Tab(label='Umkreis', value='tab-umkreis', children=[
             location_lookup_div
         ]),
-        dcc.Tab(label='Landkreis', value='tab-2', children=[
+        dcc.Tab(label='Landkreis', value='tab-landkreis', children=[
             html.H3("Wähle einen Landkreis:"),
             dcc.Dropdown(
                 id='landkreis_dropdown',
@@ -297,8 +297,9 @@ region_container = html.Div(id="region_container", className="container", childr
                 value=landkreis_options[0]["value"],
                 clearable=False
             ),
+            html.P("Hinweis: Nur Landkreise mit Datenpunkten können ausgewählt werden!"),
         ]),
-        dcc.Tab(label='Bundesland', value='tab-3', children=[
+        dcc.Tab(label='Bundesland', value='tab-bundesland', children=[
             html.H3("Wähle ein Bundesland:"),
             dcc.Dropdown(
                 id='bundesland_dropdown',
@@ -526,14 +527,18 @@ def update_permalink(latlon_local_storage, radius):
 @app.callback(
     [Output('map', 'figure'),
      Output('mean_trend_span', 'children'),
-     Output('location_text', 'children')],
+     Output('location_text', 'children'),
+     Output('nominatim_lookup_edit', 'value')],
     # Output('url', 'search')],
     [Input('latlon_local_storage', 'data'),
      Input('radiusslider', 'value'),
      Input('bundesland_dropdown', 'value'),
-     Input('landkreis_dropdown', 'value')],
-    [State('map', 'figure')])
-def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis, fig):
+     Input('landkreis_dropdown', 'value'),
+     Input('region_tabs', 'value')],
+    [State('map', 'figure'),
+     State('nominatim_lookup_edit', 'value')])
+def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis, region_tabs,
+                            fig, nominatim_lookup_edit):
     """
     Based on selected region (radius+center or landkreis or bundesland) change the following:
     - Region name
@@ -541,30 +546,37 @@ def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis,
     - Trend value (recalculate)
     """
     ctx = dash.callback_context
-    prop_ids = helpers.dash_callback_get_prop_ids(ctx) # origin of callback
+    prop_ids = helpers.dash_callback_get_prop_ids(ctx)  # origin of callback
 
-    if 'latlon_local_storage' in prop_ids or 'radiusslider' in prop_ids:
+    if 'latlon_local_storage' in prop_ids or \
+            'radiusslider' in prop_ids or \
+            ("region_tabs" in prop_ids and region_tabs == "tab-umkreis"):
         if latlon_local_storage is not None:
             lat, lon, addr = latlon_local_storage
         else:
             lat, lon = default_lat, default_lon
             addr = "..."
         location_text = f"{addr} ({radius}km Umkreis)"
+        location_editbox = addr
         filtered_map_data, poly = filter_by_radius(map_data, lat, lon, radius)
         mean_trend = round(filtered_map_data["trend"].mean(), 1)
 
         # highlight circle
         highlight_x, highlight_y = poly.exterior.coords.xy
 
-    elif "bundesland_dropdown" in prop_ids:
+    elif "bundesland_dropdown" in prop_ids or \
+            ("region_tabs" in prop_ids and region_tabs == "tab-bundesland"):
         location_text = bundesland
+        location_editbox = nominatim_lookup_edit
         filtered_map_data = map_data[map_data["bundesland"] == bundesland]
         ags = filtered_map_data["ags"].iloc[0][:-3]  # '08221' --> '08'
         mean_trend = round(filtered_map_data["trend"].mean(), 1)
         highlight_x, highlight_y = get_outline_coords("bundesland", ags)
 
-    elif "landkreis_dropdown" in prop_ids:
+    elif "landkreis_dropdown" in prop_ids or \
+            ("region_tabs" in prop_ids and region_tabs == "tab-landkreis"):
         location_text = landkreis
+        location_editbox = nominatim_lookup_edit
         filtered_map_data = map_data[map_data["landkreis_label"] == landkreis]
         ags = filtered_map_data["ags"].iloc[0]
         mean_trend = round(filtered_map_data["trend"].mean(), 1)
@@ -573,6 +585,7 @@ def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis,
     else:
         mean_trend = ""
         location_text = ""
+        location_editbox = nominatim_lookup_edit
         highlight_x, highlight_y = None, None
 
     # draw highligth into trace0
@@ -585,7 +598,7 @@ def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis,
     fig["layout"]["mapbox"]["center"]["lon"] = centerlon
     fig["layout"]["mapbox"]["zoom"] = zoom
 
-    return fig, str(mean_trend), location_text,  # urlparam
+    return fig, str(mean_trend), location_text, location_editbox
 
 
 @app.callback(
@@ -594,7 +607,6 @@ def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis,
 def style_mean_trend(mean_str):
     color = helpers.trend2color(float(mean_str))
     return dict(background=color)
-
 
 @app.callback(
     Output('nominatim_storage', 'data'),

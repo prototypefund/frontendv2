@@ -1,8 +1,8 @@
-'''
+"""
 utility functions for the frontend
-'''
+"""
 
-from math import isnan
+from math import isnan, log
 
 
 def trend2color(trendvalue):
@@ -59,3 +59,22 @@ def dash_callback_get_prop_ids(ctx):
     see https://dash.plotly.com/advanced-callbacks for more info
     """
     return [x['prop_id'].split('.')[0] for x in ctx.triggered]
+
+
+def calc_zoom(lat, lon):
+    """
+    Calculate zoom level based feature extent
+    Input: list of lat and lon values
+    Returns: Zoom level, center latitude, center longitude
+    See also: https://stackoverflow.com/questions/46891914/control-mapbox-extent-in-plotly-python-api
+    Not perfect, but good enough
+    """
+    lat = [x for x in lat if x is not None]
+    lon = [x for x in lon if x is not None]
+    width_y = max(lat) - min(lat)
+    width_x = max(lon) - min(lon)
+    centerlat = min(lat) + width_y / 2
+    centerlon = min(lon) + width_x / 2
+    zoom_y = -1.446*log(width_y) + 7.2753
+    zoom_x = -1.415*log(width_x) + 8.7068
+    return min(round(zoom_y,2),round(zoom_x,2)), centerlat, centerlon

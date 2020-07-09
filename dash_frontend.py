@@ -6,7 +6,6 @@ from flask_caching import Cache
 import pandas as pd
 import geopandas as gpd
 import json
-import requests
 
 from geopy.geocoders import Nominatim
 from urllib.parse import parse_qs
@@ -14,6 +13,7 @@ from urllib.parse import parse_qs
 from utils import queries
 from utils import helpers
 from utils.filter_by_radius import filter_by_radius
+from utils.get_outline_coords import get_outline_coords
 
 # CONSTANTS
 # =============
@@ -74,10 +74,6 @@ def load_timeseries(query_api, _id):
 query_api = get_query_api()
 map_data = get_map_data(query_api)  # map_data is a GeoDataFrame
 
-# LOAD BUNDESLAND AND LANKDREIS GEOJSON
-# =========================
-url_bl = "https://github.com/isellsoap/deutschlandGeoJSON/raw/master/2_bundeslaender/2_hoch.geo.json"
-geojson_bl = requests.get(url_bl).json()
 
 # SET UP DASH ELEMENTS
 # ======================
@@ -534,9 +530,10 @@ def update_permalink(latlon_local_storage, radius):
     # Output('url', 'search')],
     [Input('latlon_local_storage', 'data'),
      Input('radiusslider', 'value'),
-     Input('bundesland_dropdown','value')],
+     Input('bundesland_dropdown', 'value'),
+     Input('landkreis_dropdown', 'value')],
     [State('map', 'figure')])
-def update_on_region_change(latlon_local_storage, radius, bundesland, fig):
+def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis, fig):
     """
     Based on selected region (radius+center or landkreis or bundesland) change the following:
     - Region name
@@ -550,37 +547,44 @@ def update_on_region_change(latlon_local_storage, radius, bundesland, fig):
         if latlon_local_storage is not None:
             lat, lon, addr = latlon_local_storage
         else:
-            lat = default_lat
-            lon = default_lon
-            addr = "asdfg"
-        fig["layout"]["mapbox"]["center"]["lat"] = lat
-        fig["layout"]["mapbox"]["center"]["lon"] = lon
+            lat, lon = default_lat, default_lon
+            addr = "..."
         location_text = f"{addr} ({radius}km Umkreis)"
-
         filtered_map_data, poly = filter_by_radius(map_data, lat, lon, radius)
-
+        mean_trend = round(filtered_map_data["trend"].mean(), 1)
 
         # highlight circle
         highlight_x, highlight_y = poly.exterior.coords.xy
 
-        # draw highligth into trace0
-        fig["data"][0]["lat"] = highlight_y
-        fig["data"][0]["lon"] = highlight_x
     elif "bundesland_dropdown" in prop_ids:
-        filtered_map_data = map_data[map_data["bundesland"] == bundesland]
         location_text = bundesland
-        for feature in geojson_bl["features"]:
-            if feature ["properties"]["name"].lower() == bundesland.lower():
-                coords = feature["geometry"]["coordinates"][0]
-                highlight_x, highlight_y = list(zip(*coords))
-                fig["data"][0]["lat"] = highlight_y
-                fig["data"][0]["lon"] = highlight_x
-                break
+        filtered_map_data = map_data[map_data["bundesland"] == bundesland]
+        ags = filtered_map_data["ags"].iloc[0][:-3]  # '08221' --> '08'
+        mean_trend = round(filtered_map_data["trend"].mean(), 1)
+        highlight_x, highlight_y = get_outline_coords("bundesland", ags)
+
+    elif "landkreis_dropdown" in prop_ids:
+        location_text = landkreis
+        filtered_map_data = map_data[map_data["landkreis_label"] == landkreis]
+        ags = filtered_map_data["ags"].iloc[0]
+        mean_trend = round(filtered_map_data["trend"].mean(), 1)
+        highlight_x, highlight_y = get_outline_coords("landkreis", ags)
+
     else:
         mean_trend = ""
         location_text = ""
-        filtered_map_data = map_data
-    mean_trend = round(filtered_map_data["trend"].mean(), 1)
+        highlight_x, highlight_y = None, None
+
+    # draw highligth into trace0
+    fig["data"][0]["lat"] = highlight_y
+    fig["data"][0]["lon"] = highlight_x
+
+    # center and zoom map
+    zoom, centerlat, centerlon = helpers.calc_zoom(highlight_y, highlight_x)
+    fig["layout"]["mapbox"]["center"]["lat"] = centerlat
+    fig["layout"]["mapbox"]["center"]["lon"] = centerlon
+    fig["layout"]["mapbox"]["zoom"] = zoom
+
     return fig, str(mean_trend), location_text,  # urlparam
 
 

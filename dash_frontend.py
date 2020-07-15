@@ -104,7 +104,8 @@ config_plots = dict(
                             'autoScale2d',
                             'resetScale2d',
                             'resetViewMapbox'],
-    displayModeBar=True
+    displayModeBar=True,
+    responsive=True
 )
 
 #  Dash Map
@@ -220,15 +221,19 @@ selectorOptions = dict(
 chartlayout = dict(
     autosize=True,
     height=350,
-    width=600,
-    title="Waehle einen Messpunkt auf der map",
+    width=700,
+    title="Waehle einen Messpunkt auf der Karte",
     yaxis=dict(
         title="Passanten"
     ),
     xaxis=dict(
         title="Zeitpunkt",
         rangeselector=selectorOptions,
-    )
+    ),
+    legend=dict(
+        orientation="h",
+        y=-0.5
+        )
 )
 
 chart = html.Div(id="chart-container", style={'display': 'none'}, children=[
@@ -241,11 +246,25 @@ chart = html.Div(id="chart-container", style={'display': 'none'}, children=[
                 config=config_plots,
                 className="timeline-chart",
                 figure={
-                    'data': [{
-                        "x": [],
-                        "y": [],
-                        "mode": 'lines+markers',
-                    }],
+                    'data': [
+                        dict(  # datapoints
+                            x=[], y=[],
+                            mode="lines+markers",
+                            name="Daten",
+                            line=dict(color="#d9d9d9", width=1),
+                            marker=dict(
+                                size=6,
+                                color="DarkSlateGrey",
+                            ),
+                        ),
+                        dict(  # rolling average
+                            x=[], y=[],
+                            mode="lines",
+                            line_shape="spline",
+                            name="Gleitender Durchschnitt",
+                            line=dict(color="#F63366", width=4),
+                        )
+                    ],
                     'layout': chartlayout
                 }
             )
@@ -389,6 +408,7 @@ def display_click_data(clickData, fig_chart, fig_map):
     figtitle = "Wähle einen Datenpunkt auf der Karte!"
     times = []
     values = []
+    rolling = []
     origin_str = ""
     origin_url = ""
     if clickData:  # only for datapoints (trace 0), not for other elements
@@ -405,9 +425,11 @@ def display_click_data(clickData, fig_chart, fig_map):
             c_id = filtered_map_data.iloc[i]["c_id"]
             origin_url = filtered_map_data.iloc[i]["origin"]
             origin_str = f"Datenquelle: {filtered_map_data.iloc[i]['_measurement']}"
-            times, values = load_timeseries(query_api, c_id)
+            times, values, rolling = load_timeseries(query_api, c_id)
     fig_chart["data"][0]["x"] = times
     fig_chart["data"][0]["y"] = values
+    fig_chart["data"][1]["x"] = times
+    fig_chart["data"][1]["y"] = rolling
     fig_chart["layout"]["title"] = figtitle
     return fig_chart, origin_str, origin_url
 

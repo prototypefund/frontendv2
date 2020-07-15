@@ -142,6 +142,7 @@ def load_timeseries(query_api, c_id, bucket="sdd"):
     tables = query_api.query_data_frame(query)
     times = []
     values = []
+    rolling = []
     if isinstance(tables, list):
         tables = tables[0]
     if not isinstance(tables, pd.DataFrame):
@@ -151,4 +152,5 @@ def load_timeseries(query_api, c_id, bucket="sdd"):
     else:
         times = list(tables["_time"])
         values = list(tables["_value"])
-    return times, values
+        rolling = tables.set_index("_time")["_value"].rolling("3d").mean()
+    return times, values, rolling

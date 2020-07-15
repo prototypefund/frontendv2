@@ -8,7 +8,7 @@ body {
 #_dash-app-content{
     /*max-width:400px;*/
 }
-.container {
+.container,h1 {
     max-width:400px;
 }
 .container,

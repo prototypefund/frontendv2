@@ -3,12 +3,13 @@ utility functions for the frontend that query the InfluxDB
 """
 import datetime
 import pandas as pd
+import numpy as np
 import geopandas as gpd
 from influxdb_client import InfluxDBClient
 import json
 from utils import helpers
+from datetime import timedelta
 
-CID_SEP = "$"  # separator symbol for compound index
 
 def get_query_api(url, org, token):
     # set up InfluxDB query API
@@ -16,7 +17,15 @@ def get_query_api(url, org, token):
     return client.query_api()
 
 
-def get_map_data(query_api, bucket="sdd"):
+CID_SEP = "$"  # separator symbol for compound index
+
+
+def compound_index(df):
+    # make compound index
+    return df.apply(lambda x: x["_measurement"] + CID_SEP + str(x["_id"]), axis=1)
+
+
+def get_map_data(query_api, trend_window=3, bucket="sdd"):
     """
     Load the data that is required for plotting the map.
     Return a GeoDataFrame with all tags and latitude/longitude fields and the trend
@@ -42,7 +51,7 @@ def get_map_data(query_api, bucket="sdd"):
     '''
     tables = query_api.query_data_frame(query)
     tables.drop_duplicates(inplace=True)
-    tables["c_id"] = tables.apply(lambda x: x["_measurement"] + CID_SEP + str(x["_id"]), axis=1)  # make compound index
+    tables["c_id"] = compound_index(tables)
     # pivot table so that the lat/lon fields become named columns
     geo_table = tables[["_field", "_value", "c_id"]]
     geo_table = geo_table.pivot(index='c_id', columns='_field', values='_value')
@@ -61,71 +70,83 @@ def get_map_data(query_api, bucket="sdd"):
     # tables = tables.set_index("_id").join(trend).join(geo_table).reset_index()
 
     geo_table = geo_table.reset_index()
-    geo_table["trend"] = 0  # TODO: Re-insert Trend!
+    trenddict, models = load_trend(query_api, trend_window)
+    geo_table["trend"] = geo_table["c_id"].map(trenddict)
+    geo_table["model"] = geo_table["c_id"].map(models)
+
+    # def applyfit(row):
+    #     if row["_id"] in models:
+    #         a, b = models[row["_id"]]
+    #         return a * row["unixtime"] + b
+    #     else:
+    #         return np.nan
+    # geo_table["fit"] = geo_table.apply(lambda x: applyfit(x), axis=1)
 
     print("Result of 'get_map_data():")
     print(geo_table.columns)
     print(geo_table["_measurement"].value_counts())
 
-
     return geo_table
 
 
-def load_trend(query_api, bucket="sdd"):
-    """ 
-    calculate trend 
-    value of 0.2 means 20% more acitivity than 7 days ago
-    """
+def load_trend(query_api, trend_window=3, bucket="sdd"):
+    print("load_trend...")
+    filterstring = " or ".join([f'r["_field"] == "{x}"' for x in helpers.fieldnames.values()])
     query = f'''
-    import "influxdata/influxdb/v1"
-    v1.tagValues(bucket: "{bucket}", tag: "_time")
-    |> sort()
-    |> last()
-    '''
-    last_data_date = query_api.query_data_frame(query)["_value"][0]
-    last_data_date = datetime.datetime.fromtimestamp(last_data_date.timestamp())
+            from(bucket: "{bucket}")
+          |> range(start: -{trend_window}d)
+          |> filter(fn: (r) =>  {filterstring})
+          '''
+    tables = query_api.query_data_frame(query)
+    df = pd.concat(tables)
+    df["c_id"] = compound_index(df)
+    models = {}
+    trend = {}
+    df["unixtime"] = df["_time"].apply(lambda x: int(x.timestamp()), 1)  # unixtime in s
+    for idx in set(df["c_id"]):
+        # get sub-dataframe for this id
+        tmpdf = df[df["c_id"] == idx].sort_values(by=["unixtime"])
+        # remove too old data
+        lastday = max(tmpdf["_time"])
+        day0 = lastday - timedelta(days=trend_window-1)
+        tmpdf = tmpdf[tmpdf["_time"] >= day0]
+        tmpdf = tmpdf.reset_index(drop=True)
 
-    last_data_date = last_data_date - datetime.timedelta(days=2)
-    lastweek_data_date = last_data_date - datetime.timedelta(days=8)
-    query = f'''
-    from(bucket: "{bucket}")
-      |> range(start: {lastweek_data_date.strftime("%Y-%m-%d")})
-      |> filter(fn: (r) => r["_measurement"] == "hystreet")
-      |> filter(fn: (r) => r["_field"] == "pedestrian_count")
-      |> filter(fn: (r) => r["unverified"] == "False")
-      |> first()
-    '''
-    lastweek = query_api.query_data_frame(query)
+        firstday = min(tmpdf["_time"])
+        # note: day0 is the (theoretical) beginning of the trend window
+        #       and firstday is the (actual) first day where data is available
 
-    query = f'''
-    from(bucket: "{bucket}")
-      |> range(start: {last_data_date.strftime("%Y-%m-%d")})
-      |> filter(fn: (r) => r["_measurement"] == "hystreet")
-      |> filter(fn: (r) => r["_field"] == "pedestrian_count")
-      |> filter(fn: (r) => r["unverified"] == "False")
-      |> last()
-    '''
-    current = query_api.query_data_frame(query)
-    current = current[["_id", "_value"]].rename(columns={"_value": "current"}).set_index("_id")
-    lastweek = lastweek[["_id", "_value"]].rename(columns={"_value": "lastweek"}).set_index("_id")
-    df = current.join(lastweek)
+        if (lastday - firstday).days < trend_window-1:
+            # not enough data for this station
+            models[idx] = (np.nan, np.nan)
+            trend[idx] = np.nan
+            continue
 
-    def rate(current, lastweek):
-        delta = current - lastweek
-        if lastweek == 0:
-            return None
+        # linear regression y = a*x +b
+        values = pd.to_numeric(tmpdf["_value"])
+        model = np.polyfit(tmpdf["unixtime"], values, 1)
+        a, b = model
+        models[idx] = model
+
+        # calculate trend
+        #
+        t1 = firstday.timestamp()
+        t2 = lastday.timestamp()
+        y1 = (a * t1 + b)
+        y2 = (a * t2 + b)
+        if y1 > 0:
+            trend[idx] = y2 / y1 - 1
         else:
-            return 100 * round(delta / lastweek, 2)
+            trend[idx] = np.nan
 
-    df["trend"] = df.apply(lambda x: rate(x["current"], x["lastweek"]), axis=1)
-    return df["trend"]
+    return trend, models  # dict
 
 
 def load_timeseries(query_api, c_id, bucket="sdd"):
     """
     Load time series for a given compound index
     """
-    print("load_timeseries",c_id)
+    print("load_timeseries", c_id)
     _measurement, _id = c_id.split(CID_SEP, 1)
     _field = helpers.measurement2field(_measurement)
     extra_lines = ''
@@ -153,4 +174,5 @@ def load_timeseries(query_api, c_id, bucket="sdd"):
         times = list(tables["_time"])
         values = list(tables["_value"])
         rolling = tables.set_index("_time")["_value"].rolling("3d").mean()
+
     return times, values, rolling

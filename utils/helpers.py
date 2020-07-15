@@ -11,10 +11,10 @@ def trend2color(trendvalue):
     """
     if isnan(trendvalue):
         return "#999999"
-    elif trendvalue > 200:
+    elif trendvalue > 1:  # +100%
         # red
         return "#cc0000"
-    elif trendvalue < 20:
+    elif trendvalue < 0.2:  # +20%
         # green
         return "#00cc22"
     else:
@@ -37,18 +37,20 @@ def tooltiptext(df):
     return list(df.apply(lambda x: make_string(x), axis=1))
 
 
-def measurement2field(measurement):
-    """
-    Return the name of the field that contains the
-    main data for each measurement type
-    """
-    fieldnames = {
+fieldnames = {
         "airquality": "airquality_score",
         "bikes": "bike_count",
         "google_maps": "current_popularity",
         "hystreet": "pedestrian_count",
         "webcam": "personenzahl"
     }
+
+
+def measurement2field(measurement):
+    """
+    Return the name of the field that contains the
+    main data for each measurement type
+    """
     return fieldnames[measurement]
 
 

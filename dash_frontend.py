@@ -6,6 +6,8 @@ from flask_caching import Cache
 import pandas as pd
 import geopandas as gpd
 import json
+from numpy import nan
+from datetime import timedelta
 
 from geopy.geocoders import Nominatim
 from urllib.parse import parse_qs
@@ -23,6 +25,8 @@ default_radius = 60
 
 DISABLE_CACHE = True  # set to true to disable caching
 CLEAR_CACHE_ON_STARTUP = True  # for testing
+
+TRENDWINDOW = 7
 
 # DASH SETUP
 # =======
@@ -61,7 +65,7 @@ def get_query_api():
 
 @cache.memoize(unless=DISABLE_CACHE)
 def get_map_data(query_api):
-    return queries.get_map_data(query_api)
+    return queries.get_map_data(query_api, trend_window=TRENDWINDOW)
 
 
 @cache.memoize(unless=DISABLE_CACHE)
@@ -263,6 +267,13 @@ chart = html.Div(id="chart-container", style={'display': 'none'}, children=[
                             line_shape="spline",
                             name="Gleitender Durchschnitt",
                             line=dict(color="#F63366", width=4),
+                        ),
+                        dict(  # fit
+                            x=[], y=[],
+                            mode="lines",
+                            line_shape="spline",
+                            name="Fit",
+                            line=dict(color="blue", width=2),
                         )
                     ],
                     'layout': chartlayout
@@ -409,6 +420,7 @@ def display_click_data(clickData, fig_chart, fig_map):
     times = []
     values = []
     rolling = []
+    fitvals = []
     origin_str = ""
     origin_url = ""
     if clickData:  # only for datapoints (trace 0), not for other elements
@@ -426,10 +438,24 @@ def display_click_data(clickData, fig_chart, fig_map):
             origin_url = filtered_map_data.iloc[i]["origin"]
             origin_str = f"Datenquelle: {filtered_map_data.iloc[i]['_measurement']}"
             times, values, rolling = load_timeseries(query_api, c_id)
+
+            a, b = filtered_map_data.iloc[i]['model']
+            fitvals = []
+            lastday = max(times)
+            day0 = lastday - timedelta(days=TRENDWINDOW - 1)
+            for t in times:
+                if t >= day0:
+                    unixtime = int(t.timestamp())  # unixtime in s
+                    fitvals.append(a*unixtime+b)
+                else:
+                    fitvals.append(nan)
     fig_chart["data"][0]["x"] = times
     fig_chart["data"][0]["y"] = values
     fig_chart["data"][1]["x"] = times
     fig_chart["data"][1]["y"] = rolling
+    fig_chart["data"][2]["x"] = times
+    fig_chart["data"][2]["y"] = fitvals
+
     fig_chart["layout"]["title"] = figtitle
     return fig_chart, origin_str, origin_url
 
@@ -620,7 +646,7 @@ def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis,
     fig["layout"]["mapbox"]["center"]["lon"] = centerlon
     fig["layout"]["mapbox"]["zoom"] = zoom
 
-    return fig, str(mean_trend), location_text, location_editbox
+    return fig, str(mean_trend*100), location_text, location_editbox
 
 
 @app.callback(

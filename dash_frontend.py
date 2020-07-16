@@ -227,6 +227,7 @@ chartlayout = dict(
     height=350,
     width=700,
     title="Waehle einen Messpunkt auf der Karte",
+    hovermode='closest',
     yaxis=dict(
         title="Passanten"
     ),
@@ -340,6 +341,33 @@ region_container = html.Div(id="region_container", className="container", childr
     ])
 ])
 
+
+region_chartlayout = dict(
+    autosize=True,
+    height=350,
+    #width=700,
+    title="Verlauf in der Region",
+    yaxis=dict(
+        title="Messwert"
+    ),
+    xaxis=dict(
+        title="Zeitpunkt",
+        rangeselector=selectorOptions,
+    ),
+    legend=dict(
+        orientation="h",
+        y=-0.5
+        )
+)
+region_chart = dcc.Graph(
+    id='region_chart',
+    config=config_plots,
+    figure=dict(
+        data=[],
+        layout=region_chartlayout
+    )
+)
+
 trend_container = html.Div(id="trend_container", className="container", children=[
     dcc.Tabs(id='trend_tabs', value='tab-1', children=[
         dcc.Tab(label='Trend', value='tab-1', children=[
@@ -349,7 +377,7 @@ trend_container = html.Div(id="trend_container", className="container", children
                 "%"
             ]),
         ]),
-        dcc.Tab(label='Graph', value='tab-2', children=["Platzhalter für graph"])
+        dcc.Tab(label='Graph', value='tab-2', children=[region_chart])
     ]),
     html.P(id="location_p", children=[
         html.Span(children="Region: ", style={"fontWeight": "bold"}),

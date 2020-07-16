@@ -181,7 +181,13 @@ mainmap = dcc.Graph(
             margin=dict(l=0, r=0, t=0, b=0),
             mapbox=dict(
                 style="carto-positron",
-                # open-street-map, white-bg, carto-positron, carto-darkmatter, stamen-terrain, stamen-toner, stamen-watercolor
+                # open-street-map,
+                # white-bg,
+                # carto-positron,
+                # carto-darkmatter,
+                # stamen-terrain,
+                # stamen-toner,
+                # stamen-watercolor
                 bearing=0,
                 center=dict(
                     lat=default_lat,
@@ -244,7 +250,7 @@ chartlayout = dict(
 chart = html.Div(id="chart-container", style={'display': 'none'}, children=[
     html.Button(id="chart-close", children=" × "),
     dcc.Loading(
-        type="default",
+        type="circle",
         children=[
             dcc.Graph(
                 id='chart',
@@ -342,43 +348,29 @@ region_container = html.Div(id="region_container", className="container", childr
 ])
 
 
-region_chartlayout = dict(
-    autosize=True,
-    height=350,
-    #width=700,
-    title="Verlauf in der Region",
-    yaxis=dict(
-        title="Messwert"
-    ),
-    xaxis=dict(
-        title="Zeitpunkt",
-        rangeselector=selectorOptions,
-    ),
-    legend=dict(
-        orientation="h",
-        y=-0.5
-        )
-)
-region_chart = dcc.Graph(
-    id='region_chart',
-    config=config_plots,
-    figure=dict(
-        data=[],
-        layout=region_chartlayout
-    )
-)
 
 trend_container = html.Div(id="trend_container", className="container", children=[
-    dcc.Tabs(id='trend_tabs', value='tab-1', children=[
-        dcc.Tab(label='Trend', value='tab-1', children=[
-            html.H3(f"{TRENDWINDOW}-Tage-Trend im gewählten Bereich:"),
-            html.P(id="mean_trend_p", style={}, children=[
-                html.Span(id="mean_trend_span", children=""),
-                "%"
-            ]),
+
+    html.Div(children=[
+        html.H3(f"{TRENDWINDOW}-Tage-Trend im gewählten Bereich:"),
+        html.P(id="mean_trend_p", style={}, children=[
+            html.Span(id="mean_trend_span", children=""),
+            "%"
         ]),
-        dcc.Tab(label='Graph', value='tab-2', children=[region_chart])
     ]),
+    html.Div(children=[
+        html.H3("Detailgrad"),
+        dcc.RadioItems(
+            options=[
+                {'label': 'Messstationen', 'value': 'station'},
+                {'label': 'Landkreise', 'value': 'landkreis'},
+                {'label': 'Bundesländer', 'value': 'bundesland'}
+            ],
+            value='station',
+            labelStyle={'display': 'inline-block'}
+        ),
+    ]),
+
     html.P(id="location_p", children=[
         html.Span(children="Region: ", style={"fontWeight": "bold"}),
         html.Span(id="location_text", children=lookup_span_default),
@@ -422,6 +414,8 @@ app.layout = html.Div(id="dash-layout", children=[
     [Input('map', 'clickData'),
      Input('chart-close', 'n_clicks')])
 def show_hide_timeline(clickData, n_clicks):
+    if clickData is None:
+        return {'display': 'none'}
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update
@@ -431,6 +425,13 @@ def show_hide_timeline(clickData, n_clicks):
         return {'display': 'block'}
     else:
         return {'display': 'none'}
+
+
+@app.callback(
+    Output("map", "clickData"),
+    [Input("dash-layout", "n_clicks")])
+def reset_map_clickdata(n_clicks):
+    return None
 
 
 # Click map > update timeline chart

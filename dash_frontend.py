@@ -596,7 +596,7 @@ def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis,
         location_text = f"{addr} ({radius}km Umkreis)"
         location_editbox = addr
         filtered_map_data, poly = filter_by_radius(map_data, lat, lon, radius)
-        mean_trend = round(filtered_map_data["trend"].mean(), 1)
+        mean_trend = round(filtered_map_data["trend"].mean(), 2)
 
         # highlight circle
         highlight_x, highlight_y = poly.exterior.coords.xy
@@ -607,7 +607,7 @@ def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis,
         location_editbox = nominatim_lookup_edit
         filtered_map_data = map_data[map_data["bundesland"] == bundesland]
         ags = filtered_map_data["ags"].iloc[0][:-3]  # '08221' --> '08'
-        mean_trend = round(filtered_map_data["trend"].mean(), 1)
+        mean_trend = round(filtered_map_data["trend"].mean(), 2)
         highlight_x, highlight_y = get_outline_coords("bundesland", ags)
 
     elif "landkreis_dropdown" in prop_ids or \
@@ -616,7 +616,7 @@ def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis,
         location_editbox = nominatim_lookup_edit
         filtered_map_data = map_data[map_data["landkreis_label"] == landkreis]
         ags = filtered_map_data["ags"].iloc[0]
-        mean_trend = round(filtered_map_data["trend"].mean(), 1)
+        mean_trend = round(filtered_map_data["trend"].mean(), 2)
         highlight_x, highlight_y = get_outline_coords("landkreis", ags)
 
     else:
@@ -635,14 +635,18 @@ def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis,
     fig["layout"]["mapbox"]["center"]["lon"] = centerlon
     fig["layout"]["mapbox"]["zoom"] = zoom
 
-    return fig, str(mean_trend*100), location_text, location_editbox
+    mean_trend_str = str(mean_trend * 100)
+    if mean_trend >= 0.0:
+        mean_trend_str = "+" + mean_trend_str  # show plus sign
+
+    return fig, mean_trend_str, location_text, location_editbox
 
 
 @app.callback(
     Output('mean_trend_p', 'style'),
     [Input('mean_trend_span', 'children')])
 def style_mean_trend(mean_str):
-    color = helpers.trend2color(float(mean_str))
+    color = helpers.trend2color(float(mean_str)/100)
     return dict(background=color)
 
 @app.callback(

@@ -271,8 +271,7 @@ chart = html.Div(id="chart-container", style={'display': 'none'}, children=[
                         dict(  # fit
                             x=[], y=[],
                             mode="lines",
-                            line_shape="spline",
-                            name="Fit",
+                            name=f"{TRENDWINDOW}-Tage-Trend",
                             line=dict(color="blue", width=2),
                         )
                     ],
@@ -344,7 +343,7 @@ region_container = html.Div(id="region_container", className="container", childr
 trend_container = html.Div(id="trend_container", className="container", children=[
     dcc.Tabs(id='trend_tabs', value='tab-1', children=[
         dcc.Tab(label='Trend', value='tab-1', children=[
-            html.H3("7-Tage-Trend im gewählten Bereich:"),
+            html.H3(f"{TRENDWINDOW}-Tage-Trend im gewählten Bereich:"),
             html.P(id="mean_trend_p", style={}, children=[
                 html.Span(id="mean_trend_span", children=""),
                 "%"
@@ -416,13 +415,6 @@ def show_hide_timeline(clickData, n_clicks):
      State('map', 'figure')])
 def display_click_data(clickData, fig_chart, fig_map):
     #  print("Hover", clickData, type(clickData))
-    figtitle = "Wähle einen Datenpunkt auf der Karte!"
-    times = []
-    values = []
-    rolling = []
-    fitvals = []
-    origin_str = ""
-    origin_url = ""
     if clickData:  # only for datapoints (trace 0), not for other elements
         curveNumber = clickData["points"][0]['curveNumber']
         if curveNumber > 0:  # exclude selection marker
@@ -436,28 +428,25 @@ def display_click_data(clickData, fig_chart, fig_map):
                 figtitle = f"{city} ({name})"
             c_id = filtered_map_data.iloc[i]["c_id"]
             origin_url = filtered_map_data.iloc[i]["origin"]
-            origin_str = f"Datenquelle: {filtered_map_data.iloc[i]['_measurement']}"
-            times, values, rolling = load_timeseries(query_api, c_id)
+            # origin_str = f"Datenquelle: {filtered_map_data.iloc[i]['_measurement']}"
+            origin_str = f"Datenquelle: {c_id}"
 
-            a, b = filtered_map_data.iloc[i]['model']
-            fitvals = []
-            lastday = max(times)
-            day0 = lastday - timedelta(days=TRENDWINDOW - 1)
-            for t in times:
-                if t >= day0:
-                    unixtime = int(t.timestamp())  # unixtime in s
-                    fitvals.append(a*unixtime+b)
-                else:
-                    fitvals.append(nan)
-    fig_chart["data"][0]["x"] = times
-    fig_chart["data"][0]["y"] = values
-    fig_chart["data"][1]["x"] = times
-    fig_chart["data"][1]["y"] = rolling
-    fig_chart["data"][2]["x"] = times
-    fig_chart["data"][2]["y"] = fitvals
+            # Get timeseries data for this station
+            df_timeseries = load_timeseries(query_api, c_id)
 
-    fig_chart["layout"]["title"] = figtitle
-    return fig_chart, origin_str, origin_url
+            # Add "fit" column based on model
+            model = filtered_map_data.iloc[i]['model']
+            df_timeseries = helpers.apply_model_fit(df_timeseries, model, TRENDWINDOW)
+
+            fig_chart["data"][0]["x"] = df_timeseries["_time"]
+            fig_chart["data"][0]["y"] = df_timeseries["_value"]
+            fig_chart["data"][1]["x"] = df_timeseries["_time"]
+            fig_chart["data"][1]["y"] = df_timeseries["rolling"]
+            fig_chart["data"][2]["x"] = df_timeseries["_time"]
+            fig_chart["data"][2]["y"] = df_timeseries["fit"]
+            fig_chart["layout"]["title"] = figtitle
+            return fig_chart, origin_str, origin_url
+    return dash.no_update
 
 
 # Click Button > get JS GeoIP position
@@ -704,4 +693,4 @@ def nominatim_reverse_lookup(lat, lon):
 if __name__ == '__main__':
     # start Dash webserver
     print("Let's go")
-    app.run_server(debug=True, host=CONFIG["dash_host"])
+    app.run_server(debug=True, host=CONFIG["dash_host"], threaded=False)

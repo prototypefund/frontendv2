@@ -1,7 +1,6 @@
 """
 utility functions for the frontend that query the InfluxDB
 """
-import datetime
 import pandas as pd
 import numpy as np
 import geopandas as gpd
@@ -74,14 +73,6 @@ def get_map_data(query_api, trend_window=3, bucket="sdd"):
     geo_table["trend"] = geo_table["c_id"].map(trenddict)
     geo_table["model"] = geo_table["c_id"].map(models)
 
-    # def applyfit(row):
-    #     if row["_id"] in models:
-    #         a, b = models[row["_id"]]
-    #         return a * row["unixtime"] + b
-    #     else:
-    #         return np.nan
-    # geo_table["fit"] = geo_table.apply(lambda x: applyfit(x), axis=1)
-
     print("Result of 'get_map_data():")
     print(geo_table.columns)
     print(geo_table["_measurement"].value_counts())
@@ -90,11 +81,23 @@ def get_map_data(query_api, trend_window=3, bucket="sdd"):
 
 
 def load_trend(query_api, trend_window=3, bucket="sdd"):
-    print("load_trend...")
+    """
+    Acquire trend values for all stations
+    this is an expensive call, as the data from all stations
+    for the last trend_window days will be requested from
+    the influxdb. It is highly recommended to cache this!
+
+    Returns two dicts:
+        trend: c_id -> trend value
+        models: c_id -> (a, b)
+    a and b are the linear regression fit parameters: a=slope, b=offset
+
+    """
+    print(f"load_trend... (trend_window={trend_window})")
     filterstring = " or ".join([f'r["_field"] == "{x}"' for x in helpers.fieldnames.values()])
     query = f'''
             from(bucket: "{bucket}")
-          |> range(start: -{trend_window}d)
+          |> range(start: -{trend_window+2}d)
           |> filter(fn: (r) =>  {filterstring})
           '''
     tables = query_api.query_data_frame(query)
@@ -103,43 +106,40 @@ def load_trend(query_api, trend_window=3, bucket="sdd"):
     models = {}
     trend = {}
     df["unixtime"] = df["_time"].apply(lambda x: int(x.timestamp()), 1)  # unixtime in s
-    for idx in set(df["c_id"]):
+    for cid in set(df["c_id"]):
         # get sub-dataframe for this id
-        tmpdf = df[df["c_id"] == idx].sort_values(by=["unixtime"])
-        # remove too old data
-        lastday = max(tmpdf["_time"])
-        day0 = lastday - timedelta(days=trend_window-1)
-        tmpdf = tmpdf[tmpdf["_time"] >= day0]
-        tmpdf = tmpdf.reset_index(drop=True)
+        tmpdf = df[df["c_id"] == cid].sort_values(by=["unixtime"])
 
+        lastday = max(tmpdf["_time"])
         firstday = min(tmpdf["_time"])
-        # note: day0 is the (theoretical) beginning of the trend window
-        #       and firstday is the (actual) first day where data is available
 
         if (lastday - firstday).days < trend_window-1:
-            # not enough data for this station
-            models[idx] = (np.nan, np.nan)
-            trend[idx] = np.nan
+            # not enough data for this station, trend window not covered
+            models[cid] = (np.nan, np.nan)
+            trend[cid] = np.nan
             continue
+
+        day0 = lastday - timedelta(days=trend_window - 1)
+        tmpdf = tmpdf[tmpdf["_time"] >= day0]
+        tmpdf = tmpdf.reset_index(drop=True)
 
         # linear regression y = a*x +b
         values = pd.to_numeric(tmpdf["_value"])
         model = np.polyfit(tmpdf["unixtime"], values, 1)
-        a, b = model
-        models[idx] = model
+        models[cid] = model
 
         # calculate trend
-        #
-        t1 = firstday.timestamp()
+        a, b = model[:2]
+        t1 = day0.timestamp()
         t2 = lastday.timestamp()
         y1 = (a * t1 + b)
         y2 = (a * t2 + b)
         if y1 > 0:
-            trend[idx] = y2 / y1 - 1
+            trend[cid] = y2 / y1 - 1
         else:
-            trend[idx] = np.nan
+            trend[cid] = np.nan
 
-    return trend, models  # dict
+    return trend, models  # dicts
 
 
 def load_timeseries(query_api, c_id, bucket="sdd"):
@@ -161,18 +161,12 @@ def load_timeseries(query_api, c_id, bucket="sdd"):
       {extra_lines}
       '''
     tables = query_api.query_data_frame(query)
-    times = []
-    values = []
-    rolling = []
     if isinstance(tables, list):
         tables = tables[0]
-    if not isinstance(tables, pd.DataFrame):
-        print(f"Warning: tables type is not DataFrame but {type(tables)} (load_timeseries)")
-    elif tables.empty:
-        print(f"Warning: No data for {c_id} (load_timeseries)")
-    else:
-        times = list(tables["_time"])
-        values = list(tables["_value"])
-        rolling = tables.set_index("_time")["_value"].rolling("3d").mean()
+    assert isinstance(tables, pd.DataFrame), f"Warning: tables type is not DataFrame but {type(tables)} (load_timeseries)"
+    assert not tables.empty, f"Warning: No data for {c_id} (load_timeseries)"
 
-    return times, values, rolling
+    tables["rolling"] = tables.set_index("_time")["_value"].rolling("3d").mean().values
+    # import ipdb
+    # ipdb.set_trace()
+    return tables[["_time", "_value", "rolling"]]

@@ -3,6 +3,8 @@ utility functions for the frontend
 """
 
 from math import isnan, log
+from datetime import timedelta
+from numpy import nan
 
 
 def trend2color(trendvalue):
@@ -80,3 +82,19 @@ def calc_zoom(lat, lon):
     zoom_y = -1.446*log(width_y) + 7.2753
     zoom_x = -1.415*log(width_x) + 8.7068
     return min(round(zoom_y,2),round(zoom_x,2)), centerlat, centerlon
+
+
+def apply_model_fit(df, model, trend_window):
+    """
+    Add a column "fit" to a DataFrame with a "_time" column
+    For this, apply linear regression with model parameters a (slope) and
+    b (offset) to the unixtimestamp value of "_time". Do this only
+    for values inside the trend_window
+    """
+    a, b = model
+    day0 = max(df["_time"]) - timedelta(days=trend_window - 1)
+    df["fit"] = nan
+    df.loc[df["_time"] >= day0, "fit"] = df[df["_time"] >= day0].apply(lambda x: a * int(x["_time"].timestamp()) + b, axis=1)
+    return df
+
+

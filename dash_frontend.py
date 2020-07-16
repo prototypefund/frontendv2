@@ -23,10 +23,14 @@ default_lat = 50
 default_lon = 10
 default_radius = 60
 
-DISABLE_CACHE = True  # set to true to disable caching
-CLEAR_CACHE_ON_STARTUP = True  # for testing
-
 TRENDWINDOW = 7
+
+# READ CONFIG
+# ==========
+with open("config.json", "r") as f:
+    CONFIG = json.load(f)
+DISABLE_CACHE = not CONFIG["ENABLE_CACHE"]  # set to true to disable caching
+CLEAR_CACHE_ON_STARTUP = CONFIG["CLEAR_CACHE_ON_STARTUP"]  # for testing
 
 # DASH SETUP
 # =======
@@ -41,12 +45,6 @@ cache = Cache(app.server, config={
 })
 if CLEAR_CACHE_ON_STARTUP:
     cache.clear()
-
-# READ CONFIG
-# ==========
-with open("config.json", "r") as f:
-    CONFIG = json.load(f)
-
 
 # WRAPPERS
 # ===============
@@ -348,9 +346,7 @@ region_container = html.Div(id="region_container", className="container", childr
 ])
 
 
-
 trend_container = html.Div(id="trend_container", className="container", children=[
-
     html.Div(children=[
         html.H3(f"{TRENDWINDOW}-Tage-Trend im gewählten Bereich:"),
         html.P(id="mean_trend_p", style={}, children=[
@@ -398,9 +394,6 @@ app.layout = html.Div(id="dash-layout", children=[
     title,
     mainmap,
     trend_container,
-    #settings_container,
-    #area_control,
-    #location_lookup_div,
     region_container,
     chart
 ])

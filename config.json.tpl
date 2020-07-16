@@ -3,4 +3,6 @@
 "influx_token" : {{EveryoneCounts/Influx/ReadToken}},
 "influx_org" : "ec",
 "dash_host" : {{EveryoneCounts/Influx/Host}}
+"ENABLE_CACHE" : true,
+"CLEAR_CACHE_ON_STARTUP" : false
 }

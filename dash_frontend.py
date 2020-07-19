@@ -23,7 +23,6 @@ default_lat = 50
 default_lon = 10
 default_radius = 60
 
-TRENDWINDOW = 7
 
 # READ CONFIG
 # ==========
@@ -31,6 +30,7 @@ with open("config.json", "r") as f:
     CONFIG = json.load(f)
 DISABLE_CACHE = not CONFIG["ENABLE_CACHE"]  # set to true to disable caching
 CLEAR_CACHE_ON_STARTUP = CONFIG["CLEAR_CACHE_ON_STARTUP"]  # for testing
+TRENDWINDOW = CONFIG["TRENDWINDOW"]
 
 # DASH SETUP
 # =======

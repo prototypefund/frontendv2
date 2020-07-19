@@ -4,5 +4,6 @@
 "influx_org" : "ec",
 "dash_host" : {{EveryoneCounts/Influx/Host}},
 "ENABLE_CACHE" : true,
-"CLEAR_CACHE_ON_STARTUP" : false
+"CLEAR_CACHE_ON_STARTUP" : false,
+"TRENDWINDOW" : 7
 }

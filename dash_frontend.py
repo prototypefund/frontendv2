@@ -114,7 +114,8 @@ config_plots = dict(
 
 #  Dash Map
 main_map_name = "Messpunkte"
-traces = [dict(
+traces = dict()
+traces["stations"] = [dict(
     # TRACE 0: radius selection marker
     name="Filter radius",
     type="scattermapbox",
@@ -150,14 +151,46 @@ for index, measurement in enumerate(map_data["_measurement"].unique()):
         text=helpers.tooltiptext(measurement_map_data),
         hoverinfo="text",
     )
-    traces.append(trace)
+    traces["stations"].append(trace)
 map_data["trace_index"] = map_data["trace_index"].astype(int)
+
+traces["bundesland"] = []
+traces["landkreis"] = []
+for region in ["landkreis", "bundesland"]:
+    for name in sorted(map_data[region].dropna().unique(), reverse=True):
+        # reverse order so Berlin is drawn on top of Brandenburg
+        if name == "nan":
+            print(f"WARNING: NaN {region} found!")
+            print(map_data[map_data[region] == "nan"])
+            continue
+        filtered_map_data = map_data[map_data[region] == name]
+        ags = filtered_map_data["ags"].iloc[0]
+        if region == "bundesland":
+            ags = ags[:-3]
+        x, y = get_outline_coords(region, ags)
+        mean_trend = filtered_map_data["trend"].mean()
+        trace = dict(
+            name=name,
+            type="scattermapbox",
+            fill="toself",
+            showlegend=False,
+            fillcolor=helpers.trend2color(mean_trend, 0.8),
+            marker=dict(
+                color="rgba(255, 255, 255, 1.0)",
+            ),
+            lat=y,
+            lon=x,
+            mode='lines',
+            text=f"{name}: {round(mean_trend,2)}%",
+            hoverinfo="text",
+        )
+        traces[region].append(trace)
 
 mainmap = dcc.Graph(
     id='map',
     config=config_plots,
     figure={
-        'data': traces,
+        'data': traces["stations"],
         'layout': dict(
             autosize=True,
             hovermode='closest',
@@ -359,12 +392,13 @@ trend_container = html.Div(id="trend_container", className="container", children
     html.Div(children=[
         html.H3("Detailgrad"),
         dcc.RadioItems(
+            id="detail_radio",
             options=[
-                {'label': 'Messstationen', 'value': 'station'},
+                {'label': 'Messstationen', 'value': 'stations'},
                 {'label': 'Landkreise', 'value': 'landkreis'},
                 {'label': 'Bundesländer', 'value': 'bundesland'}
             ],
-            value='station',
+            value='stations',
             labelStyle={'display': 'inline-block'}
         ),
     ]),
@@ -415,7 +449,7 @@ def show_hide_timeline(clickData, n_clicks):
     if not ctx.triggered:
         return dash.no_update
     # print("CALLBACK:",ctx.triggered)
-    prop_ids = [x['prop_id'].split('.')[0] for x in ctx.triggered]
+    prop_ids = helpers.dash_callback_get_prop_ids(ctx)
     if "map" in prop_ids:
         return {'display': 'block'}
     else:
@@ -619,7 +653,7 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
         location_text = f"{addr} ({radius}km Umkreis)"
         location_editbox = addr
         filtered_map_data, poly = filter_by_radius(map_data, lat, lon, radius)
-        mean_trend = round(filtered_map_data["trend"].mean(), 2)
+        mean_trend = filtered_map_data["trend"].mean()
 
         # highlight circle
         highlight_x, highlight_y = poly.exterior.coords.xy
@@ -630,7 +664,7 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
         location_editbox = nominatim_lookup_edit
         filtered_map_data = map_data[map_data["bundesland"] == bundesland]
         ags = filtered_map_data["ags"].iloc[0][:-3]  # '08221' --> '08'
-        mean_trend = round(filtered_map_data["trend"].mean(), 2)
+        mean_trend = filtered_map_data["trend"].mean()
         highlight_x, highlight_y = get_outline_coords("bundesland", ags)
 
     elif "landkreis_dropdown" in prop_ids or \
@@ -639,7 +673,7 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
         location_editbox = nominatim_lookup_edit
         filtered_map_data = map_data[map_data["landkreis_label"] == landkreis]
         ags = filtered_map_data["ags"].iloc[0]
-        mean_trend = round(filtered_map_data["trend"].mean(), 2)
+        mean_trend = filtered_map_data["trend"].mean()
         highlight_x, highlight_y = get_outline_coords("landkreis", ags)
 
     else:
@@ -649,7 +683,7 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
         highlight_x, highlight_y = None, None
 
     highlight_polygon = (highlight_x, highlight_y)
-    mean_trend_str = str(mean_trend * 100)
+    mean_trend_str = str(int(round(mean_trend * 100)))
     if mean_trend >= 0.0:
         mean_trend_str = "+" + mean_trend_str  # show plus sign
 
@@ -657,27 +691,39 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
 
 
 @app.callback(
-    Output('map', 'figure'),
-    [Input('highlight_polygon', 'data')],
+    [Output('map', 'figure'),
+     Output('region_container', 'style')],
+    [Input('highlight_polygon', 'data'),
+     Input('detail_radio', 'value')],
     [State('map', 'figure')])
-def update_map(highlight_polygon, fig):
+def update_map(highlight_polygon, detail_radio, fig):
     """
     Redraw map based on level-of-detail selection and
     current highlight selection
     """
-    highlight_x, highlight_y = highlight_polygon
 
-    # draw highligth into trace0
-    fig["data"][0]["lat"] = highlight_y
-    fig["data"][0]["lon"] = highlight_x
+    fig["data"] = traces[detail_radio]  # Update map
 
-    # center and zoom map
-    zoom, centerlat, centerlon = helpers.calc_zoom(highlight_y, highlight_x)
-    fig["layout"]["mapbox"]["center"]["lat"] = centerlat
-    fig["layout"]["mapbox"]["center"]["lon"] = centerlon
-    fig["layout"]["mapbox"]["zoom"] = zoom
-
-    return fig
+    # Handle highlight display
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return dash.no_update
+    prop_ids = helpers.dash_callback_get_prop_ids(ctx)
+    if detail_radio == "stations":
+        highlight_x, highlight_y = highlight_polygon
+        # draw highligth into trace0
+        fig["data"][0]["lat"] = highlight_y
+        fig["data"][0]["lon"] = highlight_x
+        if "highlight_polygon" in prop_ids:
+            # center and zoom map
+            zoom, centerlat, centerlon = helpers.calc_zoom(highlight_y, highlight_x)
+            fig["layout"]["mapbox"]["center"]["lat"] = centerlat
+            fig["layout"]["mapbox"]["center"]["lon"] = centerlon
+            fig["layout"]["mapbox"]["zoom"] = zoom
+        region_container_style = {'display': 'block'}
+    else:
+        region_container_style = {'display': 'none'}
+    return fig, region_container_style
 
 @app.callback(
     Output('mean_trend_p', 'style'),

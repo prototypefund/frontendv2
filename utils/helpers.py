@@ -7,21 +7,21 @@ from datetime import timedelta
 from numpy import nan
 
 
-def trend2color(trendvalue):
+def trend2color(trendvalue, alpha=1):
     """
     return a color code for a given trend value
     """
     if isnan(trendvalue):
-        return "#999999"
+        return f"rgba(180, 180, 180, {alpha})"
     elif trendvalue > 1:  # +100%
         # red
-        return "#cc0000"
+        return f"rgba(230, 0, 0, {alpha})"
     elif trendvalue < 0.2:  # +20%
         # green
-        return "#00cc22"
+        return f"rgba(0, 230, 50, {alpha})"
     else:
         # yellow
-        return "#ccaa00"
+        return f"rgba(230, 200, 0, {alpha})"
 
 
 def tooltiptext(df):

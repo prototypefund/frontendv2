@@ -81,11 +81,13 @@ map_data = get_map_data(query_api)  # map_data is a GeoDataFrame
 # ======================
 
 # dcc Storage
-clientside_callback_storage = dcc.Store(id='clientside_callback_storage', storage_type='memory')
-nominatim_storage = dcc.Store(id='nominatim_storage', storage_type='memory')
-urlbar_storage = dcc.Store(id='urlbar_storage', storage_type='memory')
-latlon_local_storage = dcc.Store(id='latlon_local_storage', storage_type='local')
-
+storage = [
+    dcc.Store(id='clientside_callback_storage', storage_type='memory'),
+    dcc.Store(id='nominatim_storage', storage_type='memory'),
+    dcc.Store(id='urlbar_storage', storage_type='memory'),
+    dcc.Store(id='highlight_polygon', storage_type='memory'),
+    dcc.Store(id='latlon_local_storage', storage_type='local'),
+]
 # Title
 title = html.H1(
     children='EveryoneCounts',
@@ -390,7 +392,7 @@ trend_container = html.Div(id="trend_container", className="container", children
 
 app.layout = html.Div(id="dash-layout", children=[
     dcc.Location(id='url', refresh=False),
-    clientside_callback_storage, nominatim_storage, latlon_local_storage, urlbar_storage,
+    *storage,
     title,
     mainmap,
     trend_container,
@@ -582,22 +584,21 @@ def update_permalink(latlon_local_storage, radius):
     return f"?lat={lat}&lon={lon}&radius={radius}"
 
 
-# Update map on geolocation change
+# Update highlight on geolocation change or BL/LK selection
 @app.callback(
-    [Output('map', 'figure'),
+    [
      Output('mean_trend_span', 'children'),
      Output('location_text', 'children'),
-     Output('nominatim_lookup_edit', 'value')],
-    # Output('url', 'search')],
+     Output('nominatim_lookup_edit', 'value'),
+     Output('highlight_polygon', 'data')],
     [Input('latlon_local_storage', 'data'),
      Input('radiusslider', 'value'),
      Input('bundesland_dropdown', 'value'),
      Input('landkreis_dropdown', 'value'),
      Input('region_tabs', 'value')],
-    [State('map', 'figure'),
-     State('nominatim_lookup_edit', 'value')])
-def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis, region_tabs,
-                            fig, nominatim_lookup_edit):
+    [State('nominatim_lookup_edit', 'value')])
+def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region_tabs,
+                            nominatim_lookup_edit):
     """
     Based on selected region (radius+center or landkreis or bundesland) change the following:
     - Region name
@@ -647,6 +648,25 @@ def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis,
         location_editbox = nominatim_lookup_edit
         highlight_x, highlight_y = None, None
 
+    highlight_polygon = (highlight_x, highlight_y)
+    mean_trend_str = str(mean_trend * 100)
+    if mean_trend >= 0.0:
+        mean_trend_str = "+" + mean_trend_str  # show plus sign
+
+    return mean_trend_str, location_text, location_editbox, highlight_polygon
+
+
+@app.callback(
+    Output('map', 'figure'),
+    [Input('highlight_polygon', 'data')],
+    [State('map', 'figure')])
+def update_map(highlight_polygon, fig):
+    """
+    Redraw map based on level-of-detail selection and
+    current highlight selection
+    """
+    highlight_x, highlight_y = highlight_polygon
+
     # draw highligth into trace0
     fig["data"][0]["lat"] = highlight_y
     fig["data"][0]["lon"] = highlight_x
@@ -657,12 +677,7 @@ def update_on_region_change(latlon_local_storage, radius, bundesland, landkreis,
     fig["layout"]["mapbox"]["center"]["lon"] = centerlon
     fig["layout"]["mapbox"]["zoom"] = zoom
 
-    mean_trend_str = str(mean_trend * 100)
-    if mean_trend >= 0.0:
-        mean_trend_str = "+" + mean_trend_str  # show plus sign
-
-    return fig, mean_trend_str, location_text, location_editbox
-
+    return fig
 
 @app.callback(
     Output('mean_trend_p', 'style'),

@@ -63,6 +63,7 @@ def get_map_data(query_api, trend_window=3, bucket="sdd"):
     geo_table = geo_table.join(metadata)
 
     geo_table = geo_table.reset_index()
+    geo_table["ags"] = geo_table["ags"].str.zfill(5)  # 1234 --> "01234"
     trenddict, models = load_trend(query_api, trend_window)
     geo_table["trend"] = geo_table["c_id"].map(trenddict)
     geo_table["model"] = geo_table["c_id"].map(models)

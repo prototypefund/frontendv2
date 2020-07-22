@@ -44,7 +44,8 @@ fieldnames = {
         "bikes": "bike_count",
         "google_maps": "current_popularity",
         "hystreet": "pedestrian_count",
-        "webcam": "personenzahl"
+        "webcam": "personenzahl",
+        "webcam-customvision": "personenzahl"
     }
 
 

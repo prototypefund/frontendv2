@@ -780,4 +780,4 @@ def nominatim_reverse_lookup(lat, lon):
 if __name__ == '__main__':
     # start Dash webserver
     print("Let's go")
-    app.run_server(debug=True, host=CONFIG["dash_host"], threaded=False)
+    app.run_server(debug=CONFIG["DEBUG"], host=CONFIG["dash_host"], threaded=False)

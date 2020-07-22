@@ -5,5 +5,6 @@
 "dash_host" : {{EveryoneCounts/Influx/Host}},
 "ENABLE_CACHE" : true,
 "CLEAR_CACHE_ON_STARTUP" : false,
-"TRENDWINDOW" : 7
+"TRENDWINDOW" : 7,
+"DEBUG": false
 }

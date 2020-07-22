@@ -1,13 +1,13 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 from flask_caching import Cache
+import numpy as np
 import pandas as pd
 import geopandas as gpd
 import json
-from numpy import nan
-from datetime import timedelta
 
 from geopy.geocoders import Nominatim
 from urllib.parse import parse_qs
@@ -61,9 +61,12 @@ def get_query_api():
     return queries.get_query_api(url, org, token)
 
 
+query_api = get_query_api()
+
+
 @cache.memoize(unless=DISABLE_CACHE)
-def get_map_data(query_api):
-    return queries.get_map_data(query_api, trend_window=TRENDWINDOW)
+def get_map_data():
+    return queries.get_map_data(query_api=query_api, trend_window=TRENDWINDOW)
 
 
 @cache.memoize(unless=DISABLE_CACHE)
@@ -73,8 +76,7 @@ def load_timeseries(query_api, _id):
 
 # LOAD MAP DATA
 # ================
-query_api = get_query_api()
-map_data = get_map_data(query_api)  # map_data is a GeoDataFrame
+map_data = get_map_data()  # map_data is a GeoDataFrame
 
 
 # SET UP DASH ELEMENTS
@@ -154,37 +156,32 @@ for index, measurement in enumerate(map_data["_measurement"].unique()):
     traces["stations"].append(trace)
 map_data["trace_index"] = map_data["trace_index"].astype(int)
 
-traces["bundesland"] = []
-traces["landkreis"] = []
-for region in ["landkreis", "bundesland"]:
-    for name in sorted(map_data[region].dropna().unique(), reverse=True):
-        # reverse order so Berlin is drawn on top of Brandenburg
-        if name == "nan":
-            print(f"WARNING: NaN {region} found!")
-            print(map_data[map_data[region] == "nan"])
-            continue
-        filtered_map_data = map_data[map_data[region] == name]
-        ags = filtered_map_data["ags"].iloc[0]
-        if region == "bundesland":
-            ags = ags[:-3]
-        x, y = get_outline_coords(region, ags)
-        mean_trend = filtered_map_data["trend"].mean()
-        trace = dict(
-            name=name,
-            type="scattermapbox",
-            fill="toself",
-            showlegend=False,
-            fillcolor=helpers.trend2color(mean_trend, 0.8),
-            marker=dict(
-                color="rgba(255, 255, 255, 1.0)",
-            ),
-            lat=y,
-            lon=x,
-            mode='lines',
-            text=f"{name}: {round(mean_trend,2)}%",
-            hoverinfo="text",
-        )
-        traces[region].append(trace)
+# Prepare landkreis/bundeslad choropleth maps
+for region in ("landkreis", "bundesland"):
+    choropleth_df = map_data.groupby(["ags", region]).mean().reset_index()
+    if region == "bundesland":
+        choropleth_df["ags"] = choropleth_df["ags"].str[:-3]
+        geojson_filename = "states.json"
+    else:
+        # landkreis
+        geojson_filename = "counties.json"
+    with open(f"utils/geofeatures-ags-germany/{geojson_filename}", "r") as f:
+        geojson = json.load(f)
+    traces[region] = [go.Choroplethmapbox(
+        geojson=geojson,
+        locations=choropleth_df["ags"],
+        z=choropleth_df["trend"],
+        showlegend=False,
+        showscale=False,
+        colorscale=[helpers.trend2color(x) for x in np.linspace(-1, 2, 10)],
+        hoverinfo="text",
+        zmin=-1,
+        zmax=2,
+        text=helpers.tooltiptext(choropleth_df),
+        marker_line_color="white",
+        marker_opacity=1,
+        marker_line_width=1)]
+
 
 mainmap = dcc.Graph(
     id='map',

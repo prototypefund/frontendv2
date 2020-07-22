@@ -62,12 +62,6 @@ def get_map_data(query_api, trend_window=3, bucket="sdd"):
     metadata = metadata.set_index("c_id").drop_duplicates()
     geo_table = geo_table.join(metadata)
 
-    # get trend value for each station
-    # trend = load_trend(query_api)
-
-    # join everything together
-    # tables = tables.set_index("_id").join(trend).join(geo_table).reset_index()
-
     geo_table = geo_table.reset_index()
     trenddict, models = load_trend(query_api, trend_window)
     geo_table["trend"] = geo_table["c_id"].map(trenddict)
@@ -97,7 +91,7 @@ def load_trend(query_api, trend_window=3, bucket="sdd"):
     filterstring = " or ".join([f'r["_field"] == "{x}"' for x in helpers.fieldnames.values()])
     query = f'''
             from(bucket: "{bucket}")
-          |> range(start: -{trend_window+2}d)
+          |> range(start: -{trend_window + 2}d)
           |> filter(fn: (r) =>  {filterstring})
           '''
     tables = query_api.query_data_frame(query)
@@ -113,7 +107,7 @@ def load_trend(query_api, trend_window=3, bucket="sdd"):
         lastday = max(tmpdf["_time"])
         firstday = min(tmpdf["_time"])
 
-        if (lastday - firstday).days < trend_window-1:
+        if (lastday - firstday).days < trend_window - 1:
             # not enough data for this station, trend window not covered
             models[cid] = (np.nan, np.nan)
             trend[cid] = np.nan
@@ -123,20 +117,32 @@ def load_trend(query_api, trend_window=3, bucket="sdd"):
         tmpdf = tmpdf[tmpdf["_time"] >= day0]
         tmpdf = tmpdf.reset_index(drop=True)
 
-        # linear regression y = a*x +b
         values = pd.to_numeric(tmpdf["_value"])
-        model = np.polyfit(tmpdf["unixtime"], values, 1)
-        models[cid] = model
 
-        # calculate trend
-        a, b = model[:2]
-        t1 = day0.timestamp()
-        t2 = lastday.timestamp()
-        y1 = (a * t1 + b)
-        y2 = (a * t2 + b)
-        if y1 > 0:
-            trend[cid] = y2 / y1 - 1
+        COUNT_LOW_THRESHOLD = 3
+        PERCENT_NONZEROS_THRESHOLD = 0.75
+        # perform linear regression only when the mean is above COUNT_LOW_THRESHOLD
+        # or if the fraction of non-zero numbers exceeds PERCENT_NONZEROS_THRESHOLD.
+        # This is to suppress unhelpful fits for low-value data sources
+        if np.mean(values) > COUNT_LOW_THRESHOLD or \
+                np.count_nonzero(values) / len(values) > PERCENT_NONZEROS_THRESHOLD:
+            # linear regression y = a*x +b
+            model = np.polyfit(tmpdf["unixtime"], values, 1)
+            models[cid] = model
+
+            # calculate trend
+            a, b = model[:2]
+            t1 = day0.timestamp()
+            t2 = lastday.timestamp()
+            y1 = (a * t1 + b)
+            y2 = (a * t2 + b)
+            if y1 > 0:
+                trend[cid] = y2 / y1 - 1
+            else:
+                trend[cid] = np.nan
         else:
+            # counts too low for reliable regression
+            models[cid] = (np.nan, np.nan)
             trend[cid] = np.nan
 
     return trend, models  # dicts
@@ -163,7 +169,8 @@ def load_timeseries(query_api, c_id, bucket="sdd"):
     tables = query_api.query_data_frame(query)
     if isinstance(tables, list):
         tables = tables[0]
-    assert isinstance(tables, pd.DataFrame), f"Warning: tables type is not DataFrame but {type(tables)} (load_timeseries)"
+    assert isinstance(tables,
+                      pd.DataFrame), f"Warning: tables type is not DataFrame but {type(tables)} (load_timeseries)"
     assert not tables.empty, f"Warning: No data for {c_id} (load_timeseries)"
 
     tables["rolling"] = tables.set_index("_time")["_value"].rolling("3d").mean().values

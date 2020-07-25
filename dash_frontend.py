@@ -14,6 +14,7 @@ from urllib.parse import parse_qs
 from utils import queries
 from utils import helpers
 from utils import map_traces
+from utils import timeline_chart
 from utils.filter_by_radius import filter_by_radius
 from utils.get_outline_coords import get_outline_coords
 
@@ -83,6 +84,8 @@ def get_map_traces(map_data):
 # ================
 map_data = get_map_data()  # map_data is a GeoDataFrame
 map_data, traces = get_map_traces(map_data)  # traces for main map
+chart = timeline_chart.TimelineChartWindow(TRENDWINDOW, load_timeseries)
+
 
 # SET UP DASH ELEMENTS
 # ======================
@@ -168,94 +171,14 @@ mainmap = dcc.Graph(
     },
 )
 # LINE CHART
-selectorOptions = dict(
-    buttons=[
-        {
-            "step": 'all',
-            "label": 'Gesamt'
-        }, {
-            "step": 'year',
-            "stepmode": 'backward',
-            "count": 1,
-            "label": 'Jahr'
-        }, {
-            "step": 'month',
-            "stepmode": 'backward',
-            "count": 3,
-            "label": '3 Monate'
-        }, {
-            "step": 'month',
-            "stepmode": 'backward',
-            "count": 1,
-            "label": 'Monat'
-        }, {
-            "step": 'day',
-            "stepmode": 'backward',
-            "count": 7,
-            "label": 'Woche'
-        }
-    ]
-)
-chartlayout = dict(
-    autosize=True,
-    height=350,
-    width=700,
-    title="Waehle einen Messpunkt auf der Karte",
-    hovermode='closest',
-    yaxis=dict(
-        title="Passanten"
-    ),
-    xaxis=dict(
-        title="Zeitpunkt",
-        rangeselector=selectorOptions,
-    ),
-    legend=dict(
-        orientation="h",
-        y=-0.5
-        )
-)
 
-chart = html.Div(id="chart-container", style={'display': 'none'}, children=[
+chartDiv = html.Div(id="chart-container", style={'display': 'none'}, children=[
     html.Button(id="chart-close", children=" × "),
     dcc.Loading(
+        id="timeline-chart",
         type="circle",
-        children=[
-            dcc.Graph(
-                id='chart',
-                config=config_plots,
-                className="timeline-chart",
-                figure={
-                    'data': [
-                        dict(  # datapoints
-                            x=[], y=[],
-                            mode="lines+markers",
-                            name="Daten",
-                            line=dict(color="#d9d9d9", width=1),
-                            marker=dict(
-                                size=6,
-                                color="DarkSlateGrey",
-                            ),
-                        ),
-                        dict(  # rolling average
-                            x=[], y=[],
-                            mode="lines",
-                            line_shape="spline",
-                            name="Gleitender Durchschnitt",
-                            line=dict(color="#F63366", width=4),
-                        ),
-                        dict(  # fit
-                            x=[], y=[],
-                            mode="lines",
-                            name=f"{TRENDWINDOW}-Tage-Trend",
-                            line=dict(color="blue", width=2),
-                        )
-                    ],
-                    'layout': chartlayout
-                }
-            )
-        ]
+        children=[]
     ),
-    html.A(id="chart_origin", children="", href="")
 ])
 
 # LOOKUP BOX
@@ -366,7 +289,7 @@ app.layout = html.Div(id="dash-layout", children=[
     mainmap,
     trend_container,
     region_container,
-    chart
+    chartDiv
 ])
 
 # CALLBACK FUNCTIONS
@@ -400,45 +323,13 @@ def reset_map_clickdata(n_clicks):
 
 # Click map > update timeline chart
 @app.callback(
-    [Output('chart', 'figure'),
-     Output('chart_origin', 'children'),
-     Output('chart_origin', 'href')],
+    [Output('timeline-chart', 'children')],
     [Input('map', 'clickData')],
-    [State('chart', 'figure'),
-     State('map', 'figure')])
-def display_click_data(clickData, fig_chart, fig_map):
-    #  print("Hover", clickData, type(clickData))
-    if clickData:  # only for datapoints (trace 0), not for other elements
-        curveNumber = clickData["points"][0]['curveNumber']
-        if curveNumber > 0:  # exclude selection marker
-            i = clickData["points"][0]['pointIndex']
-            filtered_map_data = map_data[map_data["trace_index"] == curveNumber]
-            city = filtered_map_data.iloc[i]['city']
-            name = filtered_map_data.iloc[i]['name']
-            if city is None:
-                figtitle = f"{name}"
-            else:
-                figtitle = f"{city} ({name})"
-            c_id = filtered_map_data.iloc[i]["c_id"]
-            origin_url = filtered_map_data.iloc[i]["origin"]
-            # origin_str = f"Datenquelle: {filtered_map_data.iloc[i]['_measurement']}"
-            origin_str = f"Datenquelle: {c_id}"
-
-            # Get timeseries data for this station
-            df_timeseries = load_timeseries(c_id)
-
-            # Add "fit" column based on model
-            model = filtered_map_data.iloc[i]['model']
-            df_timeseries = helpers.apply_model_fit(df_timeseries, model, TRENDWINDOW)
-
-            fig_chart["data"][0]["x"] = df_timeseries["_time"]
-            fig_chart["data"][0]["y"] = df_timeseries["_value"]
-            fig_chart["data"][1]["x"] = df_timeseries["_time"]
-            fig_chart["data"][1]["y"] = df_timeseries["rolling"]
-            fig_chart["data"][2]["x"] = df_timeseries["_time"]
-            fig_chart["data"][2]["y"] = df_timeseries["fit"]
-            fig_chart["layout"]["title"] = figtitle
-            return fig_chart, origin_str, origin_url
+    [State('detail_radio', 'value')])
+def display_click_data(clickData, detail_radio):
+    print("Hover", clickData, type(clickData))
+    if clickData and chart.update_figure(detail_radio, clickData, map_data):
+        return [chart.get_timeline_window()]
     return dash.no_update
 
 

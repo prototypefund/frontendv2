@@ -618,9 +618,12 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
         highlight_x, highlight_y = None, None
 
     highlight_polygon = (highlight_x, highlight_y)
-    mean_trend_str = str(int(round(mean_trend * 100)))
-    if mean_trend >= 0.0:
-        mean_trend_str = "+" + mean_trend_str  # show plus sign
+    if np.isnan(mean_trend):
+        mean_trend_str = ""
+    else:
+        mean_trend_str = str(int(round(mean_trend * 100)))
+        if mean_trend >= 0.0:
+            mean_trend_str = "+" + mean_trend_str  # show plus sign
 
     return mean_trend_str, location_text, location_editbox, highlight_polygon
 

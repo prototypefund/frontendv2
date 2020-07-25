@@ -1,7 +1,6 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 from flask_caching import Cache
 import numpy as np
@@ -14,6 +13,7 @@ from urllib.parse import parse_qs
 
 from utils import queries
 from utils import helpers
+from utils import map_traces
 from utils.filter_by_radius import filter_by_radius
 from utils.get_outline_coords import get_outline_coords
 
@@ -70,14 +70,19 @@ def get_map_data():
 
 
 @cache.memoize(unless=DISABLE_CACHE)
-def load_timeseries(query_api, _id):
+def load_timeseries(_id):
     return queries.load_timeseries(query_api, _id)
+
+
+@cache.memoize(unless=DISABLE_CACHE)
+def get_map_traces(map_data):
+    return map_traces.get_map_traces(map_data=map_data)
 
 
 # LOAD MAP DATA
 # ================
 map_data = get_map_data()  # map_data is a GeoDataFrame
-
+map_data, traces = get_map_traces(map_data)  # traces for main map
 
 # SET UP DASH ELEMENTS
 # ======================
@@ -116,73 +121,6 @@ config_plots = dict(
 
 #  Dash Map
 main_map_name = "Messpunkte"
-traces = dict()
-traces["stations"] = [dict(
-    # TRACE 0: radius selection marker
-    name="Filter radius",
-    type="scattermapbox",
-    fill="toself",
-    showlegend=False,
-    fillcolor="rgba(135, 206, 250, 0.3)",
-    marker=dict(
-        color="rgba(135, 206, 250, 0.0)",
-    ),
-    hoverinfo="skip",
-    lat=[],
-    lon=[],
-    mode="lines"
-    )]
-
-# Split into traces by measurement, add column "trace_index" (important for data selection)
-for index, measurement in enumerate(map_data["_measurement"].unique()):
-    map_data.loc[map_data["_measurement"] == measurement, "trace_index"] = index+1
-    measurement_map_data = map_data[map_data["_measurement"] == measurement]
-    trace = dict(
-        # TRACE 1...N: Datapoints
-        name=measurement,
-        type="scattermapbox",
-        lat=measurement_map_data["lat"],
-        lon=measurement_map_data["lon"],
-        mode='markers',
-        marker=dict(
-            size=20,
-            color=measurement_map_data.apply(lambda x: helpers.trend2color(x["trend"]), axis=1),
-            line=dict(width=2,
-                      color='DarkSlateGrey'),
-        ),
-        text=helpers.tooltiptext(measurement_map_data),
-        hoverinfo="text",
-    )
-    traces["stations"].append(trace)
-map_data["trace_index"] = map_data["trace_index"].astype(int)
-
-# Prepare landkreis/bundeslad choropleth maps
-for region in ("landkreis", "bundesland"):
-    choropleth_df = map_data.groupby(["ags", region]).mean().reset_index()
-    if region == "bundesland":
-        choropleth_df["ags"] = choropleth_df["ags"].str[:-3]
-        geojson_filename = "states.json"
-    else:
-        # landkreis
-        geojson_filename = "counties.json"
-    with open(f"utils/geofeatures-ags-germany/{geojson_filename}", "r") as f:
-        geojson = json.load(f)
-    traces[region] = [go.Choroplethmapbox(
-        geojson=geojson,
-        locations=choropleth_df["ags"],
-        z=choropleth_df["trend"],
-        showlegend=False,
-        showscale=False,
-        colorscale=[helpers.trend2color(x) for x in np.linspace(-1, 2, 10)],
-        hoverinfo="text",
-        zmin=-1,
-        zmax=2,
-        text=helpers.tooltiptext(choropleth_df),
-        marker_line_color="white",
-        marker_opacity=1,
-        marker_line_width=1)]
-
-
 mainmap = dcc.Graph(
     id='map',
     config=config_plots,
@@ -487,7 +425,7 @@ def display_click_data(clickData, fig_chart, fig_map):
             origin_str = f"Datenquelle: {c_id}"
 
             # Get timeseries data for this station
-            df_timeseries = load_timeseries(query_api, c_id)
+            df_timeseries = load_timeseries(c_id)
 
             # Add "fit" column based on model
             model = filtered_map_data.iloc[i]['model']

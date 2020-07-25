@@ -24,7 +24,6 @@ default_lat = 50
 default_lon = 10
 default_radius = 60
 
-
 # READ CONFIG
 # ==========
 with open("config.json", "r") as f:
@@ -46,6 +45,7 @@ cache = Cache(app.server, config={
 })
 if CLEAR_CACHE_ON_STARTUP:
     cache.clear()
+
 
 # WRAPPERS
 # ===============
@@ -85,7 +85,6 @@ def get_map_traces(map_data):
 map_data = get_map_data()  # map_data is a GeoDataFrame
 map_data, traces = get_map_traces(map_data)  # traces for main map
 chart = timeline_chart.TimelineChartWindow(TRENDWINDOW, load_timeseries)
-
 
 # SET UP DASH ELEMENTS
 # ======================
@@ -177,7 +176,14 @@ chartDiv = html.Div(id="chart-container", style={'display': 'none'}, children=[
     dcc.Loading(
         id="timeline-chart",
         type="circle",
-        children=[]
+        children=[
+            dcc.Checklist(id="timeline-avg-check", value=[])
+            # This checklist  needs to be in the layout because
+            # a callback is bound to it. Otherwise, Dash 1.12 will throw errors
+            # This is an issue even when using app.validation_layout or
+            # suppress_callback_exceptions=True, as suggested in the docs
+            # Don't trust the documentation in this case.
+        ]
     ),
 ])
 
@@ -207,8 +213,7 @@ location_lookup_div = html.Div(className="", children=[
     )
 ])
 
-
-map_data["landkreis_label"] = map_data.apply(lambda x: x["landkreis"]+" "+str(x["districtType"]), 1)
+map_data["landkreis_label"] = map_data.apply(lambda x: x["landkreis"] + " " + str(x["districtType"]), 1)
 landkreis_options = [{'label': x, 'value': x} for x in sorted(map_data["landkreis_label"].unique())]
 bundesland_options = [{'label': x, 'value': x} for x in sorted(map_data["bundesland"].unique())]
 region_container = html.Div(id="region_container", className="container", children=[
@@ -237,7 +242,6 @@ region_container = html.Div(id="region_container", className="container", childr
         ]),
     ])
 ])
-
 
 trend_container = html.Div(id="trend_container", className="container", children=[
     html.Div(children=[
@@ -281,8 +285,7 @@ trend_container = html.Div(id="trend_container", className="container", children
     html.P(html.A(id="permalink", children="Permalink", href="xyz")),
 ])
 
-
-app.layout = html.Div(id="dash-layout", children=[
+layout = [
     dcc.Location(id='url', refresh=False),
     *storage,
     title,
@@ -290,7 +293,9 @@ app.layout = html.Div(id="dash-layout", children=[
     trend_container,
     region_container,
     chartDiv
-])
+]
+app.layout = html.Div(id="dash-layout", children=layout)
+
 
 # CALLBACK FUNCTIONS
 # ==================
@@ -324,11 +329,13 @@ def reset_map_clickdata(n_clicks):
 # Click map > update timeline chart
 @app.callback(
     [Output('timeline-chart', 'children')],
-    [Input('map', 'clickData')],
+    [Input('map', 'clickData'),
+     Input('timeline-avg-check', 'value')],
     [State('detail_radio', 'value')])
-def display_click_data(clickData, detail_radio):
-    print("Hover", clickData, type(clickData))
-    if clickData and chart.update_figure(detail_radio, clickData, map_data):
+def display_click_data(clickData, avg_checkbox, detail_radio):
+    print("clickData:", clickData, type(clickData))
+    avg = len(avg_checkbox) > 0
+    if clickData and chart.update_figure(detail_radio, clickData, map_data, avg):
         return [chart.get_timeline_window()]
     return dash.no_update
 
@@ -447,10 +454,10 @@ def update_permalink(latlon_local_storage, radius):
 # Update highlight on geolocation change or BL/LK selection
 @app.callback(
     [
-     Output('mean_trend_span', 'children'),
-     Output('location_text', 'children'),
-     Output('nominatim_lookup_edit', 'value'),
-     Output('highlight_polygon', 'data')],
+        Output('mean_trend_span', 'children'),
+        Output('location_text', 'children'),
+        Output('nominatim_lookup_edit', 'value'),
+        Output('highlight_polygon', 'data')],
     [Input('latlon_local_storage', 'data'),
      Input('radiusslider', 'value'),
      Input('bundesland_dropdown', 'value'),
@@ -458,7 +465,7 @@ def update_permalink(latlon_local_storage, radius):
      Input('region_tabs', 'value')],
     [State('nominatim_lookup_edit', 'value')])
 def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region_tabs,
-                            nominatim_lookup_edit):
+                     nominatim_lookup_edit):
     """
     Based on selected region (radius+center or landkreis or bundesland) change the following:
     - Region name
@@ -554,12 +561,14 @@ def update_map(highlight_polygon, detail_radio, fig):
         region_container_style = {'display': 'none'}
     return fig, region_container_style
 
+
 @app.callback(
     Output('mean_trend_p', 'style'),
     [Input('mean_trend_span', 'children')])
 def style_mean_trend(mean_str):
-    color = helpers.trend2color(float(mean_str)/100)
+    color = helpers.trend2color(float(mean_str) / 100)
     return dict(background=color)
+
 
 @app.callback(
     Output('nominatim_storage', 'data'),
@@ -579,7 +588,7 @@ def nominatim_lookup(query):
         lat = geoloc.latitude
         lon = geoloc.longitude
         address = geoloc.address
-        address = address.replace(", Deutschland","")
+        address = address.replace(", Deutschland", "")
     else:
         address = ""
         lat = default_lat

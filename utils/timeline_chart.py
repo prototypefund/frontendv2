@@ -11,6 +11,7 @@ class TimelineChartWindow:
         self.origin_url = ""
         self.origin_str = ""
         self.mode = "stations"
+        self.avg = False
         self.config_plots = dict(
             locale="de-DE",
             displaylogo=False,
@@ -78,7 +79,7 @@ class TimelineChartWindow:
     def get_figure(self):
         return self.figure
 
-    def update_figure(self, detail_radio, clickData, map_data):
+    def update_figure(self, detail_radio, clickData, map_data, avg=False):
 
         curveNumber = clickData["points"][0]['curveNumber']
         pointIndex = clickData["points"][0]['pointIndex']
@@ -95,17 +96,24 @@ class TimelineChartWindow:
             self.figure["data"] = []
             for c_id in filtered_map_data["c_id"].unique():
                 df_timeseries = self.load_timeseries(c_id)
+                if avg:
+                    trace = dict(
+                        x=df_timeseries["_time"],
+                        y=df_timeseries["rolling"],
+                        mode="lines",
+                        line=dict(width=2),
+                    )
+                else:
+                    trace = dict(
+                        x=df_timeseries["_time"],
+                        y=df_timeseries["_value"],
+                        mode="lines+markers",
+                        line=dict(width=1),
+                        marker=dict(size=6),
+                    )
                 name = filtered_map_data[filtered_map_data["c_id"] == c_id].iloc[0]["name"]
-                trace = dict(  # datapoints
-                    x=df_timeseries["_time"],
-                    y=df_timeseries["_value"],
-                    mode="lines+markers",
-                    name=name,
-                    line=dict(width=1),
-                    marker=dict(
-                        size=6,
-                    ),
-                )
+                trace["name"] = name
+
                 self.figure["data"].append(trace)
                 self.figure["layout"]["yaxis"]["title"] = "Wert"
                 self.figure["layout"]["title"] = figtitle
@@ -162,6 +170,7 @@ class TimelineChartWindow:
         else:
             return False
         self.mode = detail_radio
+        self.avg = avg
         return True
 
     def get_timeline_window(self):
@@ -176,17 +185,25 @@ class TimelineChartWindow:
         if self.mode == "stations":
             origin = html.A(id="chart_origin", children=self.origin_str, href=self.origin_url)
             output.append(origin)
+
+            output.append(dcc.Checklist(id="timeline-avg-check", value=[], style={'display': 'none'}))
+            # This invisible checklist  needs to be in the layout because
+            # a callback is bound to it. Otherwise, Dash 1.12 will throw errors
+            # This is an issue even when using app.validation_layout or
+            # suppress_callback_exceptions=True, as suggested in the docs
+            # Don't trust the documentation in this case.
         else:
-            checklist = dcc.Checklist(
+            if self.avg:
+                value = ["avg"]
+            else:
+                value = []
+            smooth_checkbox = dcc.Checklist(
+                id="timeline-avg-check",
                 options=[
-                    {'label': 'Fußgänger (Hystreet)', 'value': 'hystreet'},
-                    {'label': 'Fußgänger (Webcams)', 'value': 'webcams'},
-                    {'label': 'Fahrradfahrer', 'value': 'bikes'},
-                    {'label': 'Popularität (Google)', 'value': 'google_maps'},
-                    {'label': 'Luftqualität', 'value': 'airquality'}
+                    {'label': 'Gleitender Durchschnitt', 'value': 'avg'},
                 ],
-                value=['hystreet', 'webcams', 'bikes', 'google_maps'],
+                value=value,
                 labelStyle={'display': 'block'}
             )
-            output.append(checklist)
+            output.append(smooth_checkbox)
         return output

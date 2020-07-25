@@ -13,6 +13,7 @@ class TimelineChartWindow:
         self.origin_str = ""
         self.mode = "stations"
         self.avg = True
+        self.last_clickData = None
         self.config_plots = dict(
             locale="de-DE",
             displaylogo=False,
@@ -84,10 +85,12 @@ class TimelineChartWindow:
     def update_figure(self, detail_radio, clickData, map_data, avg):
         self.mode = detail_radio
         self.avg = avg
-        curveNumber = clickData["points"][0]['curveNumber']
-        pointIndex = clickData["points"][0]['pointIndex']
+        if clickData is not None:
+            self.last_clickData = clickData
+        curveNumber = self.last_clickData["points"][0]['curveNumber']
+        pointIndex = self.last_clickData["points"][0]['pointIndex']
         if detail_radio == "landkreis" or detail_radio == "bundesland":
-            location = clickData["points"][0]['location']
+            location = self.last_clickData["points"][0]['location']
             if detail_radio == "landkreis":
                 filtered_map_data = map_data[map_data["ags"] == location]
                 figtitle = filtered_map_data.iloc[0]["landkreis"]

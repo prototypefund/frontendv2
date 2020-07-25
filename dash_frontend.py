@@ -304,16 +304,20 @@ app.layout = html.Div(id="dash-layout", children=layout)
 @app.callback(
     Output('chart-container', 'style'),
     [Input('map', 'clickData'),
+     Input('chart-container', 'n_clicks'),
      Input('chart-close', 'n_clicks')])
-def show_hide_timeline(clickData, n_clicks):
-    if clickData is None:
+def show_hide_timeline(clickDataMap, clickDataChart, n_clicks):
+    #print("clickData:", clickDataMap, type(clickDataMap))
+    if clickDataMap is None and clickDataChart is None:
         return {'display': 'none'}
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update
-    # print("CALLBACK:",ctx.triggered)
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)
-    if "map" in prop_ids:
+    print(prop_ids)
+    if "chart-close" in prop_ids:
+        return {'display': 'none'}
+    elif "map" in prop_ids or "chart-container" in prop_ids:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -333,10 +337,14 @@ def reset_map_clickdata(n_clicks):
      Input('timeline-avg-check', 'value')],
     [State('detail_radio', 'value')])
 def display_click_data(clickData, avg_checkbox, detail_radio):
-    print("clickData:", clickData, type(clickData))
     avg = len(avg_checkbox) > 0
-    if clickData and chart.update_figure(detail_radio, clickData, map_data, avg):
-        return [chart.get_timeline_window()]
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return dash.no_update
+    prop_ids = helpers.dash_callback_get_prop_ids(ctx)
+    if clickData is not None or "timeline-avg-check" in prop_ids:
+        if chart.update_figure(detail_radio, clickData, map_data, avg):
+            return [chart.get_timeline_window()]
     return dash.no_update
 
 

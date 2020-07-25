@@ -1,6 +1,7 @@
 from utils import helpers
 import dash_core_components as dcc
 import dash_html_components as html
+from datetime import datetime, timedelta
 
 
 class TimelineChartWindow:
@@ -11,7 +12,7 @@ class TimelineChartWindow:
         self.origin_url = ""
         self.origin_str = ""
         self.mode = "stations"
-        self.avg = False
+        self.avg = True
         self.config_plots = dict(
             locale="de-DE",
             displaylogo=False,
@@ -65,6 +66,7 @@ class TimelineChartWindow:
             xaxis=dict(
                 title="Zeitpunkt",
                 rangeselector=self.selectorOptions,
+                range=[datetime.now()-timedelta(days=14), datetime.now()]
             ),
             legend=dict(
                 orientation="h",
@@ -79,7 +81,7 @@ class TimelineChartWindow:
     def get_figure(self):
         return self.figure
 
-    def update_figure(self, detail_radio, clickData, map_data, avg=False):
+    def update_figure(self, detail_radio, clickData, map_data, avg):
         self.mode = detail_radio
         self.avg = avg
         curveNumber = clickData["points"][0]['curveNumber']

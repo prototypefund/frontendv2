@@ -172,7 +172,9 @@ def load_timeseries(query_api, c_id, bucket="sdd"):
         tables = tables[0]
     assert isinstance(tables,
                       pd.DataFrame), f"Warning: tables type is not DataFrame but {type(tables)} (load_timeseries)"
-    assert not tables.empty, f"Warning: No data for {c_id} (load_timeseries)"
+    if tables.empty:
+        print(f"Warning: No data for {c_id} (load_timeseries)")
+        return None
 
     tables["rolling"] = tables.set_index("_time")["_value"].rolling("3d").mean().values
     # import ipdb

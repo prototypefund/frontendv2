@@ -80,7 +80,8 @@ class TimelineChartWindow:
         return self.figure
 
     def update_figure(self, detail_radio, clickData, map_data, avg=False):
-
+        self.mode = detail_radio
+        self.avg = avg
         curveNumber = clickData["points"][0]['curveNumber']
         pointIndex = clickData["points"][0]['pointIndex']
         if detail_radio == "landkreis" or detail_radio == "bundesland":
@@ -96,6 +97,8 @@ class TimelineChartWindow:
             self.figure["data"] = []
             for c_id in filtered_map_data["c_id"].unique():
                 df_timeseries = self.load_timeseries(c_id)
+                if df_timeseries is None:
+                    continue
                 if avg:
                     trace = dict(
                         x=df_timeseries["_time"],
@@ -123,9 +126,9 @@ class TimelineChartWindow:
             city = filtered_map_data.iloc[pointIndex]['city']
             name = filtered_map_data.iloc[pointIndex]['name']
             if city is None:
-                figtitle = f"{name}"
+                self.figure["layout"]["title"] = f"{name}"
             else:
-                figtitle = f"{city} ({name})"
+                self.figure["layout"]["title"] = f"{city} ({name})"
             c_id = filtered_map_data.iloc[pointIndex]["c_id"]
             self.origin_url = filtered_map_data.iloc[pointIndex]["origin"]
             # origin_str = f"Datenquelle: {filtered_map_data.iloc[i]['_measurement']}"
@@ -133,6 +136,9 @@ class TimelineChartWindow:
 
             # Get timeseries data for this station
             df_timeseries = self.load_timeseries(c_id)
+            if df_timeseries is None:
+                self.figure["data"] = []
+                return True
 
             # Add "fit" column based on model
             model = filtered_map_data.iloc[pointIndex]['model']
@@ -165,12 +171,8 @@ class TimelineChartWindow:
                     name=f"{self.TRENDWINDOW}-Tage-Trend",
                     line=dict(color="blue", width=2),
                 )]
-
-            self.figure["layout"]["title"] = figtitle
         else:
             return False
-        self.mode = detail_radio
-        self.avg = avg
         return True
 
     def get_timeline_window(self):

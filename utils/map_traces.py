@@ -36,7 +36,8 @@ def get_map_traces(map_data):
         measurement_map_data = map_data[map_data["_measurement"] == measurement]
         trace = dict(
             # TRACE 1...N: Datapoints
-            name=measurement,
+            _measurement=measurement,  # custom entry
+            name=helpers.measurementtitles[measurement],
             type="scattermapbox",
             lat=measurement_map_data["lat"],
             lon=measurement_map_data["lon"],

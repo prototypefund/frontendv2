@@ -69,10 +69,26 @@ def tooltiptext(df, mode):
 fieldnames = {
         "airquality": "airquality_score",
         "bikes": "bike_count",
-        "google_maps": "current_popularity",
+        # "google_maps": "current_popularity",
         "hystreet": "pedestrian_count",
         "webcam": "personenzahl",
         "webcam-customvision": "personenzahl"
+    }
+originnames = {
+        "airquality": "World Air Quality Index",
+        "bikes": "Eco Compteur",
+        # "google_maps": "Google Maps",
+        "hystreet": "hystreet.com",
+        "webcam": "öffentliche Webcam (Modell 1)",
+        "webcam-customvision": "öffentliche Webcam (Modell 2)"
+    }
+measurementtitles = {
+        "airquality": "Luftqualitäts-Index",
+        "bikes": "Fahrräder",
+        # "google_maps": "Popularität",
+        "hystreet": "Fußgänger (Laserscanner)",
+        "webcam": "Fußgänger auf Webcams (Modell 1)",
+        "webcam-customvision": "Fußgänger auf Webcams (Modell 2)"
     }
 
 

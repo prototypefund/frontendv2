@@ -136,8 +136,8 @@ class TimelineChartWindow:
                 self.figure["layout"]["title"] = f"{city} ({name})"
             c_id = filtered_map_data.iloc[pointIndex]["c_id"]
             self.origin_url = filtered_map_data.iloc[pointIndex]["origin"]
-            # origin_str = f"Datenquelle: {filtered_map_data.iloc[i]['_measurement']}"
-            self.origin_str = f"Datenquelle: {c_id}"
+            measurement = filtered_map_data.iloc[pointIndex]['_measurement']
+            self.origin_str = f"Datenquelle: {helpers.originnames[measurement]}"
 
             # Get timeseries data for this station
             df_timeseries = self.load_timeseries(c_id)

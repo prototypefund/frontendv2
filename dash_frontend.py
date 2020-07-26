@@ -131,7 +131,7 @@ mainmap = dcc.Graph(
         'layout': dict(
             autosize=True,
             hovermode='closest',
-            showlegend=True,
+            showlegend=False,
             legend_title_text='Datenquelle',
             legend=dict(
                 x=0.5,
@@ -247,8 +247,7 @@ trend_container = html.Div(id="trend_container", className="container", children
     html.Div(children=[
         html.H3(f"{TRENDWINDOW}-Tage-Trend im gewählten Bereich:"),
         html.P(id="mean_trend_p", style={}, children=[
-            html.Span(id="mean_trend_span", children=""),
-            "%"
+            html.Span(id="mean_trend_span", children="")
         ]),
     ]),
     html.Div(children=[
@@ -272,14 +271,9 @@ trend_container = html.Div(id="trend_container", className="container", children
         html.A(children="(Ändern)", style={"textDecoration": "underline"}),
     ]),
     dcc.Checklist(
-        options=[
-            {'label': 'Fußgänger (Hystreet)', 'value': 'hystreet'},
-            {'label': 'Fußgänger (Webcams)', 'value': 'webcams'},
-            {'label': 'Fahrradfahrer', 'value': 'bikes'},
-            {'label': 'Popularität (Google)', 'value': 'google_maps'},
-            {'label': 'Luftqualität', 'value': 'airquality'}
-        ],
-        value=['hystreet', 'webcams', 'bikes', 'google_maps'],
+        id="trace_visibility_checklist",
+        options=[{'label': helpers.measurementtitles[key], 'value': key} for key in helpers.measurementtitles],
+        value=['hystreet', 'webcam-customvision', 'bikes'],
         labelStyle={'display': 'block'}
     ),
     html.P(html.A(id="permalink", children="Permalink", href="xyz")),
@@ -470,10 +464,11 @@ def update_permalink(latlon_local_storage, radius):
      Input('radiusslider', 'value'),
      Input('bundesland_dropdown', 'value'),
      Input('landkreis_dropdown', 'value'),
-     Input('region_tabs', 'value')],
+     Input('region_tabs', 'value'),
+     Input('trace_visibility_checklist', 'value')],
     [State('nominatim_lookup_edit', 'value')])
 def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region_tabs,
-                     nominatim_lookup_edit):
+                     trace_visibilty, nominatim_lookup_edit):
     """
     Based on selected region (radius+center or landkreis or bundesland) change the following:
     - Region name
@@ -485,7 +480,8 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
 
     if 'latlon_local_storage' in prop_ids or \
             'radiusslider' in prop_ids or \
-            ("region_tabs" in prop_ids and region_tabs == "tab-umkreis"):
+            ("region_tabs" in prop_ids and region_tabs == "tab-umkreis") or \
+            ("trace_visibility_checklist" in prop_ids and region_tabs == "tab-umkreis"):
         if latlon_local_storage is not None:
             lat, lon, addr = latlon_local_storage
         else:
@@ -494,40 +490,42 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
         location_text = f"{addr} ({radius}km Umkreis)"
         location_editbox = addr
         filtered_map_data, poly = filter_by_radius(map_data, lat, lon, radius)
-        mean_trend = filtered_map_data["trend"].mean()
 
         # highlight circle
         highlight_x, highlight_y = poly.exterior.coords.xy
 
     elif "bundesland_dropdown" in prop_ids or \
-            ("region_tabs" in prop_ids and region_tabs == "tab-bundesland"):
+            ("region_tabs" in prop_ids and region_tabs == "tab-bundesland") or \
+            ("trace_visibility_checklist" in prop_ids and region_tabs == "tab-bundesland"):
         location_text = bundesland
         location_editbox = nominatim_lookup_edit
         filtered_map_data = map_data[map_data["bundesland"] == bundesland]
         ags = filtered_map_data["ags"].iloc[0][:-3]  # '08221' --> '08'
-        mean_trend = filtered_map_data["trend"].mean()
         highlight_x, highlight_y = get_outline_coords("bundesland", ags)
 
     elif "landkreis_dropdown" in prop_ids or \
-            ("region_tabs" in prop_ids and region_tabs == "tab-landkreis"):
+            ("region_tabs" in prop_ids and region_tabs == "tab-landkreis") or \
+            ("trace_visibility_checklist" in prop_ids and region_tabs == "tab-landkreis"):
         location_text = landkreis
         location_editbox = nominatim_lookup_edit
         filtered_map_data = map_data[map_data["landkreis_label"] == landkreis]
         ags = filtered_map_data["ags"].iloc[0]
-        mean_trend = filtered_map_data["trend"].mean()
         highlight_x, highlight_y = get_outline_coords("landkreis", ags)
 
     else:
-        mean_trend = ""
+        mean_trend_str = "nicht verfügbar"
         location_text = ""
         location_editbox = nominatim_lookup_edit
-        highlight_x, highlight_y = None, None
+        highlight_polygon = (None, None)
+        return mean_trend_str, location_text, location_editbox, highlight_polygon
 
+    filtered_map_data = filtered_map_data[filtered_map_data["_measurement"].isin(trace_visibilty)]
+    mean_trend = filtered_map_data["trend"].mean()
     highlight_polygon = (highlight_x, highlight_y)
     if np.isnan(mean_trend):
-        mean_trend_str = ""
+        mean_trend_str = "nicht verfügbar"
     else:
-        mean_trend_str = str(int(round(mean_trend * 100)))
+        mean_trend_str = str(int(round(mean_trend * 100))) + "%"
         if mean_trend >= 0.0:
             mean_trend_str = "+" + mean_trend_str  # show plus sign
 
@@ -538,22 +536,24 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
     [Output('map', 'figure'),
      Output('region_container', 'style')],
     [Input('highlight_polygon', 'data'),
-     Input('detail_radio', 'value')],
+     Input('detail_radio', 'value'),
+     Input('trace_visibility_checklist', 'value')],
     [State('map', 'figure')])
-def update_map(highlight_polygon, detail_radio, fig):
+def update_map(highlight_polygon, detail_radio, trace_visibilty, fig):
     """
     Redraw map based on level-of-detail selection and
     current highlight selection
     """
 
-    fig["data"] = traces[detail_radio]  # Update map
-
-    # Handle highlight display
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)
     if detail_radio == "stations":
+        fig["data"] = [traces[detail_radio][0]]  # drop all except highlight
+        for trace in traces[detail_radio][1:]:
+            if trace["_measurement"] in trace_visibilty:
+                fig["data"].append(trace)
         highlight_x, highlight_y = highlight_polygon
         # draw highligth into trace0
         fig["data"][0]["lat"] = highlight_y
@@ -566,6 +566,7 @@ def update_map(highlight_polygon, detail_radio, fig):
             fig["layout"]["mapbox"]["zoom"] = zoom
         region_container_style = {'display': 'block'}
     else:
+        fig["data"] = traces[detail_radio]  # Update map
         region_container_style = {'display': 'none'}
     return fig, region_container_style
 
@@ -574,7 +575,12 @@ def update_map(highlight_polygon, detail_radio, fig):
     Output('mean_trend_p', 'style'),
     [Input('mean_trend_span', 'children')])
 def style_mean_trend(mean_str):
-    color = helpers.trend2color(float(mean_str) / 100)
+    mean_str = mean_str.replace("%", "")
+    try:
+        mean_value = float(mean_str) / 100
+    except ValueError:
+        mean_value = np.nan
+    color = helpers.trend2color(mean_value)
     return dict(background=color)
 
 

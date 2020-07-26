@@ -24,18 +24,45 @@ def trend2color(trendvalue, alpha=1):
         return f"rgba(230, 200, 0, {alpha})"
 
 
-def tooltiptext(df):
+def tooltiptext(df, mode):
     """
     generate texts list for map hoverinfo
+    unfortunately, styling needs to be done here
+    because css class attributes are stripped by Dash
     """
-    cols = sorted(df.columns)
-
-    def make_string(df):
-        s = ""
-        for col in cols:
-            s += "{}: {}<br>".format(str(col).capitalize(), str(df[col]))
-        return s
-
+    def format_trend_str(trend_float):
+        if isnan(trend_float):
+            return '<i>nicht verfügbar</i>'
+        trend_str = str(round(100 * trend_float)) + '%'
+        if trend_float > 0:
+            trend_str = '+' + trend_str
+        return trend_str
+    if mode == "stations":
+        def make_string(row):
+            trend_str = format_trend_str(row['trend'])
+            if row["city"] is None:
+                title_str = row['name']
+            else:
+                title_str = f"{row['city']} ({row['name']})"
+            s = (
+                f"<span style='font-size:1.5em'><b>{title_str}</b></span><br>"
+                f"<span style='font-size:0.85em; opacity:0.8;'>{row['landkreis']}, {row['bundesland']}</span><br>"
+                f"<span style='font-size:0.85em; opacity:0.8;'>{row['_measurement']}</span><br>"
+                f"<br><span style='font-size:1em'><b>Trend:</b></span>"
+                f"<span style='font-size:1.5em'> {trend_str}</span>"
+                )
+            return s
+    else:
+        def make_string(row):
+            trend_str = format_trend_str(row["trend"]["mean"])
+            count = row["trend"]["count"]
+            s = (
+                f"<span style='font-size:1.5em'><b>{row[mode].to_string().strip()}</b></span><br>"
+                f"<span style='font-size:0.85em; opacity:0.8;'>Messpunkte: {count}</span><br>"
+                f"<span style='font-size:1em'><b>Durchschnittlicher Trend:</b></span>"
+                f"<span style='font-size:1.5em'> {trend_str}</span>"
+            )
+            return s
     return list(df.apply(lambda x: make_string(x), axis=1))
 
 

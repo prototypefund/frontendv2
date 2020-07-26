@@ -47,7 +47,7 @@ def get_map_traces(map_data):
                 line=dict(width=2,
                           color='DarkSlateGrey'),
             ),
-            text=helpers.tooltiptext(measurement_map_data),
+            text=helpers.tooltiptext(measurement_map_data, mode="stations"),
             hoverinfo="text",
         )
         traces["stations"].append(trace)
@@ -55,27 +55,28 @@ def get_map_traces(map_data):
 
     # Prepare landkreis/bundeslad choropleth maps
     for region in ("landkreis", "bundesland"):
-        choropleth_df = map_data.groupby(["ags", region]).mean().reset_index()
+        choropleth_df = map_data.copy().dropna(subset=["trend"])
         if region == "bundesland":
             choropleth_df["ags"] = choropleth_df["ags"].str[:-3]
             geojson_filename = "states.json"
         else:
             # landkreis
             geojson_filename = "counties.json"
+        choropleth_df = choropleth_df.groupby(["ags", region]).agg(["mean", "count"]).reset_index()
         with open(f"utils/geofeatures-ags-germany/{geojson_filename}", "r") as f:
             geojson = json.load(f)
         # noinspection PyTypeChecker
         traces[region] = [go.Choroplethmapbox(
             geojson=geojson,
             locations=choropleth_df["ags"],
-            z=choropleth_df["trend"],
+            z=choropleth_df["trend"]["mean"],
             showlegend=False,
             showscale=False,
             colorscale=[helpers.trend2color(x) for x in np.linspace(-1, 2, 10)],
             hoverinfo="text",
             zmin=-1,
             zmax=2,
-            text=helpers.tooltiptext(choropleth_df),
+            text=helpers.tooltiptext(choropleth_df, mode=region),
             marker_line_color="white",
             marker_opacity=1,
             marker_line_width=1)]

@@ -190,7 +190,11 @@ class TimelineChartWindow:
         )
         output.append(graph)
         if self.mode == "stations":
-            origin = html.A(id="chart_origin", children=self.origin_str, href=self.origin_url)
+            origin = html.A(
+                id="chart_origin",
+                children=self.origin_str,
+                href=self.origin_url,
+                target="_blank")
             output.append(origin)
 
             output.append(dcc.Checklist(id="timeline-avg-check", value=[], style={'display': 'none'}))

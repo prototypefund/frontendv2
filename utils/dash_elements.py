@@ -10,14 +10,23 @@ def main_controls(map_data, TRENDWINDOW):
     bundesland_options = [{'label': x, 'value': x} for x in sorted(map_data["bundesland"].unique())]
 
     return html.Div(id="main_controls", children=[
-        html.H1(
-            children='EveryoneCounts',
-            style={
-                'textAlign': 'center',
-                'color': "#333",
-                'fontFamily': 'Arial, Helvetica, sans-serif'
-            }
-        ),
+        html.Img(id="title",
+                 className="container",
+                 src="assets/logo.png",
+                 alt="EveryoneCounts - Das Social Distancing Dashboard"),
+        html.Div(id="detail_container", className="container", children=[
+            html.H3("Detailgrad"),
+            dcc.RadioItems(
+                id="detail_radio",
+                options=[
+                    {'label': 'Punkte', 'value': 'stations'},
+                    {'label': 'Landkreise', 'value': 'landkreis'},
+                    {'label': 'Bundesländer', 'value': 'bundesland'}
+                ],
+                value='stations',
+                labelStyle={'display': 'inline-block'}
+            ),
+        ]),
         html.Div(id="trend_container", className="container", children=[
             html.Div(children=[
                 html.H3(f"{TRENDWINDOW}-Tage-Trend im gewählten Bereich:"),
@@ -25,25 +34,9 @@ def main_controls(map_data, TRENDWINDOW):
                     html.Span(id="mean_trend_span", children="")
                 ]),
             ]),
-            html.Div(children=[
-                html.H3("Detailgrad"),
-                dcc.RadioItems(
-                    id="detail_radio",
-                    options=[
-                        {'label': 'Messstationen', 'value': 'stations'},
-                        {'label': 'Landkreise', 'value': 'landkreis'},
-                        {'label': 'Bundesländer', 'value': 'bundesland'}
-                    ],
-                    value='stations',
-                    labelStyle={'display': 'inline-block'}
-                ),
-            ]),
-
             html.P(id="location_p", children=[
-                html.Span(children="Region: ", style={"fontWeight": "bold"}),
-                html.Span(id="location_text", children="?"),
-                " ",
-                html.A(children="(Ändern)", style={"textDecoration": "underline"}),
+                html.P(id="location_text", children="?"),
+                html.Button(children="Ändern ↓"),
             ]),
             dcc.Checklist(
                 id="trace_visibility_checklist",
@@ -51,7 +44,6 @@ def main_controls(map_data, TRENDWINDOW):
                 value=['hystreet', 'webcam-customvision', 'bikes'],
                 labelStyle={'display': 'block'}
             ),
-            html.P(html.A(id="permalink", children="Permalink", href="xyz")),
         ]),
         html.Div(id="region_container", className="container", children=[
             dcc.Tabs(id='region_tabs', className="", value='tab-umkreis', children=[
@@ -99,6 +91,17 @@ def main_controls(map_data, TRENDWINDOW):
                     ),
                 ]),
             ])
+        ]),
+        html.Div(id="footer", className="footer", children=[
+            html.P([
+                html.Span("EveryoneCounts 2020"),
+                html.A(children="Impressum", href="https://blog.everyonecounts.de/impressum/", target="_blank"),
+                html.A(children="Blog", href="https://blog.everyonecounts.de/", target="_blank"),
+                html.A(children="Kontakt", href="mailto:kontakt@everyonecounts.de", target="_blank"),
+                html.A(children="Twitter", href="https://twitter.com/_everyonecounts", target="_blank"),
+                html.A(children="Github", href="https://github.com/socialdistancingdashboard/", target="_blank"),
+                html.A(id="permalink", children="Permalink", href="xyz"),
+            ]),
         ])
     ])
 

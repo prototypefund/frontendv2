@@ -337,10 +337,21 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
 
     return mean_trend_str, location_text, location_editbox, highlight_polygon
 
+@app.callback(
+    [Output('region_container', 'style'),
+     Output('trend_container', 'style')],
+    [Input('detail_radio', 'value')])
+def update_menu_item(detail_radio):
+    show = {'display': 'block'}
+    hide = {'display': 'none'}
+    if detail_radio == "stations":
+        return show, show
+    else:
+        return hide, hide
+
 
 @app.callback(
-    [Output('map', 'figure'),
-     Output('region_container', 'style')],
+    Output('map', 'figure'),
     [Input('highlight_polygon', 'data'),
      Input('detail_radio', 'value'),
      Input('trace_visibility_checklist', 'value')],
@@ -370,11 +381,9 @@ def update_map(highlight_polygon, detail_radio, trace_visibilty, fig):
             fig["layout"]["mapbox"]["center"]["lat"] = centerlat
             fig["layout"]["mapbox"]["center"]["lon"] = centerlon
             fig["layout"]["mapbox"]["zoom"] = zoom
-        region_container_style = {'display': 'block'}
     else:
         fig["data"] = traces[detail_radio]  # Update map
-        region_container_style = {'display': 'none'}
-    return fig, region_container_style
+    return fig
 
 
 @app.callback(

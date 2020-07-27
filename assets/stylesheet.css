@@ -8,8 +8,8 @@ body {
 #_dash-app-content{
     /*max-width:400px;*/
 }
-.container,h1 {
-    max-width:400px;
+.container {
+    width:400px;
 }
 .container,
 #chart-container,h1,h2{
@@ -18,7 +18,7 @@ body {
     padding:10px;
     text-align:left;
     background:#fff;
-    z-index:999;
+    z-index:9999;
     position:relative;
     border-radius:10px;
 }
@@ -121,3 +121,124 @@ button{
 .tab:not(.tab--selected){
     color:#999;
 }
+
+#footer {
+    position:fixed;
+    bottom:0px;
+    left:0px;
+    max-width:800px;
+    padding: 5px;
+    padding-right:60px;
+    padding-left:20px;
+    margin:auto;
+    font-size:0.8em;
+    text-align:center;
+    background:rgba(255,255,255,0.9);
+    box-shadow:0px 1px 8px #aaa;
+    border-radius: 0px 10px 0px 0px;
+    z-index:999;
+}
+#footer a{
+    margin-left: 9px;
+}
+
+#detail_radio{
+  text-align: center;
+}
+
+label {
+  background:#fff;
+  color:#333;
+  border-radius:5px;
+  margin:2px;
+  box-shadow:0px 0px 10px #dfdfdf;
+  padding:3px;
+  padding-right:8px;
+  font-size:1.2em;
+  border-bottom:1px solid #ccc;
+}
+label:hover {
+  background: #F63366;
+  color:#fff;
+  border-bottom:1px solid #fff;
+}
+
+#detail_container, .container {
+  background:#efefef;
+}
+
+#mean_trend_p {
+  border: 5px solid white !important;
+  max-width:80%;
+  width:100px;
+  margin:auto;
+  display:block;
+  text-align: center;
+}
+
+h3 {
+  text-align: center;
+}
+
+.tab-content {
+  background: white;
+}
+
+#title{
+    background:white;
+}
+
+#main_controls{
+  padding-left:5px;
+  padding-right:20px;
+  padding-top: 5px;
+  max-height:99%;
+  position:absolute;
+  left:0px;
+  top:0px;
+  overflow:auto;
+  z-index: 9999;
+}
+
+#timeline-avg-check {
+ max-width:40%;
+ text-align: center;
+}
+
+
+#region_container{
+  margin-bottom: 100px;
+}
+
+a, a:link, a:visited {
+  color: #F63366;
+  font-weight: bold;
+  text-decoration: underline;
+}
+a:hover {
+  text-decoration: none;
+}
+
+
+@supports(-webkit-appearance: none) or (-moz-appearance: none) {
+  input[type='checkbox'],
+  input[type='radio'] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+  }
+}
+input[type='checkbox'],
+input[type='radio'] {
+  aborder: 2px solid #999;
+  border-radius: 40px;
+  background: #ddd;
+  min-width:14px;
+  min-height:14px;
+  display:inline-block;
+}
+input[type='checkbox']:checked,
+input[type='radio']:checked {
+  background: #F63366;
+  border: 2px solid #FCBFCF;
+}
+

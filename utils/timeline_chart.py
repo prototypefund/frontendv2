@@ -60,8 +60,8 @@ class TimelineChartWindow:
             responsive=True,
             #height=350,
             #width=700,
-            title="Waehle einen Messpunkt auf der Karte",
-            hovermode='closest',
+            title="",
+            hovermode='x unified',
             yaxis=dict(
                 title="Passanten"
             ),
@@ -72,7 +72,7 @@ class TimelineChartWindow:
             ),
             legend=dict(
                 orientation="h",
-                y=-0.5
+                y=-0.4
             )
         )
         self.figure = {
@@ -121,8 +121,9 @@ class TimelineChartWindow:
                         marker=dict(size=6),
                     )
                 info = filtered_map_data[filtered_map_data["c_id"] == c_id].iloc[0][["name", "_measurement"]]
-                trace["name"] = f"{info['name']} ({helpers.measurementtitles[info['_measurement']]})"
-
+                measurementtitle = helpers.measurementtitles[info['_measurement']]
+                trace["hovertemplate"] = f"{info['name']}: <b>%{{y:.1f}}</b> {measurementtitle}<extra></extra>"
+                trace["name"] = f"{info['name']} ({measurementtitle})"
                 self.figure["data"].append(trace)
                 self.figure["layout"]["yaxis"]["title"] = "Wert"
                 self.figure["layout"]["title"] = figtitle

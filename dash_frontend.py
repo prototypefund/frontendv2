@@ -97,6 +97,7 @@ app.layout = html.Div(id="dash-layout", children=[
     dash_elements.timeline_chart()
 ])
 
+
 # CALLBACK FUNCTIONS
 # ==================
 
@@ -107,18 +108,24 @@ app.layout = html.Div(id="dash-layout", children=[
      Input('chart-container', 'n_clicks'),
      Input('chart-close', 'n_clicks')])
 def show_hide_timeline(clickDataMap, clickDataChart, n_clicks):
-    #print("clickData:", clickDataMap, type(clickDataMap))
-    if clickDataMap is None and clickDataChart is None:
-        return {'display': 'none'}
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)
     print(prop_ids)
-    if "chart-close" in prop_ids:
+    if "chart-container" in prop_ids:
+        # interacted with chart
+        return dash.no_update
+    elif "chart-close" in prop_ids:
+        # clicked on close button
         return {'display': 'none'}
-    elif "map" in prop_ids or "chart-container" in prop_ids:
-        return {'display': 'block'}
+    elif "map" in prop_ids:
+        if clickDataMap is None:
+            # clicked on empty map
+            return {'display': 'none'}
+        else:
+            # clicked on data
+            return {'display': 'block'}
     else:
         return {'display': 'none'}
 

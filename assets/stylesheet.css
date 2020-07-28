@@ -44,17 +44,32 @@ body {
     right:0px;
     left:0px;
     margin:auto;
-    max-width:700px;
+    width:66vw;
+    height:66vh;
     min-width:400px;
-    text-align:right;
+    min-height:400px;
+    text-align:center;
     animation-duration: 1s;
     animation-name: chart-container-anim;
+}
+#chart-container>div{
+    height:90%;
+    width:100%;
+}
+#chart{
+    height:100%;
+    width:100%;
 }
 
 #chart-close{
     color:black;
     font-size:1.5em;
     width:1.5em;
+    height:1.5em;
+    position:absolute;
+    top:0px;
+    left:0px;
+    z-index:999;
 }
 
 #chart-container .svg-container{
@@ -109,6 +124,7 @@ button{
     margin:5px;
     padding:5px;
 }
+
 
 .tab-content {
     border-left: 1px solid #d6d6d6;

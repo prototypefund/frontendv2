@@ -57,8 +57,9 @@ class TimelineChartWindow:
         )
         self.chartlayout = dict(
             autosize=True,
-            height=350,
-            width=700,
+            responsive=True,
+            #height=350,
+            #width=700,
             title="Waehle einen Messpunkt auf der Karte",
             hovermode='closest',
             yaxis=dict(

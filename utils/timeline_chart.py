@@ -120,8 +120,8 @@ class TimelineChartWindow:
                         line=dict(width=1),
                         marker=dict(size=6),
                     )
-                name = filtered_map_data[filtered_map_data["c_id"] == c_id].iloc[0]["name"]
-                trace["name"] = name
+                info = filtered_map_data[filtered_map_data["c_id"] == c_id].iloc[0][["name", "_measurement"]]
+                trace["name"] = f"{info['name']} ({helpers.measurementtitles[info['_measurement']]})"
 
                 self.figure["data"].append(trace)
                 self.figure["layout"]["yaxis"]["title"] = "Wert"

@@ -133,7 +133,7 @@ class TimelineChartWindow:
             filtered_map_data = map_data[map_data["trace_index"] == curveNumber]
             city = filtered_map_data.iloc[pointIndex]['city']
             name = filtered_map_data.iloc[pointIndex]['name']
-            if city is None:
+            if city is None or type(city) is not str:
                 self.figure["layout"]["title"] = f"{name}"
             else:
                 self.figure["layout"]["title"] = f"{city} ({name})"

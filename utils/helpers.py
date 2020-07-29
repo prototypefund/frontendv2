@@ -40,10 +40,10 @@ def tooltiptext(df, mode):
     if mode == "stations":
         def make_string(row):
             trend_str = format_trend_str(row['trend'])
-            if "city" not in row or row["city"] is None:
-                title_str = row['name']
-            else:
+            if "city" in row and type(row["city"]) == str:
                 title_str = f"{row['city']} ({row['name']})"
+            else:
+                title_str = row['name']
             s = (
                 f"<span style='font-size:1.5em'><b>{title_str}</b></span><br>"
                 f"<span style='font-size:0.85em; opacity:0.8;'>{row['landkreis']}, {row['bundesland']}</span><br>"

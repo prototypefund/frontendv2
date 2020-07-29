@@ -6,5 +6,6 @@
 "ENABLE_CACHE" : true,
 "CLEAR_CACHE_ON_STARTUP" : false,
 "TRENDWINDOW" : 7,
-"DEBUG": false
+"DEBUG": false,
+"measurements": ["hystreet", "webcam-customvision", "bikes"]
 }

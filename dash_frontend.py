@@ -32,6 +32,7 @@ with open("config.json", "r") as f:
 DISABLE_CACHE = not CONFIG["ENABLE_CACHE"]  # set to true to disable caching
 CLEAR_CACHE_ON_STARTUP = CONFIG["CLEAR_CACHE_ON_STARTUP"]  # for testing
 TRENDWINDOW = CONFIG["TRENDWINDOW"]
+MEASUREMENTS = CONFIG["measurements"]
 
 # DASH SETUP
 # =======
@@ -67,7 +68,10 @@ query_api = get_query_api()
 
 @cache.memoize(unless=DISABLE_CACHE)
 def get_map_data():
-    return queries.get_map_data(query_api=query_api, trend_window=TRENDWINDOW)
+    return queries.get_map_data(
+        query_api=query_api,
+        measurements=MEASUREMENTS,
+        trend_window=TRENDWINDOW)
 
 
 @cache.memoize(unless=DISABLE_CACHE)

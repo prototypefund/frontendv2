@@ -24,7 +24,7 @@ def compound_index(df):
     return df.apply(lambda x: x["_measurement"] + CID_SEP + str(x["_id"]), axis=1)
 
 
-def get_map_data(query_api, trend_window=3, bucket="sdd"):
+def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
     """
     Load the data that is required for plotting the map.
     Return a GeoDataFrame with all tags and latitude/longitude fields and the trend
@@ -41,16 +41,30 @@ def get_map_data(query_api, trend_window=3, bucket="sdd"):
               "name",
               "districtType",
               "origin"]
-    query = f'''
-    from(bucket: "{bucket}")
-    |> range(start: -10d) 
-    |> filter(fn: (r) => r["_field"] == "lon" or r["_field"] == "lat")
-    |> group(columns:["lat", "lon"])
-    |> keep(columns: {json.dumps(fields)})
-    '''
-    tables = query_api.query_data_frame(query)
-    tables.drop_duplicates(inplace=True)
-    tables["c_id"] = compound_index(tables)
+    geo_table = pd.DataFrame()
+    tables = pd.DataFrame()
+    for _measurement in measurements:
+        query = f'''
+        from(bucket: "{bucket}")
+        |> range(start: -10d) 
+        |> filter(fn: (r) => r["_field"] == "lon" or r["_field"] == "lat")
+        |> filter(fn: (r) => r["_measurement"] == "{_measurement}")
+        |> group(columns:["lat", "lon"])
+        |> keep(columns: {json.dumps(fields)})
+        '''
+        try:
+            influx_table = query_api.query_data_frame(query)
+        except:
+            print("Error fetching data from influxdb")
+            print(query)
+            continue
+        influx_table.drop_duplicates(inplace=True)
+        influx_table["c_id"] = compound_index(influx_table)
+        influx_table["_value"] = pd.to_numeric((influx_table["_value"]))
+        if tables.empty:
+            tables = influx_table.copy()
+        else:
+            tables = tables.append(influx_table, ignore_index=True)
     # pivot table so that the lat/lon fields become named columns
     geo_table = tables[["_field", "_value", "c_id"]]
     geo_table = geo_table.pivot(index='c_id', columns='_field', values='_value')

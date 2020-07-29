@@ -49,6 +49,7 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
         |> range(start: -10d) 
         |> filter(fn: (r) => r["_field"] == "lon" or r["_field"] == "lat")
         |> filter(fn: (r) => r["_measurement"] == "{_measurement}")
+        |> filter(fn: (r) => r["unverified"] != "True")
         |> group(columns:["lat", "lon"])
         |> keep(columns: {json.dumps(fields)})
         '''
@@ -78,9 +79,11 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
 
     geo_table = geo_table.reset_index()
     geo_table["ags"] = geo_table["ags"].str.zfill(5)  # 1234 --> "01234"
-    trenddict, models = load_trend(query_api, trend_window)
-    geo_table["trend"] = geo_table["c_id"].map(trenddict)
-    geo_table["model"] = geo_table["c_id"].map(models)
+    trenddict = load_trend(query_api, trend_window)
+    geo_table["trend"] = geo_table["c_id"].map(trenddict["trend"])
+    geo_table["model"] = geo_table["c_id"].map(trenddict["model"])
+    geo_table["last_value"] = geo_table["c_id"].map(trenddict["last_value"])
+    geo_table["last_time"] = geo_table["c_id"].map(trenddict["last_time"])
 
     print("Result of 'get_map_data():")
     print(geo_table.columns)
@@ -96,9 +99,17 @@ def load_trend(query_api, trend_window=3, bucket="sdd"):
     for the last trend_window days will be requested from
     the influxdb. It is highly recommended to cache this!
 
-    Returns two dicts:
-        trend: c_id -> trend value
-        models: c_id -> (a, b)
+    Returns a dict of dict with the following keys:
+        trend : trend value
+        model : parameter tupel (a, b)
+        last_value : last value
+        last_time  : datetime
+    Each of these contains a dict with c_id -> value
+    Example:
+        > x = load_trend(...)
+        > x['model']['some_id']
+        (1.234, 5.678)
+
     a and b are the linear regression fit parameters: a=slope, b=offset
 
     """
@@ -108,15 +119,22 @@ def load_trend(query_api, trend_window=3, bucket="sdd"):
             from(bucket: "{bucket}")
           |> range(start: -{trend_window + 2}d)
           |> filter(fn: (r) =>  {filterstring})
+          |> filter(fn: (r) => r["unverified"] != "True")
           '''
     tables = query_api.query_data_frame(query)
     df = pd.concat(tables)
     df["c_id"] = compound_index(df)
-    models = {}
-    trend = {}
+
+    output = {
+        "model": {},
+        "trend": {},
+        "last_value": {},
+        "last_time": {}
+    }
     df["unixtime"] = df["_time"].apply(lambda x: int(x.timestamp()), 1)  # unixtime in s
     for cid in set(df["c_id"]):
         # get sub-dataframe for this id
+
         tmpdf = df[df["c_id"] == cid].sort_values(by=["unixtime"])
 
         lastday = max(tmpdf["_time"])
@@ -124,8 +142,8 @@ def load_trend(query_api, trend_window=3, bucket="sdd"):
 
         if (lastday - firstday).days < trend_window - 1:
             # not enough data for this station, trend window not covered
-            models[cid] = (np.nan, np.nan)
-            trend[cid] = np.nan
+            output["model"][cid] = (np.nan, np.nan)
+            output["trend"][cid] = np.nan
             continue
 
         day0 = lastday - timedelta(days=trend_window - 1)
@@ -133,6 +151,8 @@ def load_trend(query_api, trend_window=3, bucket="sdd"):
         tmpdf = tmpdf.reset_index(drop=True)
 
         values = pd.to_numeric(tmpdf["_value"])
+        output["last_value"][cid] = tmpdf["_value"].iloc[-1]
+        output["last_time"][cid] = tmpdf["_time"].iloc[-1]
 
         COUNT_LOW_THRESHOLD = 3
         PERCENT_NONZEROS_THRESHOLD = 0.75
@@ -143,7 +163,7 @@ def load_trend(query_api, trend_window=3, bucket="sdd"):
                 np.count_nonzero(values) / len(values) > PERCENT_NONZEROS_THRESHOLD:
             # linear regression y = a*x +b
             model = np.polyfit(tmpdf["unixtime"], values, 1)
-            models[cid] = model
+            output["model"][cid] = model
 
             # calculate trend
             a, b = model[:2]
@@ -152,15 +172,15 @@ def load_trend(query_api, trend_window=3, bucket="sdd"):
             y1 = (a * t1 + b)
             y2 = (a * t2 + b)
             if y1 > 0:
-                trend[cid] = y2 / y1 - 1
+                output["trend"][cid] = y2 / y1 - 1
             else:
-                trend[cid] = np.nan
+                output["trend"][cid] = np.nan
         else:
             # counts too low for reliable regression
-            models[cid] = (np.nan, np.nan)
-            trend[cid] = np.nan
+            output["model"][cid] = (np.nan, np.nan)
+            output["trend"][cid] = np.nan
 
-    return trend, models  # dicts
+    return output  # dicts
 
 
 def load_timeseries(query_api, c_id, bucket="sdd"):
@@ -171,15 +191,13 @@ def load_timeseries(query_api, c_id, bucket="sdd"):
     _measurement, _id = c_id.split(CID_SEP, 1)
     _field = helpers.measurement2field(_measurement)
     extra_lines = ''
-    if _measurement == "hystreet":
-        extra_lines += '|> filter(fn: (r) => r["unverified"] == "False")\n'
     query = f'''
     from(bucket: "{bucket}")
       |> range(start: -60d) 
       |> filter(fn: (r) => r["_measurement"] == "{_measurement}")
       |> filter(fn: (r) => r["_field"] == "{_field}")
       |> filter(fn: (r) => r["_id"] == "{_id}")
-      {extra_lines}
+      |> filter(fn: (r) => r["unverified"] != "True")
       '''
     tables = query_api.query_data_frame(query)
     if isinstance(tables, list):

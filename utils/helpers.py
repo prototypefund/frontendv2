@@ -39,6 +39,11 @@ def tooltiptext(df, mode):
         return trend_str
     if mode == "stations":
         def make_string(row):
+            last_value = round(float(row["last_value"]), 1)
+            try:
+                last_time = row["last_time"].strftime("%d.%m.%Y %H:%M")
+            except ValueError:
+                last_time = ""
             trend_str = format_trend_str(row['trend'])
             if "city" in row and type(row["city"]) == str:
                 title_str = f"{row['city']} ({row['name']})"
@@ -47,9 +52,12 @@ def tooltiptext(df, mode):
             s = (
                 f"<span style='font-size:1.5em'><b>{title_str}</b></span><br>"
                 f"<span style='font-size:0.85em; opacity:0.8;'>{row['landkreis']}, {row['bundesland']}</span><br>"
-                f"<span style='font-size:0.85em; opacity:0.8;'>{row['_measurement']}</span><br>"
+                f"<span style='font-size:0.85em; opacity:0.8;'>{measurementtitles[row['_measurement']]}</span><br>"
                 f"<br><span style='font-size:1em'><b>Trend:</b></span>"
-                f"<span style='font-size:1.5em'> {trend_str}</span>"
+                f"<span style='font-size:1.5em'> {trend_str}</span><br>"
+                f"<span style='font-size:1em'><b>Letzter Wert:</b></span> "
+                f"<span style='font-size:1em'>{last_value}</span><br>"
+                f"<span style='font-size:0.85em; opacity:0.8;'>{last_time}</span>"
                 )
             return s
     else:

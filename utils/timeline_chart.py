@@ -90,7 +90,6 @@ class TimelineChartWindow:
         if clickData is not None:
             self.last_clickData = clickData
         curveNumber = self.last_clickData["points"][0]['curveNumber']
-        pointIndex = self.last_clickData["points"][0]['pointIndex']
         if detail_radio == "landkreis" or detail_radio == "bundesland":
             location = self.last_clickData["points"][0]['location']
             if detail_radio == "landkreis":
@@ -130,16 +129,17 @@ class TimelineChartWindow:
                 self.figure["layout"]["title"] = figtitle
 
         elif detail_radio == "stations" and curveNumber > 0:  # exclude selection marker
-            filtered_map_data = map_data[map_data["trace_index"] == curveNumber]
-            city = filtered_map_data.iloc[pointIndex]['city']
-            name = filtered_map_data.iloc[pointIndex]['name']
+            c_id = clickData["points"][0]["customdata"]
+            station_data = map_data[map_data["c_id"] == c_id].iloc[0]
+            city = station_data['city']
+            name = station_data['name']
             if city is None or type(city) is not str:
                 self.figure["layout"]["title"] = f"{name}"
             else:
                 self.figure["layout"]["title"] = f"{city} ({name})"
-            c_id = filtered_map_data.iloc[pointIndex]["c_id"]
-            self.origin_url = filtered_map_data.iloc[pointIndex]["origin"]
-            measurement = filtered_map_data.iloc[pointIndex]['_measurement']
+
+            self.origin_url = station_data["origin"]
+            measurement = station_data['_measurement']
             self.origin_str = f"Datenquelle: {helpers.originnames[measurement]}"
 
             # Get timeseries data for this station
@@ -149,7 +149,7 @@ class TimelineChartWindow:
                 return True
 
             # Add "fit" column based on model
-            model = filtered_map_data.iloc[pointIndex]['model']
+            model = station_data['model']
             df_timeseries = helpers.apply_model_fit(df_timeseries, model, self.TRENDWINDOW)
 
             self.figure["data"] = [

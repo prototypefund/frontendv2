@@ -148,6 +148,7 @@ def reset_map_clickdata(n_clicks):
      Input('timeline-avg-check', 'value')],
     [State('detail_radio', 'value')])
 def display_click_data(clickData, avg_checkbox, detail_radio):
+    print(clickData)
     avg = len(avg_checkbox) > 0
     ctx = dash.callback_context
     if not ctx.triggered:

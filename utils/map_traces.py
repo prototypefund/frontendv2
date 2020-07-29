@@ -50,6 +50,7 @@ def get_map_traces(map_data):
             ),
             text=helpers.tooltiptext(measurement_map_data, mode="stations"),
             hoverinfo="text",
+            customdata=measurement_map_data["c_id"]
         )
         traces["stations"].append(trace)
     map_data["trace_index"] = map_data["trace_index"].astype(int)

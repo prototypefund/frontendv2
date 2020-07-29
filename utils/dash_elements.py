@@ -5,7 +5,9 @@ from utils import helpers
 SLIDER_MAX = 130
 
 
-def main_controls(map_data, TRENDWINDOW):
+def main_controls(map_data, CONFIG):
+    TRENDWINDOW = CONFIG["TRENDWINDOW"]
+    MEASUREMENTS = CONFIG["measurements"]
     landkreis_options = [{'label': x, 'value': x} for x in sorted(map_data["landkreis_label"].unique())]
     bundesland_options = [{'label': x, 'value': x} for x in sorted(map_data["bundesland"].unique())]
 
@@ -40,7 +42,11 @@ def main_controls(map_data, TRENDWINDOW):
             ]),
             dcc.Checklist(
                 id="trace_visibility_checklist",
-                options=[{'label': helpers.measurementtitles[key], 'value': key} for key in helpers.measurementtitles],
+                options=[
+                    {'label': helpers.measurementtitles[key], 'value': key}
+                    for key in helpers.measurementtitles
+                    if key in MEASUREMENTS
+                ],
                 value=['hystreet', 'webcam-customvision', 'bikes'],
                 labelStyle={'display': 'block'}
             ),

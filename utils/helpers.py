@@ -79,16 +79,16 @@ originnames = {
         "bikes": "Eco Compteur",
         # "google_maps": "Google Maps",
         "hystreet": "hystreet.com",
-        "webcam": "öffentliche Webcam (Modell 1)",
-        "webcam-customvision": "öffentliche Webcam (Modell 2)"
+        "webcam": "öffentliche Webcam (alt)",
+        "webcam-customvision": "öffentliche Webcam"
     }
 measurementtitles = {
         "airquality": "Luftqualitäts-Index",
         "bikes": "Fahrräder",
         # "google_maps": "Popularität",
         "hystreet": "Fußgänger (Laserscanner)",
-        "webcam": "Fußgänger auf Webcams (Modell 1)",
-        "webcam-customvision": "Fußgänger auf Webcams (Modell 2)"
+        "webcam": "Fußgänger auf Webcams (alt)",
+        "webcam-customvision": "Fußgänger auf Webcams"
     }
 
 

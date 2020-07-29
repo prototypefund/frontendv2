@@ -97,7 +97,7 @@ app.layout = html.Div(id="dash-layout", children=[
     dcc.Location(id='url', refresh=False),
     *dash_elements.storage(),
     dash_elements.mainmap(),
-    dash_elements.main_controls(map_data, TRENDWINDOW),
+    dash_elements.main_controls(map_data, CONFIG),
     dash_elements.timeline_chart()
 ])
 

@@ -120,7 +120,7 @@ def show_hide_timeline(clickDataMap, clickDataChart, n_clicks):
     if "chart-close" in prop_ids:
         # clicked on close button
         return {'display': 'none'}
-    elif "chart-container" in prop_ids:
+    elif "chart-container" in prop_ids or prop_ids is None:
         # interacted with chart
         return dash.no_update
     elif "map" in prop_ids:

@@ -79,7 +79,7 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
 
     geo_table = geo_table.reset_index()
     geo_table["ags"] = geo_table["ags"].str.zfill(5)  # 1234 --> "01234"
-    trenddict = load_trend(query_api, trend_window)
+    trenddict = load_trend(query_api, measurements, trend_window)
     geo_table["trend"] = geo_table["c_id"].map(trenddict["trend"])
     geo_table["model"] = geo_table["c_id"].map(trenddict["model"])
     geo_table["last_value"] = geo_table["c_id"].map(trenddict["last_value"])
@@ -92,7 +92,7 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
     return geo_table
 
 
-def load_trend(query_api, trend_window=3, bucket="sdd"):
+def load_trend(query_api, measurements, trend_window=3, bucket="sdd"):
     """
     Acquire trend values for all stations
     this is an expensive call, as the data from all stations
@@ -114,7 +114,7 @@ def load_trend(query_api, trend_window=3, bucket="sdd"):
 
     """
     print(f"load_trend... (trend_window={trend_window})")
-    filterstring = " or ".join([f'r["_field"] == "{x}"' for x in helpers.fieldnames.values()])
+    filterstring = " or ".join([f'r["_field"] == "{helpers.fieldnames[x]}"' for x in measurements])
     query = f'''
             from(bucket: "{bucket}")
           |> range(start: -{trend_window + 2}d)
@@ -122,6 +122,7 @@ def load_trend(query_api, trend_window=3, bucket="sdd"):
           |> filter(fn: (r) => r["unverified"] != "True")
           '''
     tables = query_api.query_data_frame(query)
+    print("query executed")
     df = pd.concat(tables)
     df["c_id"] = compound_index(df)
 

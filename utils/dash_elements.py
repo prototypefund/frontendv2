@@ -20,8 +20,9 @@ def main_controls(map_data, CONFIG):
         html.Div(id="info_container", className="container", children=[
             html.Button(id="btn-info", children="Informationen anzeigen ↓"),
             html.Div(id="infotext", style={"display": "none"}, children=[
+                html.H3("Informationen über diese Karte"),
                 dcc.Markdown(f"""
-                Die Maßnahmen gegen COVID19 wie Kontaktverbote und geschlossene Geschäfte haben große 
+                Die Maßnahmen gegen COVID-19 wie Kontaktverbote und geschlossene Geschäfte haben große 
                 Änderungen in unserem Alltag mit sich gebracht. Wir sehen dies jeden Tag wenn wir vor die Haustür 
                 gehen. Aber wie ist die Lage im Rest des Landes? Wird Social Distancing überall gleich strikt 
                 befolgt? Sinkt die Zurückhaltung am Wochenende oder bei guten Wetter? Sind tatsächlich mehr/weniger 
@@ -52,7 +53,25 @@ def main_controls(map_data, CONFIG):
                 Mess-Stationen in deiner Umgebung (hellblauer Bereich auf der Karte) mitteln lassen. Diesen Bereich 
                 kannst Du über eine Umkreis-Auswahl oder mit der Landkreis- oder Bundesland-Suche weiter unten im Menü 
                 festlegen.
-                """)
+                """),
+                html.H3("Weitere Informationen"),
+                html.Ul([
+                    html.Li(html.A(children="Über das Projekt",
+                                   href="https://blog.everyonecounts.de/das-projekt/",
+                                   target="_blank")),
+                    html.Li(html.A(children="Über das Team",
+                                   href="https://blog.everyonecounts.de/das-team/",
+                                   target="_blank")),
+                    html.Li(html.A(children="Über die Daten",
+                                   href="https://blog.everyonecounts.de/die-daten/",
+                                   target="_blank")),
+                    html.Li(html.A(children="Presseberichte",
+                                   href="https://blog.everyonecounts.de/presseschau/",
+                                   target="_blank")),
+                    html.Li(html.A(children="Blog",
+                                   href="https://blog.everyonecounts.de/",
+                                   target="_blank")),
+                ])
             ])
         ]),
         html.Div(id="detail_container", className="container", children=[

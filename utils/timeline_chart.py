@@ -157,7 +157,7 @@ class TimelineChartWindow:
                     x=df_timeseries["_time"],
                     y=df_timeseries["_value"],
                     mode="lines+markers",
-                    name="Daten",
+                    name=helpers.measurementtitles[measurement],
                     line=dict(color="#d9d9d9", width=1),
                     marker=dict(
                         size=6,
@@ -179,6 +179,7 @@ class TimelineChartWindow:
                     name=f"{self.TRENDWINDOW}-Tage-Trend",
                     line=dict(color="blue", width=2),
                 )]
+            self.figure["layout"]["yaxis"]["title"] = helpers.measurementtitles[measurement]
         else:
             return False
         return True

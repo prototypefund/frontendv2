@@ -226,23 +226,25 @@ def update_from_url(urlbar_str):
      Input('nominatim_storage', 'data'),
      Input('mapposition_lookup_button', 'n_clicks')],
     [State('latlon_local_storage', 'data'),
-     State('map', 'figure')]
+     State('map', 'figure'),
+     State("url", "search")]
 )
 def update_latlon_local_storage(urlbar_storage, clientside_callback_storage,
                                 nominatim_storage,
                                 mapposition_lookup_button,
                                 latlon_local_storage,
-                                fig):
+                                fig,
+                                urlbar_str):
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)
-    if "urlbar_storage" in prop_ids:
+    if "urlbar_storage" in prop_ids and urlbar_str is not None and urlbar_str != "":
         lat = urlbar_storage[0]
         lon = urlbar_storage[1]
         addr = nominatim_reverse_lookup(lat, lon)
         return (lat, lon, addr)
-    elif prop_ids[0] == "clientside_callback_storage":
+    elif "clientside_callback_storage" in prop_ids:
         lat, lon, _ = clientside_callback_storage
         if (lat, lon) == (0, 0):
             return latlon_local_storage  # original value, don't change

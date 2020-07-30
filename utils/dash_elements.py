@@ -1,6 +1,7 @@
 import dash_core_components as dcc
 import dash_html_components as html
 from utils import helpers
+from utils.ec_analytics import tracking_pixel_img
 from numpy import nan
 
 SLIDER_MAX = 130
@@ -174,7 +175,8 @@ def main_controls(map_data, CONFIG):
                     #  html.A(id="permalink", children="Permalink", href="xyz"),
                 ]),
             ]),
-        ])
+        ]),
+        tracking_pixel_img()
     ])
 
 

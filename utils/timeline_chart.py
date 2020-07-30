@@ -2,6 +2,7 @@ from utils import helpers
 import dash_core_components as dcc
 import dash_html_components as html
 from datetime import datetime, timedelta
+from utils.ec_analytics import matomo_tracking
 
 
 class TimelineChartWindow:
@@ -125,8 +126,9 @@ class TimelineChartWindow:
                 trace["hovertemplate"] = f"{info['name']}: <b>%{{y:.1f}}</b> {measurementtitle}<extra></extra>"
                 trace["name"] = f"{info['name']} ({measurementtitle})"
                 self.figure["data"].append(trace)
-                self.figure["layout"]["yaxis"]["title"] = "Wert"
-                self.figure["layout"]["title"] = figtitle
+            self.figure["layout"]["yaxis"]["title"] = "Wert"
+            self.figure["layout"]["title"] = figtitle
+            matomo_tracking(f"EC_Dash_Timeline_{detail_radio}")
 
         elif detail_radio == "stations" and curveNumber > 0:  # exclude selection marker
             c_id = clickData["points"][0]["customdata"]
@@ -180,6 +182,7 @@ class TimelineChartWindow:
                     line=dict(color="blue", width=2),
                 )]
             self.figure["layout"]["yaxis"]["title"] = helpers.measurementtitles[measurement]
+            matomo_tracking(f"EC_Dash_Timeline_Stations_{measurement}")
         else:
             return False
         return True

@@ -18,6 +18,7 @@ from utils import timeline_chart
 from utils import dash_elements
 from utils.filter_by_radius import filter_by_radius
 from utils.get_outline_coords import get_outline_coords
+from utils.ec_analytics import matomo_tracking
 
 # CONSTANTS
 # =============
@@ -314,6 +315,7 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
 
         # highlight circle
         highlight_x, highlight_y = poly.exterior.coords.xy
+        matomo_tracking("EC_Dash_Highlight_Radius")
 
     elif "bundesland_dropdown" in prop_ids or \
             ("region_tabs" in prop_ids and region_tabs == "tab-bundesland") or \
@@ -323,6 +325,7 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
         filtered_map_data = MAP_DATA[MAP_DATA["bundesland"] == bundesland]
         ags = filtered_map_data["ags"].iloc[0][:-3]  # '08221' --> '08'
         highlight_x, highlight_y = get_outline_coords("bundesland", ags)
+        matomo_tracking("EC_Dash_Highlight_Bundesland")
 
     elif "landkreis_dropdown" in prop_ids or \
             ("region_tabs" in prop_ids and region_tabs == "tab-landkreis") or \
@@ -332,6 +335,7 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
         filtered_map_data = MAP_DATA[MAP_DATA["landkreis_label"] == landkreis]
         ags = filtered_map_data["ags"].iloc[0]
         highlight_x, highlight_y = get_outline_coords("landkreis", ags)
+        matomo_tracking("EC_Dash_Highlight_Landkreis")
 
     else:
         mean_trend_str = "nicht verfügbar"
@@ -351,6 +355,7 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
             mean_trend_str = "+" + mean_trend_str  # show plus sign
 
     return mean_trend_str, location_text, location_editbox, highlight_polygon
+
 
 @app.callback(
     Output('trend_container', 'style'),
@@ -372,6 +377,7 @@ def show_hide_region_select(n_clicks, detail_radio):
         return dash.no_update, dash.no_update
     if n_clicks % 2 == 1 and detail_radio == "stations":
         # show
+        matomo_tracking("EC_Dash_Show_Region_Select")
         return "Auswahl einklappen ↑", {'display': 'block'}
     else:
         # hide
@@ -386,6 +392,7 @@ def show_hide_region_select(n_clicks):
         return dash.no_update, dash.no_update
     if n_clicks % 2 == 1:
         # show
+        matomo_tracking("EC_Dash_Show_Infobox")
         return "Informationen ausblenden ↑", {'display': 'block'}
     else:
         # hide

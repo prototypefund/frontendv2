@@ -28,18 +28,7 @@ def main_controls(map_data, CONFIG):
                 value='stations',
                 labelStyle={'display': 'inline-block'}
             ),
-        ]),
-        html.Div(id="trend_container", className="container", children=[
-            html.Div(children=[
-                html.H3(f"{TRENDWINDOW}-Tage-Trend im gewählten Bereich:"),
-                html.P(id="mean_trend_p", style={}, children=[
-                    html.Span(id="mean_trend_span", children="")
-                ]),
-            ]),
-            html.P(id="location_p", children=[
-                html.P(id="location_text", children="?"),
-                html.Button(children="Ändern ↓"),
-            ]),
+            html.H3("Datenquellen"),
             dcc.Checklist(
                 id="trace_visibility_checklist",
                 options=[
@@ -50,6 +39,18 @@ def main_controls(map_data, CONFIG):
                 value=['hystreet', 'webcam-customvision', 'bikes'],
                 labelStyle={'display': 'block'}
             ),
+        ]),
+        html.Div(id="trend_container", className="container", children=[
+            html.Div(children=[
+                html.H3(f"{TRENDWINDOW}-Tage-Trend im gewählten Bereich"),
+                html.P(id="mean_trend_p", style={}, children=[
+                    html.Span(id="mean_trend_span", children="")
+                ]),
+            ]),
+            html.P(id="location_p", children=[
+                html.P(id="location_text", children="?"),
+                html.Button(children="Ändern ↓"),
+            ]),
         ]),
         html.Div(id="region_container", className="container", children=[
             dcc.Tabs(id='region_tabs', className="", value='tab-umkreis', children=[

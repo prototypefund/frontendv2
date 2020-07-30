@@ -193,7 +193,7 @@ def storage():
         dcc.Store(id='nominatim_storage', storage_type='memory'),
         dcc.Store(id='urlbar_storage', storage_type='memory'),
         dcc.Store(id='highlight_polygon', storage_type='memory'),
-        dcc.Store(id='latlon_local_storage', storage_type='local'),
+        dcc.Store(id='latlon_local_storage', storage_type='local', data=(50.144, 8.617, "Frankfurt am Main")),
     ]
 
 

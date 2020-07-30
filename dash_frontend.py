@@ -180,8 +180,8 @@ app.clientside_callback(
 
     function showPosition(position) {
       if (position=='error') {
-        lat = -1;
-        lon = -1;
+        lat = 0;
+        lon = 0;
       } else {
         lat = position.coords.latitude;
         lon = position.coords.longitude;
@@ -243,19 +243,21 @@ def update_latlon_local_storage(urlbar_storage, clientside_callback_storage,
         lat = urlbar_storage[0]
         lon = urlbar_storage[1]
         addr = nominatim_reverse_lookup(lat, lon)
-        return (lat, lon, addr)
-    elif "clientside_callback_storage" in prop_ids:
+        return lat, lon, addr
+    elif "clientside_callback_storage" in prop_ids and \
+            clientside_callback_storage[0] != 0 and \
+            clientside_callback_storage[1] != 0:
         lat, lon, _ = clientside_callback_storage
         if (lat, lon) == (0, 0):
             return latlon_local_storage  # original value, don't change
         else:
             addr = nominatim_reverse_lookup(lat, lon)
-            return (lat, lon, addr)
+            return lat, lon, addr
     elif prop_ids[0] == "mapposition_lookup_button":
         lat = fig["layout"]["mapbox"]["center"]["lat"]
         lon = fig["layout"]["mapbox"]["center"]["lon"]
         addr = nominatim_reverse_lookup(lat, lon)
-        return (lat, lon, addr)
+        return lat, lon, addr
     elif prop_ids[0] == "nominatim_storage" and nominatim_storage[2] != "":
         return nominatim_storage
     else:

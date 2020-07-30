@@ -4,12 +4,13 @@ from utils import helpers
 import plotly.graph_objects as go
 
 
-def get_map_traces(map_data):
+def get_map_traces(map_data, measurements):
     """
     Prepare traces for the map Graph depending on the level of
     detail: "station", "landkreis", "bundesland"
 
     :param geopandas.GeoDataFrame map_data: map_data GeoDataFrame
+    :param list measurements: list of measurements to include
     :return dict: dict of traces for plotting
     :return geopandas.GeoDataFrame: updated map_data GeoDataFrame
     """
@@ -31,7 +32,8 @@ def get_map_traces(map_data):
         )]
 
     # Split into traces by measurement, add column "trace_index" (important for data selection)
-    for index, measurement in enumerate(map_data["_measurement"].unique()):
+    map_data["trace_index"] = -1  # reset
+    for index, measurement in enumerate(measurements):
         map_data.loc[map_data["_measurement"] == measurement, "trace_index"] = index+1
         measurement_map_data = map_data[map_data["_measurement"] == measurement]
         trace = dict(
@@ -58,6 +60,7 @@ def get_map_traces(map_data):
     # Prepare landkreis/bundeslad choropleth maps
     for region in ("landkreis", "bundesland"):
         choropleth_df = map_data.copy().dropna(subset=["trend"])
+        choropleth_df = choropleth_df[choropleth_df["_measurement"].isin(measurements)]
         if region == "bundesland":
             choropleth_df["ags"] = choropleth_df["ags"].str[:-3]
             geojson_filename = "states.json"

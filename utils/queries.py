@@ -84,6 +84,7 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
     geo_table["model"] = geo_table["c_id"].map(trenddict["model"])
     geo_table["last_value"] = geo_table["c_id"].map(trenddict["last_value"])
     geo_table["last_time"] = geo_table["c_id"].map(trenddict["last_time"])
+    geo_table["landkreis_label"] = geo_table.apply(lambda x: x["landkreis"] + " " + str(x["districtType"]), 1)
 
     print("Result of 'get_map_data():")
     print(geo_table.columns)

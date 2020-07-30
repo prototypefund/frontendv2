@@ -48,57 +48,63 @@ def main_controls(map_data, CONFIG):
                 ]),
             ]),
             html.P(id="location_p", children=[
-                html.P(id="location_text", children="?"),
-                html.Button(children="Ändern ↓"),
+                html.Span(id="location_text", children="?"),
             ]),
+            html.Button(id="btn-region-select", children="Region auswählen ↓"),
+            html.Div(id="region_container",
+                     style={"display": "none"},
+                     children=[
+                         dcc.Tabs(id='region_tabs', className="", value='tab-umkreis', children=[
+                             dcc.Tab(label='Umkreis', value='tab-umkreis', children=[
+                                 html.Div(id="radius_search_tab", children=[
+                                     html.H3("Mittelpunkt bestimmen:"),
+                                     html.Div(id="search-container", children=[
+                                         dcc.Input(id="nominatim_lookup_edit", type="text", placeholder="",
+                                                   debounce=False),
+                                         html.Button(id='nominatim_lookup_button', n_clicks=0, children='Suchen'),
+                                     ]),
+                                     html.Button(id='geojs_lookup_button', n_clicks=0,
+                                                 children='Automatisch bestimmen'),
+                                     html.Button(id='mapposition_lookup_button', n_clicks=0,
+                                                 children='Kartenmittelpunkt verwenden'),
+                                     html.H3("Umkreis:"),
+                                     dcc.Slider(
+                                         id='radiusslider',
+                                         min=5,
+                                         max=SLIDER_MAX,
+                                         step=5,
+                                         value=60,
+                                         tooltip=dict(
+                                             always_visible=False,
+                                             placement="top"
+                                         ),
+                                         marks={20 * x: str(20 * x) + 'km' for x in range(SLIDER_MAX // 20 + 1)}
+                                     )
+                                 ]),
+                             ]),
+                             dcc.Tab(label='Landkreis', value='tab-landkreis', children=[
+                                 html.H3("Wähle einen Landkreis:"),
+                                 dcc.Dropdown(
+                                     id='landkreis_dropdown',
+                                     options=landkreis_options,
+                                     value=landkreis_options[0]["value"],
+                                     clearable=False
+                                 ),
+                                 html.P("Hinweis: Nur Landkreise mit Datenpunkten können ausgewählt werden!"),
+                             ]),
+                             dcc.Tab(label='Bundesland', value='tab-bundesland', children=[
+                                 html.H3("Wähle ein Bundesland:"),
+                                 dcc.Dropdown(
+                                     id='bundesland_dropdown',
+                                     options=bundesland_options,
+                                     value=bundesland_options[0]["value"],
+                                     clearable=False
+                                 ),
+                             ]),
+                         ])
+                     ]),
         ]),
-        html.Div(id="region_container", className="container", children=[
-            dcc.Tabs(id='region_tabs', className="", value='tab-umkreis', children=[
-                dcc.Tab(label='Umkreis', value='tab-umkreis', children=[
-                    html.Div(id="radius_search_tab", children=[
-                        html.H3("Mittelpunkt bestimmen:"),
-                        html.Div(id="search-container", children=[
-                            dcc.Input(id="nominatim_lookup_edit", type="text", placeholder="", debounce=False),
-                            html.Button(id='nominatim_lookup_button', n_clicks=0, children='Suchen'),
-                        ]),
-                        html.Button(id='geojs_lookup_button', n_clicks=0, children='Automatisch bestimmen'),
-                        html.Button(id='mapposition_lookup_button', n_clicks=0, children='Kartenmittelpunkt verwenden'),
-                        html.H3("Umkreis:"),
-                        dcc.Slider(
-                            id='radiusslider',
-                            min=5,
-                            max=SLIDER_MAX,
-                            step=5,
-                            value=60,
-                            tooltip=dict(
-                                always_visible=False,
-                                placement="top"
-                            ),
-                            marks={20 * x: str(20 * x) + 'km' for x in range(SLIDER_MAX // 20 + 1)}
-                        )
-                    ]),
-                ]),
-                dcc.Tab(label='Landkreis', value='tab-landkreis', children=[
-                    html.H3("Wähle einen Landkreis:"),
-                    dcc.Dropdown(
-                        id='landkreis_dropdown',
-                        options=landkreis_options,
-                        value=landkreis_options[0]["value"],
-                        clearable=False
-                    ),
-                    html.P("Hinweis: Nur Landkreise mit Datenpunkten können ausgewählt werden!"),
-                ]),
-                dcc.Tab(label='Bundesland', value='tab-bundesland', children=[
-                    html.H3("Wähle ein Bundesland:"),
-                    dcc.Dropdown(
-                        id='bundesland_dropdown',
-                        options=bundesland_options,
-                        value=bundesland_options[0]["value"],
-                        clearable=False
-                    ),
-                ]),
-            ])
-        ]),
+
         html.Div(id="footer", className="footer", children=[
             html.P([
                 html.Span("EveryoneCounts 2020"),

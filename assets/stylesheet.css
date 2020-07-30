@@ -223,7 +223,8 @@ h3 {
 
 
 #region_container{
-  margin-bottom: 100px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 a, a:link, a:visited {

@@ -349,16 +349,29 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
     return mean_trend_str, location_text, location_editbox, highlight_polygon
 
 @app.callback(
-    [Output('region_container', 'style'),
-     Output('trend_container', 'style')],
+    Output('trend_container', 'style'),
     [Input('detail_radio', 'value')])
 def update_menu_item(detail_radio):
-    show = {'display': 'block'}
-    hide = {'display': 'none'}
     if detail_radio == "stations":
-        return show, show
+        return {'display': 'block'}
     else:
-        return hide, hide
+        return {'display': 'none'}
+
+
+@app.callback(
+    [Output("btn-region-select", "children"),
+     Output("region_container", "style")],
+    [Input("btn-region-select", "n_clicks")],
+    [State('detail_radio', 'value')])
+def show_hide_region_select(n_clicks, detail_radio):
+    if n_clicks is None:
+        return dash.no_update, dash.no_update
+    if n_clicks%2 == 1 and detail_radio == "stations":
+        # show
+        return "Auswahl einklappen ↑", {'display': 'block'}
+    else:
+        # hide
+        return "Region auswählen ↓", {'display': 'none'}
 
 
 @app.callback(

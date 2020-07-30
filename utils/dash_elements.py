@@ -113,7 +113,7 @@ def main_controls(map_data, CONFIG):
                     html.A(children="Kontakt", href="mailto:kontakt@everyonecounts.de", target="_blank"),
                     html.A(children="Twitter", href="https://twitter.com/_everyonecounts", target="_blank"),
                     html.A(children="Github", href="https://github.com/socialdistancingdashboard/", target="_blank"),
-                    html.A(id="permalink", children="Permalink", href="xyz"),
+                    #  html.A(id="permalink", children="Permalink", href="xyz"),
                 ]),
             ]),
         ])

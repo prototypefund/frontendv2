@@ -263,13 +263,13 @@ def update_latlon_local_storage(urlbar_storage, clientside_callback_storage,
 
 
 # Update permalink
-@app.callback(
-    Output('permalink', 'href'),
-    [Input('latlon_local_storage', 'data'),
-     Input('radiusslider', 'value')])
-def update_permalink(latlon_local_storage, radius):
-    lat, lon, _ = latlon_local_storage
-    return f"?lat={lat}&lon={lon}&radius={radius}"
+# @app.callback(
+#     Output('permalink', 'href'),
+#     [Input('latlon_local_storage', 'data'),
+#      Input('radiusslider', 'value')])
+# def update_permalink(latlon_local_storage, radius):
+#     lat, lon, _ = latlon_local_storage
+#     return f"?lat={lat}&lon={lon}&radius={radius}"
 
 
 # Update highlight on geolocation change or BL/LK selection
@@ -456,6 +456,8 @@ def nominatim_reverse_lookup(lat, lon):
     geoloc = geolocator.reverse(query, exactly_one=True)
     address = ""
     if geoloc:
+        if "address" not in geoloc.raw:
+            return ""
         addressparts = geoloc.raw["address"]
         addresslist = []
         for part in ['hamlet', 'village', 'city_district', 'city', 'county', 'state']:

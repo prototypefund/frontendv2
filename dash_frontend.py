@@ -370,12 +370,26 @@ def update_menu_item(detail_radio):
 def show_hide_region_select(n_clicks, detail_radio):
     if n_clicks is None:
         return dash.no_update, dash.no_update
-    if n_clicks%2 == 1 and detail_radio == "stations":
+    if n_clicks % 2 == 1 and detail_radio == "stations":
         # show
         return "Auswahl einklappen ↑", {'display': 'block'}
     else:
         # hide
         return "Region auswählen ↓", {'display': 'none'}
+
+@app.callback(
+    [Output("btn-info", "children"),
+     Output("infotext", "style")],
+    [Input("btn-info", "n_clicks")])
+def show_hide_region_select(n_clicks):
+    if n_clicks is None:
+        return dash.no_update, dash.no_update
+    if n_clicks % 2 == 1:
+        # show
+        return "Informationen ausblenden ↑", {'display': 'block'}
+    else:
+        # hide
+        return "Informationen anzeigen ↓", {'display': 'none'}
 
 
 @app.callback(

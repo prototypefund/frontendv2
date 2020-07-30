@@ -1,6 +1,7 @@
 import dash_core_components as dcc
 import dash_html_components as html
 from utils import helpers
+from numpy import nan
 
 SLIDER_MAX = 130
 
@@ -16,6 +17,44 @@ def main_controls(map_data, CONFIG):
                  className="container",
                  src="assets/logo.png",
                  alt="EveryoneCounts - Das Social Distancing Dashboard"),
+        html.Div(id="info_container", className="container", children=[
+            html.Button(id="btn-info", children="Informationen anzeigen ↓"),
+            html.Div(id="infotext", style={"display": "none"}, children=[
+                dcc.Markdown(f"""
+                Die Maßnahmen gegen COVID19 wie Kontaktverbote und geschlossene Geschäfte haben große 
+                Änderungen in unserem Alltag mit sich gebracht. Wir sehen dies jeden Tag wenn wir vor die Haustür 
+                gehen. Aber wie ist die Lage im Rest des Landes? Wird Social Distancing überall gleich strikt 
+                befolgt? Sinkt die Zurückhaltung am Wochenende oder bei guten Wetter? Sind tatsächlich mehr/weniger 
+                Menschen im Park unterwegs? Diese Fragen sind sehr schwer direkt zu beantworten, aber wir können 
+                versuchen, **indirekt** Erkentnisse darüber zu gewinnen indem wir verschiedene Indikatoren 
+                zur **Aktivität im öffentlichen Raum** betrachten. Dazu setzen wir auf unterschiedliche Datenquellen, 
+                um ein möglichst umfassendes Bild zu zeichnen. 
+                
+                Die Punkt auf der Karte stellen einzelne Messtation dar. Die Farbe entspricht dem aktuellen
+                **{TRENDWINDOW}-Tage-Trend**:"""),
+                html.Div(id="legende", children=[
+                    html.Div(id="legende-1",
+                             style={"background":helpers.trend2color(-1.)},
+                             children="fallend oder gleich (< +20%)"),
+                    html.Div(id="legende-2",
+                             style={"background":helpers.trend2color(0.3)},
+                             children="leicht steigend (+20% bis +100%) "),
+                    html.Div(id="legende-3",
+                             style={"background":helpers.trend2color(2.0)},
+                             children="stark steigend (> +100%)"),
+                    html.Div(id="legende-4",
+                             style={"background": helpers.trend2color(nan)},
+                             children="keine Daten oder nicht ausreichend für Trendbestimmung"),
+                ]),
+                dcc.Markdown(f"""Du kannst auf jede Station klicken um mehr 
+                Informationen zu erhalten. Außerdem kannst Du den **Detailgrad** ändern um verschiedene Landkreise oder 
+                Bundesländer mit einander zu vergleichen. In der "Punkte"-Ansicht kannst Du den Trend über die 
+                Mess-Stationen in deiner Umgebung (hellblauer Bereich auf der Karte) mitteln lassen. Diesen Bereich 
+                kannst Du über eine Umkreis-Auswahl oder mit der Landkreis- oder Bundesland-Suche weiter unten im Menü 
+                festlegen.
+                """)
+            ])
+        ]),
         html.Div(id="detail_container", className="container", children=[
             html.H3("Detailgrad"),
             dcc.RadioItems(

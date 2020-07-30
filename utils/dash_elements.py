@@ -104,16 +104,17 @@ def main_controls(map_data, CONFIG):
                          ])
                      ]),
         ]),
-
-        html.Div(id="footer", className="footer", children=[
-            html.P([
-                html.Span("EveryoneCounts 2020"),
-                html.A(children="Impressum", href="https://blog.everyonecounts.de/impressum/", target="_blank"),
-                html.A(children="Blog", href="https://blog.everyonecounts.de/", target="_blank"),
-                html.A(children="Kontakt", href="mailto:kontakt@everyonecounts.de", target="_blank"),
-                html.A(children="Twitter", href="https://twitter.com/_everyonecounts", target="_blank"),
-                html.A(children="Github", href="https://github.com/socialdistancingdashboard/", target="_blank"),
-                html.A(id="permalink", children="Permalink", href="xyz"),
+        html.Div(id="footer-container", children=[
+            html.Div(id="footer", className="footer", children=[
+                html.P([
+                    html.Span("EveryoneCounts 2020"),
+                    html.A(children="Impressum", href="https://blog.everyonecounts.de/impressum/", target="_blank"),
+                    html.A(children="Blog", href="https://blog.everyonecounts.de/", target="_blank"),
+                    html.A(children="Kontakt", href="mailto:kontakt@everyonecounts.de", target="_blank"),
+                    html.A(children="Twitter", href="https://twitter.com/_everyonecounts", target="_blank"),
+                    html.A(children="Github", href="https://github.com/socialdistancingdashboard/", target="_blank"),
+                    html.A(id="permalink", children="Permalink", href="xyz"),
+                ]),
             ]),
         ])
     ])

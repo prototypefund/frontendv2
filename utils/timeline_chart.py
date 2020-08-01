@@ -70,7 +70,7 @@ class TimelineChartWindow:
                 title="Zeitpunkt",
                 rangeselector=self.selectorOptions,
                 range=[datetime.now()-timedelta(days=14), datetime.now()],
-                tickformat='%A<br>%e.%B'
+                tickformat='%A<br>%e.%B, %H:%M'
             ),
             legend=dict(
                 orientation="h",

@@ -224,4 +224,17 @@ class TimelineChartWindow:
                 labelStyle={'display': 'block'}
             )
             output.append(smooth_checkbox)
+        infotext = html.P(children=[
+            """
+            Möchtest Du diese Daten herunterladen oder Zugriff auf weiter zurückliegende Daten? Zum Beispiel um selber
+            spannende Analysen zu machen und Zusammenhänge aufzudecken oder einfach aus Interesse? Fantastisch! Wir sind
+            vorbereitet und haben eine API dafür eingerichtet. Um Zugang zu erhalten schreib einfach eine Mail an
+            """,
+            html.A("kontakt@everyoneocunts.de",
+                   href="mailto:kontakt@everyonecounts.de?subject=Anfrage%20API-Zugriff",
+                   target="_blank"),
+            "."
+
+        ])
+        output.append(infotext)
         return output

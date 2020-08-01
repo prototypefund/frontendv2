@@ -48,17 +48,18 @@ body {
     height:66vh;
     min-width:400px;
     min-height:400px;
-    text-align:center;
     animation-duration: 1s;
     animation-name: chart-container-anim;
 }
 #chart-container>div{
-    height:90%;
+    height:83%;
     width:100%;
 }
 #chart{
     height:100%;
     width:100%;
+    border-bottom:1px solid #ddd;
+    margin-bottom:8px;
 }
 
 #chart-close{
@@ -220,9 +221,12 @@ h3 {
 
 #timeline-avg-check {
  max-width:40%;
- text-align: center;
+ text-align: left;
 }
-
+#timeline-avg-check p{
+    text-align: left;
+    max-width:600px;
+}
 
 #region_container{
   margin-top: 10px;

@@ -185,7 +185,7 @@ def load_trend(query_api, measurements, trend_window=3, bucket="sdd"):
     return output  # dicts
 
 
-def load_timeseries(query_api, c_id, bucket="sdd"):
+def load_timeseries(query_api, c_id, daysback=90, bucket="sdd"):
     """
     Load time series for a given compound index
     """
@@ -195,7 +195,7 @@ def load_timeseries(query_api, c_id, bucket="sdd"):
     extra_lines = ''
     query = f'''
     from(bucket: "{bucket}")
-      |> range(start: -60d) 
+      |> range(start: -{daysback}d) 
       |> filter(fn: (r) => r["_measurement"] == "{_measurement}")
       |> filter(fn: (r) => r["_field"] == "{_field}")
       |> filter(fn: (r) => r["_id"] == "{_id}")

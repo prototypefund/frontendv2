@@ -85,7 +85,7 @@ class TimelineChartWindow:
     def get_figure(self):
         return self.figure
 
-    def update_figure(self, detail_radio, clickData, map_data, avg):
+    def update_figure(self, detail_radio, clickData, map_data, avg, measurements):
         self.mode = detail_radio
         self.avg = avg
         if clickData is not None:
@@ -122,6 +122,10 @@ class TimelineChartWindow:
                         marker=dict(size=6),
                     )
                 info = filtered_map_data[filtered_map_data["c_id"] == c_id].iloc[0][["name", "_measurement"]]
+                if info['_measurement'] in measurements:
+                    trace["visible"] = True
+                else:
+                    trace["visible"] = "legendonly"
                 measurementtitle = helpers.measurementtitles[info['_measurement']]
                 trace["hovertemplate"] = f"{info['name']}: <b>%{{y:.1f}}</b> {measurementtitle}<extra></extra>"
                 trace["name"] = f"{info['name']} ({measurementtitle})"

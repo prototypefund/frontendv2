@@ -146,8 +146,9 @@ def reset_map_clickdata(n_clicks):
     [Output('timeline-chart', 'children')],
     [Input('map', 'clickData'),
      Input('timeline-avg-check', 'value')],
-    [State('detail_radio', 'value')])
-def display_click_data(clickData, avg_checkbox, detail_radio):
+    [State('detail_radio', 'value'),
+     State('trace_visibility_checklist','value')])
+def display_click_data(clickData, avg_checkbox, detail_radio, trace_visibility):
     print(clickData)
     avg = len(avg_checkbox) > 0
     ctx = dash.callback_context
@@ -155,7 +156,7 @@ def display_click_data(clickData, avg_checkbox, detail_radio):
         return dash.no_update
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)
     if clickData is not None or "timeline-avg-check" in prop_ids:
-        if CHART.update_figure(detail_radio, clickData, MAP_DATA, avg):
+        if CHART.update_figure(detail_radio, clickData, MAP_DATA, avg, trace_visibility):
             return [CHART.get_timeline_window()]
     return dash.no_update
 

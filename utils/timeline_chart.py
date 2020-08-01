@@ -34,11 +34,11 @@ class TimelineChartWindow:
                     "step": 'all',
                     "label": 'Gesamt'
                 }, {
-                    "step": 'year',
-                    "stepmode": 'backward',
-                    "count": 1,
-                    "label": 'Jahr'
-                }, {
+                #     "step": 'year',
+                #     "stepmode": 'backward',
+                #     "count": 1,
+                #     "label": 'Jahr'
+                # }, {
                     "step": 'month',
                     "stepmode": 'backward',
                     "count": 3,

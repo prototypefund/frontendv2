@@ -366,3 +366,15 @@ input[type='radio']:checked {
 #feedback-container p{
     margin-top:25px;
 }
+
+a.supporter, a.supporter img{
+    background:transparent;
+    border:none;
+}
+a.supporter img {
+    border-radius: var(--boxradius);
+    padding: var(--boxradius);
+}
+a.supporter img:hover{
+    background:white;
+}

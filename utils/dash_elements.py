@@ -73,6 +73,20 @@ def main_controls(map_data, CONFIG):
                                    href="https://blog.everyonecounts.de/",
                                    target="_blank")),
                 ]),
+                html.Div(id="supporter", children=[
+                    html.A(href="https://bmbf.de",
+                           className="supporter",
+                           target="_blank",
+                           children=[
+                               html.Img(src="assets/support_bmbf.png")
+                           ]),
+                    html.A(href="https://projecttogether.org/wirvsvirus/",
+                           className="supporter",
+                           target="_blank",
+                           children=[
+                               html.Img(src="assets/support_solutionenabler.png")
+                           ]),
+                ]),
                 html.Button(id="btn-info-close", children="Informationen ausblenden ↑"),
             ])
         ]),

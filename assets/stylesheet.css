@@ -285,6 +285,10 @@ input[type='radio']:checked {
 #trend_container, #location_p{
     text-align:center;
 }
+.tab-content{
+    min-height:280px;
+    /* do not cut off dropdown menu */
+}
 #location_text{
     color:#333;
     font-size:1em;

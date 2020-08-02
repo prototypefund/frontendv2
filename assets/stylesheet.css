@@ -1,7 +1,21 @@
+:root {
+    --bggray: #efefef;
+    --lightgreen: #D3EECD;
+    --darkgreen: #04652A;
+    --pink: #F63366;
+    --lightpink: #FCBFCF;
+    --yellow: #F3B202;
+    --lightyellow: #FEE5A0;
+    --boxshadow: 0px 1px 8px #aaa;
+    --boxradius: 10px;
+}
+
+
 body {
-    background:#efefef;
+    background:var(--bggray);
     font-family:Arial,Helvetica,sans-serif;
     font-size:0.9em;
+    overflow:hidden;
 }
 
 
@@ -14,13 +28,13 @@ body {
 .container,
 #chart-container,h1,h2{
     margin-bottom:10px;
-    box-shadow:0px 1px 8px #aaa;
+    box-shadow:var(--boxshadow);
     padding:10px;
     text-align:left;
     background:#fff;
     z-index:9999;
     position:relative;
-    border-radius:10px;
+    border-radius:var(--boxradius);
 }
 
 @keyframes chart-container-anim {
@@ -131,7 +145,7 @@ button{
 }
 
 .tab--selected {
-  border-top:3px solid #F63366 !important;
+  border-top:3px solid var(--pink) !important;
   background-color: white !important;
   background: linear-gradient(180deg, rgba(246,51,102,0.2) 0%, rgba(246,51,102,0) 100%);
 }
@@ -153,8 +167,8 @@ button{
     font-size:0.9em;
     text-align:center;
     background:rgba(255,255,255,0.85);
-    box-shadow:0px 1px 8px #aaa;
-    border-radius: 10px 10px 0px 0px;
+    box-shadow:var(--boxshadow);
+    border-radius: var(--boxradius) var(--boxradius) 0px 0px;
     z-index:9999;
 }
 #footer a{
@@ -177,13 +191,13 @@ label {
   border-bottom:1px solid #ccc;
 }
 label:hover {
-  background: #F63366;
+  background: var(--pink);
   color:#fff;
   border-bottom:1px solid #fff;
 }
 
 #detail_container, .container {
-  background:#efefef;
+  background:var(--bggray);
 }
 
 #mean_trend_p {
@@ -234,7 +248,7 @@ h3 {
 }
 
 a, a:link, a:visited {
-  color: #F63366;
+  color: var(--pink);
   font-weight: bold;
   text-decoration: underline;
 }
@@ -264,8 +278,8 @@ input[type='checkbox']{
 }
 input[type='checkbox']:checked,
 input[type='radio']:checked {
-  background: #F63366;
-  border: 2px solid #FCBFCF;
+  background: var(--pink);
+  border: 2px solid var(--lightpink);
 }
 
 #trend_container, #location_p{
@@ -289,7 +303,7 @@ input[type='radio']:checked {
 }
 
 #legende{
-  border-radius: 10px;
+  border-radius: var(--boxradius);
   overflow: hidden;
   box-shadow:0px 1px 6px #bbb;
 }
@@ -315,9 +329,9 @@ input[type='radio']:checked {
 }
 
 @keyframes blink {
-      0% {background:#efefef;}
-      50% {background:#FEE5A0;}
-      100% {background:#efefef;}
+      0% {background:var(--bggray);}
+      50% {background:var(--lightyellow);}
+      100% {background:var(--bggray);}
 }
 #info_container {
     animation-name: blink;
@@ -337,8 +351,9 @@ input[type='radio']:checked {
   max-width:500px;
   border:2px solid white;
   padding:20px;
-  border-radius:5px;
-  background-color: #FEE59F;
+  border-radius: var(--boxradius);
+  box-shadow: var(--boxshadow);
+  background-color: var(--lightyellow);
   animation-name: fadein;
   animation-duration: 1s;
   animation-delay:30s;

@@ -32,7 +32,7 @@ def main_controls(map_data, CONFIG):
                 zur **Aktivität im öffentlichen Raum** betrachten. Dazu setzen wir auf unterschiedliche Datenquellen, 
                 um ein möglichst umfassendes Bild zu zeichnen. 
                 
-                Die Punkt auf der Karte stellen einzelne Messtation dar. Die Farbe entspricht dem aktuellen
+                Die Punkt auf der Karte stellen einzelne Messtationen dar. Die Farbe entspricht dem aktuellen
                 **{TRENDWINDOW}-Tage-Trend**:"""),
                 html.Div(id="legende", children=[
                     html.Div(id="legende-1",

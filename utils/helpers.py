@@ -12,11 +12,11 @@ def trend2color(trendvalue, alpha=1):
     return a color code for a given trend value
     """
     if isnan(trendvalue):
-        return f"rgba(180, 180, 180, {alpha})"
+        return f"rgba(180, 180, 180, {alpha*0.7})"
     elif trendvalue > 1:  # +100%
         # red
         return f"rgba(230, 0, 0, {alpha})"
-    elif trendvalue < 0.2:  # +20%
+    elif trendvalue < 0.1:  # +10%
         # green
         return f"rgba(0, 230, 50, {alpha})"
     else:

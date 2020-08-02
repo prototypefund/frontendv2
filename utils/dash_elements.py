@@ -36,17 +36,17 @@ def main_controls(map_data, CONFIG):
                 **{TRENDWINDOW}-Tage-Trend**:"""),
                 html.Div(id="legende", children=[
                     html.Div(id="legende-1",
-                             style={"background":helpers.trend2color(-1.)},
-                             children="fallend oder gleich (< +20%)"),
+                             style={"background": helpers.trend2color(-1.)},
+                             children="fallend oder gleich (< +10%)"),
                     html.Div(id="legende-2",
-                             style={"background":helpers.trend2color(0.3)},
-                             children="leicht steigend (+20% bis +100%) "),
+                             style={"background": helpers.trend2color(0.3)},
+                             children="leicht steigend (+10% bis +100%) "),
                     html.Div(id="legende-3",
-                             style={"background":helpers.trend2color(2.0)},
+                             style={"background": helpers.trend2color(2.0)},
                              children="stark steigend (> +100%)"),
                     html.Div(id="legende-4",
                              style={"background": helpers.trend2color(nan)},
-                             children="keine Daten oder nicht ausreichend für Trendbestimmung"),
+                             children="zu wenig Daten für die Trendbestimmung"),
                 ]),
                 dcc.Markdown(f"""Du kannst auf jede Station klicken um mehr 
                 Informationen zu erhalten. Außerdem kannst Du den **Detailgrad** ändern um verschiedene Landkreise oder 

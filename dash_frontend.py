@@ -116,7 +116,7 @@ def show_hide_timeline(clickDataMap, clickDataChart, n_clicks):
     if not ctx.triggered:
         return dash.no_update
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)
-    print(prop_ids)
+    # print(prop_ids)
     if "chart-close" in prop_ids:
         # clicked on close button
         return {'display': 'none'}
@@ -384,20 +384,26 @@ def show_hide_region_select(n_clicks, detail_radio):
         # hide
         return "Region auswählen ↓", {'display': 'none'}
 
+
 @app.callback(
     [Output("btn-info", "children"),
      Output("infotext", "style")],
-    [Input("btn-info", "n_clicks")])
-def show_hide_region_select(n_clicks):
-    if n_clicks is None:
+    [Input("btn-info", "n_clicks"),
+     Input("btn-info-close", "n_clicks")])
+def show_hide_region_select(n_clicks, n_clicks_close):
+    ctx = dash.callback_context
+    if (n_clicks is None and n_clicks_close is None) or not ctx.triggered:
         return dash.no_update, dash.no_update
-    if n_clicks % 2 == 1:
+    elif n_clicks_close is None:
+        n_clicks_close = 0
+    prop_ids = helpers.dash_callback_get_prop_ids(ctx)
+    if "btn-info-close" in prop_ids or (n_clicks + n_clicks_close) % 2 == 0:
+        # hide
+        return "Informationen anzeigen ↓", {'display': 'none'}
+    else:
         # show
         matomo_tracking("EC_Dash_Show_Infobox")
         return "Informationen ausblenden ↑", {'display': 'block'}
-    else:
-        # hide
-        return "Informationen anzeigen ↓", {'display': 'none'}
 
 
 @app.callback(

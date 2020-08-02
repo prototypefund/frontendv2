@@ -72,7 +72,8 @@ def main_controls(map_data, CONFIG):
                     html.Li(html.A(children="Blog",
                                    href="https://blog.everyonecounts.de/",
                                    target="_blank")),
-                ])
+                ]),
+                html.Button(id="btn-info-close", children="Informationen ausblenden ↑"),
             ])
         ]),
         html.Div(id="detail_container", className="container", children=[

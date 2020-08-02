@@ -274,3 +274,17 @@ def timeline_chart():
             ]
         ),
     ])
+
+
+def feedback_window():
+    return html.Div(id="feedback-container", style={'display': 'block'}, children=[
+        html.Button(id="feedback-close", children=" × "),
+        dcc.Markdown(
+            """
+            Hast Du **3 Minuten Zeit** für unsere kleine **Nutzerbefragung**? Wir möchten besser werden und 
+            EveryoneCounts weiterentwickeln, dafür ist Feedback von unseren Nutzern von unschätzbarem Wert. Hilf mit!
+            """),
+        html.A(children=">> Link zur Umfrage (Google Forms) <<",
+               target="_blank",
+               href="https://docs.google.com/forms/d/e/1FAIpQLSda91f1ewYx2y-Z7GOK8FqffThDIxUMe1OJ0bWaC0EuRiMxcA/viewform")
+        ])

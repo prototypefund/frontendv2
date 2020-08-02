@@ -98,7 +98,8 @@ app.layout = html.Div(id="dash-layout", children=[
     *dash_elements.storage(),
     dash_elements.mainmap(),
     dash_elements.main_controls(MAP_DATA, CONFIG),
-    dash_elements.timeline_chart()
+    dash_elements.timeline_chart(),
+    dash_elements.feedback_window()
 ])
 
 
@@ -149,7 +150,7 @@ def reset_map_clickdata(n_clicks):
     [State('detail_radio', 'value'),
      State('trace_visibility_checklist','value')])
 def display_click_data(clickData, avg_checkbox, detail_radio, trace_visibility):
-    print(clickData)
+    # print(clickData)
     avg = len(avg_checkbox) > 0
     ctx = dash.callback_context
     if not ctx.triggered:
@@ -460,6 +461,15 @@ def style_mean_trend(mean_str):
 def nominatim_lookup_callback(button, submit, query):
     return nominatim_lookup(query)
 
+
+@app.callback(
+    Output('feedback-container', 'style'),
+    [Input('feedback-close', 'n_clicks')])
+def hide_feedback_box(n_clicks):
+    if n_clicks is not None:
+        return {"display": "none"}
+    else:
+        return dash.no_update
 
 @cache.memoize(unless=DISABLE_CACHE)
 def nominatim_lookup(query):

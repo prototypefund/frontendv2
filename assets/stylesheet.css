@@ -62,7 +62,7 @@ body {
     margin-bottom:8px;
 }
 
-#chart-close{
+#chart-close, #feedback-close{
     color:black;
     font-size:1.5em;
     width:1.5em;
@@ -324,4 +324,26 @@ input[type='radio']:checked {
     animation-duration: 1s;
     animation-iteration-count: 4;
     animation-delay: 1s;
+}
+@keyframes fadein {
+      0% {opacity:0; right:-600px;}
+      100% {opacity:1; right:5px;}
+}
+#feedback-container{
+  z-index: 99999 !important;
+  position:absolute;
+  right:0px;
+  top:30px;
+  max-width:500px;
+  border:2px solid white;
+  padding:20px;
+  border-radius:5px;
+  background-color: #FEE59F;
+  animation-name: fadein;
+  animation-duration: 1s;
+  animation-delay:30s;
+  animation-fill-mode: both;
+}
+#feedback-container p{
+    margin-top:25px;
 }

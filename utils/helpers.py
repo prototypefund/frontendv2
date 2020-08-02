@@ -63,10 +63,10 @@ def tooltiptext(df, mode):
     else:
         def make_string(row):
             trend_str = format_trend_str(row["trend"]["mean"])
-            count = row["trend"]["count"]
+            size = row["trend"]["size"]
             s = (
                 f"<span style='font-size:1.5em'><b>{row[mode].to_string().strip()}</b></span><br>"
-                f"<span style='font-size:0.85em; opacity:0.8;'>Messpunkte: {count}</span><br>"
+                f"<span style='font-size:0.85em; opacity:0.8;'>Messpunkte: {size}</span><br>"
                 f"<span style='font-size:1em'><b>Durchschnittlicher Trend:</b></span>"
                 f"<span style='font-size:1.5em'> {trend_str}</span>"
             )

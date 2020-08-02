@@ -59,7 +59,7 @@ def get_map_traces(map_data, measurements):
 
     # Prepare landkreis/bundeslad choropleth maps
     for region in ("landkreis", "bundesland"):
-        choropleth_df = map_data.copy().dropna(subset=["trend"])
+        choropleth_df = map_data.copy()
         choropleth_df = choropleth_df[choropleth_df["_measurement"].isin(measurements)]
         if region == "bundesland":
             choropleth_df["ags"] = choropleth_df["ags"].str[:-3]
@@ -67,7 +67,7 @@ def get_map_traces(map_data, measurements):
         else:
             # landkreis
             geojson_filename = "counties.json"
-        choropleth_df = choropleth_df.groupby(["ags", region]).agg(["mean", "count"]).reset_index()
+        choropleth_df = choropleth_df.groupby(["ags", region]).agg(["mean", "size"]).reset_index()
         with open(f"utils/geofeatures-ags-germany/{geojson_filename}", "r") as f:
             geojson = json.load(f)
         # noinspection PyTypeChecker

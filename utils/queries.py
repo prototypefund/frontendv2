@@ -68,7 +68,7 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
             tables = tables.append(influx_table, ignore_index=True)
     # pivot table so that the lat/lon fields become named columns
     geo_table = tables[["_field", "_value", "c_id"]]
-    geo_table = geo_table.pivot(index='c_id', columns='_field', values='_value')
+    geo_table = geo_table.pivot_table(index='c_id', columns='_field', values='_value')
     geo_table = round(geo_table, 6)
     geo_table = gpd.GeoDataFrame(geo_table, geometry=gpd.points_from_xy(geo_table.lon, geo_table.lat))
 

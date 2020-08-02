@@ -138,6 +138,8 @@ def load_trend(query_api, measurements, trend_window=3, bucket="sdd"):
         # get sub-dataframe for this id
 
         tmpdf = df[df["c_id"] == cid].sort_values(by=["unixtime"])
+        output["last_value"][cid] = tmpdf["_value"].iloc[-1]
+        output["last_time"][cid] = tmpdf["_time"].iloc[-1]
 
         lastday = max(tmpdf["_time"])
         firstday = min(tmpdf["_time"])
@@ -153,8 +155,6 @@ def load_trend(query_api, measurements, trend_window=3, bucket="sdd"):
         tmpdf = tmpdf.reset_index(drop=True)
 
         values = pd.to_numeric(tmpdf["_value"])
-        output["last_value"][cid] = tmpdf["_value"].iloc[-1]
-        output["last_time"][cid] = tmpdf["_time"].iloc[-1]
 
         COUNT_LOW_THRESHOLD = 3
         PERCENT_NONZEROS_THRESHOLD = 0.75

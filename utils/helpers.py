@@ -39,7 +39,10 @@ def tooltiptext(df, mode):
         return trend_str
     if mode == "stations":
         def make_string(row):
-            last_value = round(float(row["last_value"]), 1)
+            if isnan(row["last_value"]):
+                last_value = "nicht verfügbar"
+            else:
+                last_value = round(float(row["last_value"]), 1)
             try:
                 last_time = row["last_time"].strftime("%d.%m.%Y %H:%M")
             except ValueError:
@@ -58,6 +61,7 @@ def tooltiptext(df, mode):
                 f"<span style='font-size:1em'><b>Letzter Wert:</b></span> "
                 f"<span style='font-size:1em'>{last_value}</span><br>"
                 f"<span style='font-size:0.85em; opacity:0.8;'>{last_time}</span>"
+                f"<br><br><span style='font-size:0.85em; opacity:0.8;'>Punkt anklicken um mehr Informationen zu erhalten!</span>"
                 )
             return s
     else:
@@ -69,6 +73,7 @@ def tooltiptext(df, mode):
                 f"<span style='font-size:0.85em; opacity:0.8;'>Messpunkte: {size}</span><br>"
                 f"<span style='font-size:1em'><b>Durchschnittlicher Trend:</b></span>"
                 f"<span style='font-size:1.5em'> {trend_str}</span>"
+                f"<br><br><span style='font-size:0.85em; opacity:0.8;'>Anklicken um mehr Informationen zu erhalten!</span>"
             )
             return s
     return list(df.apply(lambda x: make_string(x), axis=1))

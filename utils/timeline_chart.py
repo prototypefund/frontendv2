@@ -69,7 +69,7 @@ class TimelineChartWindow:
             xaxis=dict(
                 title="Zeitpunkt",
                 rangeselector=self.selectorOptions,
-                range=[datetime.now()-timedelta(days=14), datetime.now()],
+                range=[datetime.now()-timedelta(days=14), datetime.now()+timedelta(hours=3)],
                 tickformat='%A<br>%e.%B, %H:%M'
             ),
             legend=dict(

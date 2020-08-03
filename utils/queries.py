@@ -60,7 +60,10 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
             print(query)
             continue
         influx_table.drop_duplicates(inplace=True)
-        influx_table["c_id"] = compound_index(influx_table)
+        try:
+            influx_table["c_id"] = compound_index(influx_table)
+        except:
+            continue
         influx_table["_value"] = pd.to_numeric((influx_table["_value"]))
         if tables.empty:
             tables = influx_table.copy()

@@ -1,5 +1,6 @@
 import json
 import numpy as np
+import pandas as pd
 from utils import helpers
 import plotly.graph_objects as go
 
@@ -36,13 +37,17 @@ def get_map_traces(map_data, measurements):
     for index, measurement in enumerate(measurements):
         map_data.loc[map_data["_measurement"] == measurement, "trace_index"] = index+1
         measurement_map_data = map_data[map_data["_measurement"] == measurement]
+
+        # geodataseries as return (lat, lon,...) can cause issues, convert to dataframe:
+        measurement_map_data = pd.DataFrame(measurement_map_data)
+
         trace = dict(
             # TRACE 1...N: Datapoints
             _measurement=measurement,  # custom entry
             name=helpers.measurementtitles[measurement],
             type="scattermapbox",
-            lat=measurement_map_data["lat"],
-            lon=measurement_map_data["lon"],
+            lat=list(measurement_map_data["lat"]),
+            lon=list(measurement_map_data["lon"]),
             mode='markers',
             marker=dict(
                 size=20,
@@ -52,7 +57,7 @@ def get_map_traces(map_data, measurements):
             ),
             text=helpers.tooltiptext(measurement_map_data, mode="stations"),
             hoverinfo="text",
-            customdata=measurement_map_data["c_id"]
+            customdata=list(measurement_map_data["c_id"])
         )
         traces["stations"].append(trace)
     map_data["trace_index"] = map_data["trace_index"].astype(int)

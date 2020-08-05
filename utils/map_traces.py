@@ -51,7 +51,7 @@ def get_map_traces(map_data, measurements):
             mode='markers',
             marker=dict(
                 size=20,
-                color=measurement_map_data.apply(lambda x: helpers.trend2color(x["trend"]), axis=1),
+                color=list(measurement_map_data.apply(lambda x: helpers.trend2color(x["trend"]), axis=1)),
                 line=dict(width=2,
                           color='DarkSlateGrey'),
             ),

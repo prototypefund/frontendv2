@@ -63,9 +63,10 @@ def get_map_traces(map_data, measurements):
     map_data["trace_index"] = map_data["trace_index"].astype(int)
 
     # Prepare landkreis/bundeslad choropleth maps
+    choropleth_df_original = map_data.copy()
+    choropleth_df_original = choropleth_df_original[choropleth_df_original["_measurement"].isin(measurements)]
     for region in ("landkreis", "bundesland"):
-        choropleth_df = map_data.copy()
-        choropleth_df = choropleth_df[choropleth_df["_measurement"].isin(measurements)]
+        choropleth_df = choropleth_df_original.copy()
         if region == "bundesland":
             choropleth_df["ags"] = choropleth_df["ags"].str[:-3]
             geojson_filename = "states.json"

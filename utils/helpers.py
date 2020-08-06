@@ -169,7 +169,7 @@ def filter_by_consent(df):
     webcams_df = webcams_df[["ID_Name", "consent"]]
     df = df.merge(webcams_df, on="ID_Name", how="left")
     df = df[df["consent"] == True]
-    df = df.drop("consent", errors="ignore").reset_index(drop=True)
+    df = df.drop(["consent", "ID_Name"], errors="ignore").reset_index(drop=True)
     return df
 
 

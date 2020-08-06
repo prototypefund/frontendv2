@@ -5,6 +5,7 @@ utility functions for the frontend
 from math import isnan, log
 from datetime import timedelta
 from numpy import nan
+import pandas as pd
 
 
 def trend2color(trendvalue, alpha=1):
@@ -152,6 +153,23 @@ def apply_model_fit(df, model, trend_window):
     day0 = max(df["_time"]) - timedelta(days=trend_window - 1)
     df["fit"] = nan
     df.loc[df["_time"] >= day0, "fit"] = df[df["_time"] >= day0].apply(lambda x: a * int(x["_time"].timestamp()) + b, axis=1)
+    return df
+
+
+def filter_by_consent(df):
+    """
+    This is for the webcams only
+    Check whether we have obtained consent from the
+    webcam owner and keep only entries where this is the case
+    """
+    webcam_list_url = "https://raw.githubusercontent.com/socialdistancingdashboard/SDD-Webcam-CustomVision/master/webcam_list_2.json"
+    webcams_df = pd.read_json(webcam_list_url)
+    webcams_df["ID_Name"] = webcams_df.apply(lambda x: str(x["ID"])+"_"+x["Name"], 1)
+    df["ID_Name"] = df.apply(lambda x: x["_id"].split("_")[0] + "_" + x["name"], 1)
+    webcams_df = webcams_df[["ID_Name", "consent"]]
+    df = df.merge(webcams_df, on="ID_Name", how="left")
+    df = df[df["consent"] == True]
+    df = df.drop("consent", errors="ignore").reset_index(drop=True)
     return df
 
 

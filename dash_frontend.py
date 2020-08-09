@@ -67,7 +67,7 @@ def get_query_api():
 query_api = get_query_api()
 
 
-@cache.memoize(unless=DISABLE_CACHE)
+@cache.memoize(timeout=1800, unless=DISABLE_CACHE)
 def get_map_data():
     return queries.get_map_data(
         query_api=query_api,
@@ -75,12 +75,12 @@ def get_map_data():
         trend_window=TRENDWINDOW)
 
 
-@cache.memoize(unless=DISABLE_CACHE)
+@cache.memoize(timeout=1800, unless=DISABLE_CACHE)
 def load_timeseries(_id):
     return queries.load_timeseries(query_api, _id)
 
 
-@cache.memoize(unless=DISABLE_CACHE)
+@cache.memoize(timeout=1800, unless=DISABLE_CACHE)
 def get_map_traces(map_data, measurements):
     return map_traces.get_map_traces(map_data, measurements)
 

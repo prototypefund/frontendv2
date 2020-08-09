@@ -471,7 +471,7 @@ def hide_feedback_box(n_clicks):
     else:
         return dash.no_update
 
-@cache.memoize(unless=DISABLE_CACHE)
+@cache.memoize(timeout=1800, unless=DISABLE_CACHE)
 def nominatim_lookup(query):
     # Location name --> lat,lon
     geolocator = Nominatim(user_agent="everyonecounts")
@@ -488,7 +488,7 @@ def nominatim_lookup(query):
     return (lat, lon, address)
 
 
-@cache.memoize(unless=DISABLE_CACHE)
+@cache.memoize(timeout=1800, unless=DISABLE_CACHE)
 def nominatim_reverse_lookup(lat, lon):
     # lat,lon --> location name
     geolocator = Nominatim(user_agent="everyonecounts")

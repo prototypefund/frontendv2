@@ -43,7 +43,7 @@ cache = Cache(app.server, config={
     'CACHE_TYPE': 'filesystem',
     'CACHE_DIR': 'cache',
     'CACHE_THRESHOLD': 100,  # max cache size in items
-    'CACHE_DEFAULT_TIMEOUT': 3600  # seconds
+    'CACHE_DEFAULT_TIMEOUT': 1800  # seconds
     # see https://pythonhosted.org/Flask-Caching/
 })
 if CLEAR_CACHE_ON_STARTUP:

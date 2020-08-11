@@ -67,7 +67,7 @@ def get_query_api():
 query_api = get_query_api()
 
 
-@cache.memoize(timeout=1800, unless=DISABLE_CACHE)
+@cache.memoize(unless=DISABLE_CACHE)
 def get_map_data():
     return queries.get_map_data(
         query_api=query_api,
@@ -75,12 +75,12 @@ def get_map_data():
         trend_window=TRENDWINDOW)
 
 
-@cache.memoize(timeout=1800, unless=DISABLE_CACHE)
+@cache.memoize(unless=DISABLE_CACHE)
 def load_timeseries(_id):
     return queries.load_timeseries(query_api, _id)
 
 
-@cache.memoize(timeout=1800, unless=DISABLE_CACHE)
+@cache.memoize(unless=DISABLE_CACHE)
 def get_map_traces(map_data, measurements):
     return map_traces.get_map_traces(map_data, measurements)
 
@@ -471,7 +471,7 @@ def hide_feedback_box(n_clicks):
     else:
         return dash.no_update
 
-@cache.memoize(timeout=1800, unless=DISABLE_CACHE)
+@cache.memoize(unless=DISABLE_CACHE)
 def nominatim_lookup(query):
     # Location name --> lat,lon
     geolocator = Nominatim(user_agent="everyonecounts")
@@ -488,7 +488,7 @@ def nominatim_lookup(query):
     return (lat, lon, address)
 
 
-@cache.memoize(timeout=1800, unless=DISABLE_CACHE)
+@cache.memoize(unless=DISABLE_CACHE)
 def nominatim_reverse_lookup(lat, lon):
     # lat,lon --> location name
     geolocator = Nominatim(user_agent="everyonecounts")

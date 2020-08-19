@@ -11,7 +11,8 @@
 "CACHE_CONFIG": {
   "CACHE_TYPE": "filesystem",
   "CACHE_DIR": "cache",
-  "CACHE_THRESHOLD": 100,
+  "CACHE_THRESHOLD": 500,
   "CACHE_DEFAULT_TIMEOUT": 1800
-  }
+  },
+"LOG_LEVEL": "DEBUG"
 }

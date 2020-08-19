@@ -6,6 +6,7 @@ import numpy as np
 import geopandas as gpd
 from influxdb_client import InfluxDBClient
 import json
+import logging
 from utils import helpers
 from datetime import timedelta
 
@@ -29,6 +30,7 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
     Load the data that is required for plotting the map.
     Return a GeoDataFrame with all tags and latitude/longitude fields and the trend
     """
+    logging.debug("Influx DB query for get_map_data()")
     fields = ["_field",
               "_value",
               "_id",
@@ -54,7 +56,9 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
         |> keep(columns: {json.dumps(fields)})
         '''
         try:
+            logging.debug(f" Influx query for {_measurement}...")
             influx_table = query_api.query_data_frame(query)
+            logging.debug(" Influx query finished.")
         except:
             print("Error fetching data from influxdb")
             print(query)
@@ -94,6 +98,8 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
     print(geo_table.columns)
     print(geo_table["_measurement"].value_counts())
 
+    logging.debug(f'Number of stations:\n {geo_table["_measurement"].value_counts()}')
+
     return geo_table
 
 
@@ -119,6 +125,7 @@ def load_trend(query_api, measurements, trend_window=3, bucket="sdd"):
 
     """
     print(f"load_trend... (trend_window={trend_window})")
+    logging.debug(f"load_trend(..., trend_window={trend_window})")
     filterstring = " or ".join([f'r["_field"] == "{helpers.fieldnames[x]}"' for x in measurements])
     query = f'''
             from(bucket: "{bucket}")
@@ -193,6 +200,7 @@ def load_timeseries(query_api, c_id, daysback=90, bucket="sdd"):
     """
     Load time series for a given compound index
     """
+    logging.debug(f"Influx DB query for load_timeseries(..., {c_id})")
     print("load_timeseries", c_id)
     _measurement, _id = c_id.split(CID_SEP, 1)
     _field = helpers.measurement2field(_measurement)

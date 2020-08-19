@@ -4,12 +4,13 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from flask_caching import Cache
 import numpy as np
-import pandas as pd
-import geopandas as gpd
 import json
+import logging
+import os
 
 from geopy.geocoders import Nominatim
 from urllib.parse import parse_qs
+from datetime import datetime
 
 from utils import queries
 from utils import helpers
@@ -35,6 +36,21 @@ CLEAR_CACHE_ON_STARTUP = CONFIG["CLEAR_CACHE_ON_STARTUP"]  # for testing
 CACHE_CONFIG = CONFIG["CACHE_CONFIG"]
 TRENDWINDOW = CONFIG["TRENDWINDOW"]
 MEASUREMENTS = CONFIG["measurements"]
+LOG_LEVEL = CONFIG["LOG_LEVEL"]
+
+# SET UP LOGGING
+# =============
+numeric_level = getattr(logging, LOG_LEVEL.upper(), None)
+if not isinstance(numeric_level, int):
+    raise ValueError(f'Invalid log level: {LOG_LEVEL}')
+if not os.path.exists('logs'):
+    os.makedirs('logs')
+logging.basicConfig(filename=datetime.now().strftime("logs/dash_frontend_%Y-%M-%d_%H-%M.log"),
+                    filemode='a',  # or 'w'
+                    level=numeric_level,
+                    format='%(asctime)s | %(levelname)s\t| %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
+logging.info(f"config file contents:\n\t{CONFIG}")
 
 # DASH SETUP
 # =======
@@ -43,6 +59,7 @@ app.title = 'EveryoneCounts'
 # see https://pythonhosted.org/Flask-Caching/
 cache = Cache(app.server, config=CACHE_CONFIG)
 if CLEAR_CACHE_ON_STARTUP:
+    logging.info("Clearing cache...")
     cache.clear()
 
 
@@ -65,6 +82,7 @@ query_api = get_query_api()
 
 @cache.memoize(unless=DISABLE_CACHE)
 def get_map_data():
+    logging.debug("CACHE MISS: get_map_data()")
     return queries.get_map_data(
         query_api=query_api,
         measurements=MEASUREMENTS,
@@ -73,11 +91,13 @@ def get_map_data():
 
 @cache.memoize(unless=DISABLE_CACHE)
 def load_timeseries(_id):
+    logging.debug(f"CACHE MISS: load_timeseries({_id})")
     return queries.load_timeseries(query_api, _id)
 
 
 @cache.memoize(unless=DISABLE_CACHE)
 def get_map_traces(map_data, measurements):
+    logging.debug("CACHE MISS: get_map_traces(...)")
     return map_traces.get_map_traces(map_data, measurements)
 
 
@@ -466,6 +486,7 @@ def hide_feedback_box(n_clicks):
         return {"display": "none"}
     else:
         return dash.no_update
+
 
 @cache.memoize(unless=DISABLE_CACHE)
 def nominatim_lookup(query):

@@ -48,9 +48,13 @@ if not os.path.exists('logs'):
 logging.basicConfig(filename=datetime.now().strftime("logs/dash_frontend_%Y-%m-%d_%H-%M.log"),
                     filemode='a',  # or 'w'
                     level=numeric_level,
-                    format='%(asctime)s | %(levelname)s\t| %(message)s',
+                    format='%(asctime)s | %(levelname)s\t| %(funcName)s: %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 logging.info(f"config file contents:\n\t{CONFIG}")
+
+# Make dash logger ('werkzeug') less chatty:
+dash_logger = logging.getLogger('werkzeug')
+dash_logger.setLevel(logging.WARNING)
 
 # DASH SETUP
 # =======
@@ -82,7 +86,7 @@ query_api = get_query_api()
 
 @cache.memoize(unless=DISABLE_CACHE)
 def get_map_data():
-    logging.debug("CACHE MISS: get_map_data()")
+    logging.debug("CACHE MISS")
     return queries.get_map_data(
         query_api=query_api,
         measurements=MEASUREMENTS,
@@ -91,13 +95,13 @@ def get_map_data():
 
 @cache.memoize(unless=DISABLE_CACHE)
 def load_timeseries(_id):
-    logging.debug(f"CACHE MISS: load_timeseries({_id})")
+    logging.debug(f"CACHE MISS ({_id})")
     return queries.load_timeseries(query_api, _id)
 
 
 @cache.memoize(unless=DISABLE_CACHE)
 def get_map_traces(map_data, measurements):
-    logging.debug("CACHE MISS: get_map_traces(...)")
+    logging.debug("CACHE MISS")
     return map_traces.get_map_traces(map_data, measurements)
 
 

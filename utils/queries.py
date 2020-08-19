@@ -58,7 +58,6 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
         try:
             logging.debug(f" Influx query for {_measurement}...")
             influx_table = query_api.query_data_frame(query)
-            logging.debug(" Influx query finished.")
         except:
             print("Error fetching data from influxdb")
             print(query)
@@ -98,7 +97,7 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
     print(geo_table.columns)
     print(geo_table["_measurement"].value_counts())
 
-    logging.debug(f'Number of stations:\n {geo_table["_measurement"].value_counts()}')
+    logging.info(f'Number of stations:\n{geo_table["_measurement"].value_counts()}')
 
     return geo_table
 
@@ -125,7 +124,7 @@ def load_trend(query_api, measurements, trend_window=3, bucket="sdd"):
 
     """
     print(f"load_trend... (trend_window={trend_window})")
-    logging.debug(f"load_trend(..., trend_window={trend_window})")
+    logging.debug(f"Influx DB query for load_trend() with trend_window={trend_window}")
     filterstring = " or ".join([f'r["_field"] == "{helpers.fieldnames[x]}"' for x in measurements])
     query = f'''
             from(bucket: "{bucket}")

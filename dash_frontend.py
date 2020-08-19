@@ -101,10 +101,8 @@ def get_map_traces(map_data, measurements):
     return map_traces.get_map_traces(map_data, measurements)
 
 
-# LOAD MAP DATA
+# INITIALIZE CHART OBJECT
 # ================
-MAP_DATA = get_map_data()  # map_data is a GeoDataFrame
-MAP_DATA, TRACES = get_map_traces(MAP_DATA, MEASUREMENTS)  # traces for main map
 CHART = timeline_chart.TimelineChartWindow(TRENDWINDOW, load_timeseries)
 
 # SET UP DASH LAYOUT
@@ -113,7 +111,7 @@ app.layout = html.Div(id="dash-layout", children=[
     dcc.Location(id='url', refresh=False),
     *dash_elements.storage(),
     dash_elements.mainmap(),
-    dash_elements.main_controls(MAP_DATA, CONFIG),
+    dash_elements.main_controls(get_map_data(), CONFIG),
     dash_elements.timeline_chart(),
     dash_elements.feedback_window()
 ])
@@ -173,7 +171,8 @@ def display_click_data(clickData, avg_checkbox, detail_radio, trace_visibility):
         return dash.no_update
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)
     if clickData is not None or "timeline-avg-check" in prop_ids:
-        if CHART.update_figure(detail_radio, clickData, MAP_DATA, avg, trace_visibility):
+        map_data, _ = get_map_traces(get_map_data(), trace_visibility)
+        if CHART.update_figure(detail_radio, clickData, map_data, avg, trace_visibility):
             return [CHART.get_timeline_window()]
     return dash.no_update
 
@@ -318,6 +317,8 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
     ctx = dash.callback_context
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)  # origin of callback
 
+    map_data, traces = get_map_traces(get_map_data(), trace_visibilty)  # traces for main map
+
     if 'latlon_local_storage' in prop_ids or \
             'radiusslider' in prop_ids or \
             ("region_tabs" in prop_ids and region_tabs == "tab-umkreis") or \
@@ -329,7 +330,7 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
             addr = "..."
         location_text = f"{addr} ({radius}km Umkreis)"
         location_editbox = addr
-        filtered_map_data, poly = filter_by_radius(MAP_DATA, lat, lon, radius)
+        filtered_map_data, poly = filter_by_radius(map_data, lat, lon, radius)
 
         # highlight circle
         highlight_x, highlight_y = poly.exterior.coords.xy
@@ -340,7 +341,7 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
             ("trace_visibility_checklist" in prop_ids and region_tabs == "tab-bundesland"):
         location_text = bundesland
         location_editbox = nominatim_lookup_edit
-        filtered_map_data = MAP_DATA[MAP_DATA["bundesland"] == bundesland]
+        filtered_map_data = map_data[map_data["bundesland"] == bundesland]
         ags = filtered_map_data["ags"].iloc[0][:-3]  # '08221' --> '08'
         highlight_x, highlight_y = get_outline_coords("bundesland", ags)
         matomo_tracking("EC_Dash_Highlight_Bundesland")
@@ -350,7 +351,7 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
             ("trace_visibility_checklist" in prop_ids and region_tabs == "tab-landkreis"):
         location_text = landkreis
         location_editbox = nominatim_lookup_edit
-        filtered_map_data = MAP_DATA[MAP_DATA["landkreis_label"] == landkreis]
+        filtered_map_data = map_data[map_data["landkreis_label"] == landkreis]
         ags = filtered_map_data["ags"].iloc[0]
         highlight_x, highlight_y = get_outline_coords("landkreis", ags)
         matomo_tracking("EC_Dash_Highlight_Landkreis")
@@ -434,14 +435,12 @@ def update_map(highlight_polygon, detail_radio, trace_visibilty, fig):
     Redraw map based on level-of-detail selection and
     current highlight selection
     """
-    global MAP_DATA, TRACES
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)
-    if "trace_visibility_checklist" in prop_ids:
-        MAP_DATA, TRACES = map_traces.get_map_traces(MAP_DATA, trace_visibilty)
-    fig["data"] = TRACES[detail_radio]  # Update map
+    map_data, traces = map_traces.get_map_traces(get_map_data(), trace_visibilty)
+    fig["data"] = traces[detail_radio]  # Update map
     if detail_radio == "stations":
         highlight_x, highlight_y = highlight_polygon
         # draw highligth into trace0

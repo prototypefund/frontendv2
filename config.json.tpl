@@ -3,9 +3,15 @@
 "influx_token" : {{EveryoneCounts/Influx/ReadToken}},
 "influx_org" : "ec",
 "dash_host" : {{EveryoneCounts/Influx/Host}},
-"ENABLE_CACHE" : true,
-"CLEAR_CACHE_ON_STARTUP" : false,
 "TRENDWINDOW" : 7,
 "DEBUG": false,
-"measurements": ["hystreet", "webcam-customvision", "bikes"]
+"measurements": ["hystreet", "webcam-customvision", "bikes"],
+"ENABLE_CACHE" : true,
+"CLEAR_CACHE_ON_STARTUP" : true,
+"CACHE_CONFIG": {
+  "CACHE_TYPE": "filesystem",
+  "CACHE_DIR": "cache",
+  "CACHE_THRESHOLD": 100,
+  "CACHE_DEFAULT_TIMEOUT": 1800
+  }
 }

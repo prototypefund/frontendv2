@@ -32,6 +32,7 @@ with open("config.json", "r") as f:
     CONFIG = json.load(f)
 DISABLE_CACHE = not CONFIG["ENABLE_CACHE"]  # set to true to disable caching
 CLEAR_CACHE_ON_STARTUP = CONFIG["CLEAR_CACHE_ON_STARTUP"]  # for testing
+CACHE_CONFIG = CONFIG["CACHE_CONFIG"]
 TRENDWINDOW = CONFIG["TRENDWINDOW"]
 MEASUREMENTS = CONFIG["measurements"]
 
@@ -39,13 +40,8 @@ MEASUREMENTS = CONFIG["measurements"]
 # =======
 app = dash.Dash()
 app.title = 'EveryoneCounts'
-cache = Cache(app.server, config={
-    'CACHE_TYPE': 'filesystem',
-    'CACHE_DIR': 'cache',
-    'CACHE_THRESHOLD': 100,  # max cache size in items
-    'CACHE_DEFAULT_TIMEOUT': 1800  # seconds
-    # see https://pythonhosted.org/Flask-Caching/
-})
+# see https://pythonhosted.org/Flask-Caching/
+cache = Cache(app.server, config=CACHE_CONFIG)
 if CLEAR_CACHE_ON_STARTUP:
     cache.clear()
 

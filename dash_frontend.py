@@ -171,8 +171,7 @@ def display_click_data(clickData, avg_checkbox, detail_radio, trace_visibility):
         return dash.no_update
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)
     if clickData is not None or "timeline-avg-check" in prop_ids:
-        map_data, _ = get_map_traces(get_map_data(), trace_visibility)
-        if CHART.update_figure(detail_radio, clickData, map_data, avg, trace_visibility):
+        if CHART.update_figure(detail_radio, clickData, get_map_data(), avg, trace_visibility):
             return [CHART.get_timeline_window()]
     return dash.no_update
 
@@ -317,7 +316,7 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
     ctx = dash.callback_context
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)  # origin of callback
 
-    map_data, traces = get_map_traces(get_map_data(), trace_visibilty)  # traces for main map
+    map_data = get_map_data()
 
     if 'latlon_local_storage' in prop_ids or \
             'radiusslider' in prop_ids or \
@@ -439,7 +438,7 @@ def update_map(highlight_polygon, detail_radio, trace_visibilty, fig):
     if not ctx.triggered:
         return dash.no_update
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)
-    map_data, traces = map_traces.get_map_traces(get_map_data(), trace_visibilty)
+    traces = map_traces.get_map_traces(get_map_data(), trace_visibilty)
     fig["data"] = traces[detail_radio]  # Update map
     if detail_radio == "stations":
         highlight_x, highlight_y = highlight_polygon

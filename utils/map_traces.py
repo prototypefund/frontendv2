@@ -13,7 +13,6 @@ def get_map_traces(map_data, measurements):
     :param geopandas.GeoDataFrame map_data: map_data GeoDataFrame
     :param list measurements: list of measurements to include
     :return dict: dict of traces for plotting
-    :return geopandas.GeoDataFrame: updated map_data GeoDataFrame
     """
     traces = dict()
     traces["stations"] = [dict(
@@ -32,10 +31,7 @@ def get_map_traces(map_data, measurements):
         mode="lines"
         )]
 
-    # Split into traces by measurement, add column "trace_index" (important for data selection)
-    map_data["trace_index"] = -1  # reset
-    for index, measurement in enumerate(measurements):
-        map_data.loc[map_data["_measurement"] == measurement, "trace_index"] = index+1
+    for measurement in measurements:
         measurement_map_data = map_data[map_data["_measurement"] == measurement]
 
         # geodataseries as return (lat, lon,...) can cause issues, convert to dataframe:
@@ -60,7 +56,6 @@ def get_map_traces(map_data, measurements):
             customdata=list(measurement_map_data["c_id"])
         )
         traces["stations"].append(trace)
-    map_data["trace_index"] = map_data["trace_index"].astype(int)
 
     # Prepare landkreis/bundeslad choropleth maps
     choropleth_df_original = map_data.copy()
@@ -91,4 +86,4 @@ def get_map_traces(map_data, measurements):
             marker_line_color="white",
             marker_opacity=1,
             marker_line_width=1)]
-    return map_data, traces
+    return traces

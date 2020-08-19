@@ -45,7 +45,7 @@ if not isinstance(numeric_level, int):
     raise ValueError(f'Invalid log level: {LOG_LEVEL}')
 if not os.path.exists('logs'):
     os.makedirs('logs')
-logging.basicConfig(filename=datetime.now().strftime("logs/dash_frontend_%Y-%M-%d_%H-%M.log"),
+logging.basicConfig(filename=datetime.now().strftime("logs/dash_frontend_%Y-%m-%d_%H-%M.log"),
                     filemode='a',  # or 'w'
                     level=numeric_level,
                     format='%(asctime)s | %(levelname)s\t| %(message)s',

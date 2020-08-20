@@ -6,6 +6,7 @@ from math import isnan, log
 from datetime import timedelta
 from numpy import nan
 import pandas as pd
+import logging
 
 
 def trend2color(trendvalue, alpha=1):
@@ -152,9 +153,12 @@ def apply_model_fit(df, model, trend_window):
     b (offset) to the unixtimestamp value of "_time". Do this only
     for values inside the trend_window
     """
-    a, b = model
-    day0 = max(df["_time"]) - timedelta(days=trend_window - 1)
     df["fit"] = nan
+    try:
+        a, b = model
+    except TypeError:
+        return df
+    day0 = max(df["_time"]) - timedelta(days=trend_window - 1)
     df.loc[df["_time"] >= day0, "fit"] = df[df["_time"] >= day0].apply(lambda x: a * int(x["_time"].timestamp()) + b, axis=1)
     return df
 

@@ -86,7 +86,8 @@ fieldnames = {
         # "google_maps": "current_popularity",
         "hystreet": "pedestrian_count",
         "webcam": "personenzahl",
-        "webcam-customvision": "personenzahl"
+        "webcam-customvision": "personenzahl",
+        "mdm": "vehicleFlow"
     }
 originnames = {
         "airquality": "World Air Quality Index",
@@ -94,7 +95,8 @@ originnames = {
         # "google_maps": "Google Maps",
         "hystreet": "hystreet.com",
         "webcam": "öffentliche Webcam (alt)",
-        "webcam-customvision": "öffentliche Webcam"
+        "webcam-customvision": "öffentliche Webcam",
+        "mdm": "Mobilitäts Daten Marktplatz (MDM)"
     }
 measurementtitles = {
         "airquality": "Luftqualitäts-Index",
@@ -102,7 +104,8 @@ measurementtitles = {
         # "google_maps": "Popularität",
         "hystreet": "Fußgänger (Laserscanner)",
         "webcam": "Fußgänger auf Webcams (alt)",
-        "webcam-customvision": "Fußgänger auf Webcams"
+        "webcam-customvision": "Fußgänger auf Webcams",
+        "mdm": "Fahrzeuge"
     }
 
 

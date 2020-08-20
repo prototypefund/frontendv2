@@ -5,7 +5,7 @@
 "dash_host" : {{EveryoneCounts/Influx/Host}},
 "TRENDWINDOW" : 7,
 "DEBUG": false,
-"measurements": ["hystreet", "webcam-customvision", "bikes"],
+"measurements": ["hystreet", "webcam-customvision", "bikes", "mdm"],
 "ENABLE_CACHE" : true,
 "CLEAR_CACHE_ON_STARTUP" : true,
 "CACHE_CONFIG": {

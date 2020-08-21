@@ -170,7 +170,11 @@ def filter_by_consent(df):
     webcam owner and keep only entries where this is the case
     """
     webcam_list_url = "https://raw.githubusercontent.com/socialdistancingdashboard/SDD-Webcam-CustomVision/master/webcam_list_2.json"
-    webcams_df = pd.read_json(webcam_list_url)
+    try:
+        webcams_df = pd.read_json(webcam_list_url)
+    except ValueError:
+        logging.warning("Cannot read webcam JSON")
+        return pd.DataFrame()  # empty dataframe
     webcams_df["ID_Name"] = webcams_df.apply(lambda x: str(x["ID"])+"_"+x["Name"], 1)
     df["ID_Name"] = df.apply(lambda x: x["_id"].split("_")[0] + "_" + x["name"], 1)
     webcams_df = webcams_df[["ID_Name", "consent"]]

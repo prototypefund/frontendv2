@@ -14,7 +14,6 @@ class TimelineChartWindow:
         self.origin_str = ""
         self.mode = "stations"
         self.avg = True
-        self.last_clickData = None
         self.config_plots = dict(
             locale="de-DE",
             displaylogo=False,
@@ -85,14 +84,18 @@ class TimelineChartWindow:
     def get_figure(self):
         return self.figure
 
-    def update_figure(self, detail_radio, clickData, map_data, avg, measurements):
+    def update_figure(self, detail_radio, selection, map_data, avg, measurements):
+        """
+        :param str detail_radio: either stations, landkreis or bundesland
+        :param str selection: AGS for LK/BL or c_id for stations
+        :param pandas.DataFrame map_data: map_data dataframe
+        :param bool avg: rolling average boolean
+        :param list of str measurements:  hystreet, bikes, ... (only for BL/LK)
+        """
         self.mode = detail_radio
         self.avg = avg
-        if clickData is not None:
-            self.last_clickData = clickData
-        curveNumber = self.last_clickData["points"][0]['curveNumber']
         if detail_radio == "landkreis" or detail_radio == "bundesland":
-            location = self.last_clickData["points"][0]['location']
+            location = selection
             if detail_radio == "landkreis":
                 filtered_map_data = map_data[map_data["ags"] == location]
                 figtitle = filtered_map_data.iloc[0]["landkreis"]
@@ -134,8 +137,8 @@ class TimelineChartWindow:
             self.figure["layout"]["title"] = figtitle
             matomo_tracking(f"EC_Dash_Timeline_{detail_radio}")
 
-        elif detail_radio == "stations" and curveNumber > 0:  # exclude selection marker
-            c_id = clickData["points"][0]["customdata"]
+        elif detail_radio == "stations":
+            c_id = selection
             station_data = map_data[map_data["c_id"] == c_id].iloc[0]
             city = station_data['city']
             name = station_data['name']
@@ -152,7 +155,7 @@ class TimelineChartWindow:
             df_timeseries = self.load_timeseries(c_id)
             if df_timeseries is None:
                 self.figure["data"] = []
-                return True
+                return
 
             # Add "fit" column based on model
             model = station_data['model']
@@ -187,9 +190,6 @@ class TimelineChartWindow:
                 )]
             self.figure["layout"]["yaxis"]["title"] = helpers.measurementtitles[measurement]
             matomo_tracking(f"EC_Dash_Timeline_Stations_{measurement}")
-        else:
-            return False
-        return True
 
     def get_timeline_window(self):
         output = []

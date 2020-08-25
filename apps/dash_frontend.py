@@ -152,8 +152,15 @@ def display_click_data(clickData, avg_checkbox, detail_radio, trace_visibility):
         return dash.no_update
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)
     if clickData is not None or "timeline-avg-check" in prop_ids:
-        if CHART.update_figure(detail_radio, clickData, get_map_data(), avg, trace_visibility):
-            return [CHART.get_timeline_window()]
+        if detail_radio == "stations" and clickData["points"][0]['curveNumber'] == 0:
+            # exclude selection marker
+            return dash.no_update
+        elif detail_radio == "landkreis" or detail_radio == "bundesland":
+            selection = clickData["points"][0]['location']
+        elif detail_radio == "stations":
+            selection = clickData["points"][0]["customdata"]
+        CHART.update_figure(detail_radio, selection, get_map_data(), avg, trace_visibility)
+        return [CHART.get_timeline_window()]
     return dash.no_update
 
 

@@ -27,7 +27,7 @@ LOG_LEVEL = CONFIG["LOG_LEVEL"]
 numeric_level = getattr(logging, LOG_LEVEL.upper(), None)
 if not isinstance(numeric_level, int):
     raise ValueError(f'Invalid log level: {LOG_LEVEL}')
-if not os.path.exists('../logs'):
+if not os.path.exists('logs'):
     os.makedirs('logs')
 logging.basicConfig(filename=datetime.now().strftime("logs/dash_frontend_%Y-%m-%d_%H-%M.log"),
                     filemode='a',  # or 'w'

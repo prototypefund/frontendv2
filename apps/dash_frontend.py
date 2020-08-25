@@ -21,16 +21,19 @@ from utils.filter_by_radius import filter_by_radius
 from utils.get_outline_coords import get_outline_coords
 from utils.ec_analytics import matomo_tracking
 
+from app import app, cache
+
+with open("config.json", "r") as f:
+    CONFIG = json.load(f)
+
 # CONSTANTS
 # =============
 default_lat = 50
 default_lon = 10
 default_radius = 60
 
-# READ CONFIG
-# ==========
-with open("config.json", "r") as f:
-    CONFIG = json.load(f)
+# UNPACK CONFIG
+# =============
 DISABLE_CACHE = not CONFIG["ENABLE_CACHE"]  # set to true to disable caching
 CLEAR_CACHE_ON_STARTUP = CONFIG["CLEAR_CACHE_ON_STARTUP"]  # for testing
 CACHE_CONFIG = CONFIG["CACHE_CONFIG"]
@@ -38,33 +41,33 @@ TRENDWINDOW = CONFIG["TRENDWINDOW"]
 MEASUREMENTS = CONFIG["measurements"]
 LOG_LEVEL = CONFIG["LOG_LEVEL"]
 
-# SET UP LOGGING
-# =============
-numeric_level = getattr(logging, LOG_LEVEL.upper(), None)
-if not isinstance(numeric_level, int):
-    raise ValueError(f'Invalid log level: {LOG_LEVEL}')
-if not os.path.exists('logs'):
-    os.makedirs('logs')
-logging.basicConfig(filename=datetime.now().strftime("logs/dash_frontend_%Y-%m-%d_%H-%M.log"),
-                    filemode='a',  # or 'w'
-                    level=numeric_level,
-                    format='%(asctime)s | %(levelname)s\t| %(funcName)s: %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S')
-logging.info(f"config file contents:\n\t{CONFIG}")
-
-# Make dash logger ('werkzeug') less chatty:
-dash_logger = logging.getLogger('werkzeug')
-dash_logger.setLevel(logging.WARNING)
+# # SET UP LOGGING
+# # =============
+# numeric_level = getattr(logging, LOG_LEVEL.upper(), None)
+# if not isinstance(numeric_level, int):
+#     raise ValueError(f'Invalid log level: {LOG_LEVEL}')
+# if not os.path.exists('../logs'):
+#     os.makedirs('logs')
+# logging.basicConfig(filename=datetime.now().strftime("logs/dash_frontend_%Y-%m-%d_%H-%M.log"),
+#                     filemode='a',  # or 'w'
+#                     level=numeric_level,
+#                     format='%(asctime)s | %(levelname)s\t| %(funcName)s: %(message)s',
+#                     datefmt='%Y-%m-%d %H:%M:%S')
+# logging.info(f"config file contents:\n\t{CONFIG}")
+#
+# # Make dash logger ('werkzeug') less chatty:
+# dash_logger = logging.getLogger('werkzeug')
+# dash_logger.setLevel(logging.WARNING)
 
 # DASH SETUP
 # =======
-app = dash.Dash()
+#app = dash.Dash()
 app.title = 'EveryoneCounts'
 # see https://pythonhosted.org/Flask-Caching/
-cache = Cache(app.server, config=CACHE_CONFIG)
-if CLEAR_CACHE_ON_STARTUP:
-    logging.info("Clearing cache...")
-    cache.clear()
+#cache = Cache(app.server, config=CACHE_CONFIG)
+#if CLEAR_CACHE_ON_STARTUP:
+#    logging.info("Clearing cache...")
+#    cache.clear()
 
 
 # WRAPPERS
@@ -111,7 +114,7 @@ CHART = timeline_chart.TimelineChartWindow(TRENDWINDOW, load_timeseries)
 
 # SET UP DASH LAYOUT
 # ======================
-app.layout = html.Div(id="dash-layout", children=[
+layout = html.Div(id="dash-layout", children=[
     dcc.Location(id='url', refresh=False),
     *dash_elements.storage(),
     dash_elements.mainmap(),
@@ -526,9 +529,4 @@ def nominatim_reverse_lookup(lat, lon):
     return address
 
 
-# MAIN
-# ==================
-if __name__ == '__main__':
-    # start Dash webserver
-    print("Let's go")
-    app.run_server(debug=CONFIG["DEBUG"], host=CONFIG["dash_host"], threaded=False)
+

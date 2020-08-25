@@ -41,9 +41,6 @@ TRENDWINDOW = CONFIG["TRENDWINDOW"]
 MEASUREMENTS = CONFIG["measurements"]
 LOG_LEVEL = CONFIG["LOG_LEVEL"]
 
-app.title = 'EveryoneCounts Dashboard'
-
-
 # WRAPPERS
 # ===============
 # Wrappers around some module functions so they can be cached

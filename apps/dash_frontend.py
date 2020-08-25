@@ -41,33 +41,7 @@ TRENDWINDOW = CONFIG["TRENDWINDOW"]
 MEASUREMENTS = CONFIG["measurements"]
 LOG_LEVEL = CONFIG["LOG_LEVEL"]
 
-# # SET UP LOGGING
-# # =============
-# numeric_level = getattr(logging, LOG_LEVEL.upper(), None)
-# if not isinstance(numeric_level, int):
-#     raise ValueError(f'Invalid log level: {LOG_LEVEL}')
-# if not os.path.exists('../logs'):
-#     os.makedirs('logs')
-# logging.basicConfig(filename=datetime.now().strftime("logs/dash_frontend_%Y-%m-%d_%H-%M.log"),
-#                     filemode='a',  # or 'w'
-#                     level=numeric_level,
-#                     format='%(asctime)s | %(levelname)s\t| %(funcName)s: %(message)s',
-#                     datefmt='%Y-%m-%d %H:%M:%S')
-# logging.info(f"config file contents:\n\t{CONFIG}")
-#
-# # Make dash logger ('werkzeug') less chatty:
-# dash_logger = logging.getLogger('werkzeug')
-# dash_logger.setLevel(logging.WARNING)
-
-# DASH SETUP
-# =======
-#app = dash.Dash()
-app.title = 'EveryoneCounts'
-# see https://pythonhosted.org/Flask-Caching/
-#cache = Cache(app.server, config=CACHE_CONFIG)
-#if CLEAR_CACHE_ON_STARTUP:
-#    logging.info("Clearing cache...")
-#    cache.clear()
+app.title = 'EveryoneCounts Dashboard'
 
 
 # WRAPPERS

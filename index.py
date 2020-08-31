@@ -58,5 +58,5 @@ def display_page(pathname):
 if __name__ == '__main__':
     # start Dash webserver
     logging.info(f"config file contents:\n\t{CONFIG}")
-    app.run_server(debug=CONFIG["DEBUG"], host=CONFIG["dash_host"])
+    app.run_server(debug=CONFIG["DEBUG"], host=CONFIG["dash_host"], threaded=False)
     logging.info("Webserver started")

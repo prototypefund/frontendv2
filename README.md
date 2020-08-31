@@ -13,3 +13,19 @@ Credentials are stored in `config.json`. This file is generated from `config.jso
 ```
 secrethub inject -i config.json.tpl -o config.json --identity-provider=aws
 ```
+
+## Widget
+Example URLs: 
+- `https://everyonecounts.de/widget?widgettype=timeline&station=hystreet$110&show_rolling=0&show_trend=0`
+- `https://everyonecounts.de/widget?widgettype=fill&station=hystreet$110&max=5000&show_number=both`
+
+Possible widget types (`widgettype=`) and their parameters:
+- `timeline` (shows a timeline chart)
+    - `station` (required)
+    - `show_trend` (optional, 1 or 0)
+    - `show_rolling` (optional, 1 or 0)
+- `fill` (shows how filled a station is)
+    - `station` (required)
+    - `max` (required)
+    - `show_number` (optional, one of 'total', 'percentage' or 'both')
+

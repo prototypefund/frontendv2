@@ -3,8 +3,11 @@ import logging
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
+from urllib.parse import parse_qs
+
 from utils import queries, timeline_chart, dash_elements
 from app import app, cache
+
 
 # READ CONFIG
 # ===========
@@ -58,19 +61,46 @@ map_data = get_map_data()
 dropdowndict = map_data[["name", "c_id"]].set_index("c_id").to_dict()["name"]
 
 layout = html.Div(children=[
-    html.H1("Widget"),
-    dcc.Dropdown(id="selection",
-                 options=[{"value": key, "label": dropdowndict[key]} for key in dropdowndict],
-                 value=list(dropdowndict.keys())[0]),
-    html.Div(id="timeline-chart-widget")
+    dcc.Location(id='url-widget', refresh=True),
+    html.Div(id="timeline-chart-widget"),
+    "Bereitgestellt von ",
+    html.A(
+        id="ec_link",
+        children="EveryoneCounts",
+        href="https://everyonecounts.de",
+        target="_blank")
 ])
 
 
 @app.callback(
     [Output('timeline-chart-widget', 'children')],
-    [Input('selection', 'value')]
+    [Input('url-widget', 'search')]
 )
-def update_widget(selection):
-    print("selection", selection)
-    CHART.update_figure("stations", selection, get_map_data(), False, [])
-    return [CHART.get_timeline_window()]
+def parse_url_params(url_search_str):
+    if url_search_str != None:
+        urlparams = parse_qs(url_search_str.replace("?", ""))
+        print(urlparams)
+    if "widgettype" not in urlparams:
+        return ["You need to specify a widgettype. Either timeline or fill."]
+    elif "station" not in urlparams:
+        return ["You need to specify a station. Use the configurator."]
+    widgettype = urlparams["widgettype"]
+    if widgettype == ["timeline"]:
+        station = urlparams["station"][0]
+        map_data = get_map_data()
+        show_trend = False  # default
+        show_rolling = True  # default
+        if "show_trend" in urlparams:
+            show_trend = urlparams["show_trend"] == ["1"]
+        if "show_rolling" in urlparams:
+            show_rolling = urlparams["show_rolling"] == ["1"]
+        if station in map_data["c_id"].unique():
+            CHART.update_figure("stations", station, map_data, False, [], show_trend, show_rolling)
+            return [CHART.get_timeline_window(show_api_text=False)]
+        else:
+            return [f"Unknown station {station}"]
+    elif widgettype == ["fill"]:
+        pass
+    else:
+        return ["Unknown widgettype"]
+

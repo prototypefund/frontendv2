@@ -84,13 +84,22 @@ class TimelineChartWindow:
     def get_figure(self):
         return self.figure
 
-    def update_figure(self, detail_radio, selection, map_data, avg, measurements):
+    def update_figure(self,
+                      detail_radio,
+                      selection,
+                      map_data,
+                      avg,
+                      measurements,
+                      show_trend=True,
+                      show_rolling=True):
         """
         :param str detail_radio: either stations, landkreis or bundesland
         :param str selection: AGS for LK/BL or c_id for stations
         :param pandas.DataFrame map_data: map_data dataframe
         :param bool avg: rolling average boolean
         :param list of str measurements:  hystreet, bikes, ... (only for BL/LK)
+        :param bool show_trend: show trend-line in stations view
+        :param bool show_rolling: show rolling average line in stations view
         """
         self.mode = detail_radio
         self.avg = avg
@@ -172,26 +181,30 @@ class TimelineChartWindow:
                         size=6,
                         color="DarkSlateGrey",
                     ),
-                ),
-                dict(  # rolling average
-                    x=df_timeseries["_time"],
-                    y=df_timeseries["rolling"],
-                    mode="lines",
-                    line_shape="spline",
-                    name="Gleitender Durchschnitt",
-                    line=dict(color="#F63366", width=4),
-                ),
-                dict(  # fit
-                    x=df_timeseries["_time"],
-                    y=df_timeseries["fit"],
-                    mode="lines",
-                    name=f"{self.TRENDWINDOW}-Tage-Trend",
-                    line=dict(color="blue", width=2),
                 )]
+            if show_rolling:
+                self.figure["data"].append(
+                    dict(  # rolling average
+                        x=df_timeseries["_time"],
+                        y=df_timeseries["rolling"],
+                        mode="lines",
+                        line_shape="spline",
+                        name="Gleitender Durchschnitt",
+                        line=dict(color="#F63366", width=4),
+                    ))
+            if show_trend:
+                self.figure["data"].append(
+                    dict(  # fit
+                        x=df_timeseries["_time"],
+                        y=df_timeseries["fit"],
+                        mode="lines",
+                        name=f"{self.TRENDWINDOW}-Tage-Trend",
+                        line=dict(color="blue", width=2),
+                    ))
             self.figure["layout"]["yaxis"]["title"] = helpers.measurementtitles[measurement]
             matomo_tracking(f"EC_Dash_Timeline_Stations_{measurement}")
 
-    def get_timeline_window(self):
+    def get_timeline_window(self, show_api_text=True):
         output = []
         graph = dcc.Graph(
             id='chart',
@@ -228,17 +241,18 @@ class TimelineChartWindow:
                 labelStyle={'display': 'block'}
             )
             output.append(smooth_checkbox)
-        infotext = html.P(children=[
-            """
-            Möchtest Du diese Daten herunterladen oder Zugriff auf weiter zurückliegende Daten? Zum Beispiel um selber
-            spannende Analysen zu machen und Zusammenhänge aufzudecken oder einfach aus Interesse? Fantastisch! Wir sind
-            vorbereitet und haben eine API dafür eingerichtet. Um Zugang zu erhalten schreib einfach eine Mail an
-            """,
-            html.A("kontakt@everyoneocunts.de",
-                   href="mailto:kontakt@everyonecounts.de?subject=Anfrage%20API-Zugriff",
-                   target="_blank"),
-            "."
+        if show_api_text:
+            infotext = html.P(children=[
+                """
+                Möchtest Du diese Daten herunterladen oder Zugriff auf weiter zurückliegende Daten? Zum Beispiel um selber
+                spannende Analysen zu machen und Zusammenhänge aufzudecken oder einfach aus Interesse? Fantastisch! Wir sind
+                vorbereitet und haben eine API dafür eingerichtet. Um Zugang zu erhalten schreib einfach eine Mail an
+                """,
+                html.A("kontakt@everyoneocunts.de",
+                       href="mailto:kontakt@everyonecounts.de?subject=Anfrage%20API-Zugriff",
+                       target="_blank"),
+                "."
 
-        ])
-        output.append(infotext)
+            ])
+            output.append(infotext)
         return output

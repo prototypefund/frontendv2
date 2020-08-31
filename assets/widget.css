@@ -1,0 +1,54 @@
+#widget{
+    background-color:#fff;
+    border: 1px solid #ccc;
+    padding:15px;
+    border-radius:10px;
+    text-align:center;
+}
+
+#widget div{
+margin-left:auto;
+margin-right:auto;
+}
+
+#widget-percentage,
+#widget-percentage.both,
+#widget-percentage.percentage,
+#widget-total,
+#widget-total.total{
+    font-size:30px;
+    font-weight:bold;
+    paddding:20px;
+    border-radius:999px;
+    background-color:var(--pink);
+    padding:20px !important;
+    max-width:200px;
+    text-align:center;
+    color:#fff;
+}
+#widget-total.both{
+    font-size:20px;
+    font-weight:normal;
+    paddding:10px;
+    background-color:#fff;
+    color:var(--pink);
+}
+#widget-percentage.total,
+#widget-total.percentage{
+    display:none;
+}
+
+#ec-attribution,
+#widget_origin{
+    font-size:0.8em;
+    margin-top:10px;
+}
+
+h1#widget-title{
+    border:none;
+    box-shadow:none;
+    padding-left:0px;
+    margin-top:0px !important;
+    font-size:18px;
+    text-align:center;
+}

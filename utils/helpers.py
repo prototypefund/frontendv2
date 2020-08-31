@@ -108,6 +108,15 @@ measurementtitles = {
         "webcam-customvision": "Fußgänger auf Webcams",
         "mdm": "Fahrzeuge"
     }
+timeformats = {
+        "airquality": "%d.%m.%Y %H:%M",
+        "bikes": "%d.%m.%Y",
+        # "google_maps": "Popularität",
+        "hystreet": "%d.%m.%Y",
+        "webcam": "%d.%m.%Y %H:%M",
+        "webcam-customvision": "%d.%m.%Y %H:%M",
+        "mdm": "%d.%m.%Y %H:%M"
+    }
 
 
 def measurement2field(measurement):

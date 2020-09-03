@@ -97,7 +97,7 @@ layout = html.Div(id="configurator", children=[
 
 
 @app.callback(
-    Output('textarea', 'value'),
+    Output('widgeturl', 'value'),
     [Input('tabs', 'value'),
      Input('station', 'value'),
      Input('timeline_checklist', 'value')]
@@ -110,13 +110,20 @@ def make_widget_url(tabs, station, timeline_checklist):
         show_rolling = "show_rolling" in timeline_checklist
         widgeturl += f"&show_trend={int(show_trend)}"
         widgeturl += f"&show_rolling={int(show_rolling)}"
-
     return widgeturl
 
 
 @app.callback(
+    Output('textarea', 'value'),
+    [Input('widgeturl', 'value')]
+)
+def update_embed_code(url):
+    return url
+
+
+@app.callback(
     Output('preview', 'src'),
-    [Input('textarea', 'value')]
+    [Input('widgeturl', 'value')]
 )
 def update_preview(url):
     return url

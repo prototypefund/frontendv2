@@ -7,7 +7,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 
 from app import app
-from apps import widget, dash_frontend
+from apps import widget, dash_frontend, widgetconfigurator
 
 # READ CONFIG
 # ============
@@ -48,6 +48,9 @@ def display_page(pathname):
     if pathname == '/widget':
         app.title = 'EveryoneCounts Widget'
         return widget.layout
+    if pathname == '/widget/configurator':
+        app.title = 'EveryoneCounts Widget Konfigurator'
+        return widgetconfigurator.layout
     else:
         app.title = 'EveryoneCounts Dashboard'
         return dash_frontend.layout

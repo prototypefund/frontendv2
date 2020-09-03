@@ -5,9 +5,8 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 from urllib.parse import parse_qs
 
-from utils import queries, timeline_chart, dash_elements
+from utils import queries, helpers
 from app import app, cache
-
 
 # READ CONFIG
 # ===========
@@ -19,6 +18,7 @@ CACHE_CONFIG = CONFIG["CACHE_CONFIG"]
 TRENDWINDOW = CONFIG["TRENDWINDOW"]
 MEASUREMENTS = CONFIG["measurements"]
 LOG_LEVEL = CONFIG["LOG_LEVEL"]
+BASE_URL = CONFIG["BASE_URL"]
 
 # WRAPPERS
 # ===============
@@ -47,33 +47,76 @@ def get_map_data():
         trend_window=TRENDWINDOW)
 
 
-@cache.memoize(unless=DISABLE_CACHE)
-def load_timeseries(_id):
-    logging.debug(f"CACHE MISS ({_id})")
-    return queries.load_timeseries(query_api, _id)
-
-
-# INITIALIZE CHART OBJECT
-# ================
-CHART = timeline_chart.TimelineChartWindow(TRENDWINDOW, load_timeseries)
 map_data = get_map_data()
-
+map_data["name"] = map_data.apply(lambda x: f'{x["name"]} ({helpers.measurementtitles[x["_measurement"]]})', 1)
 dropdowndict = map_data[["name", "c_id"]].set_index("c_id").to_dict()["name"]
-
-layout = html.Div(children=[
-    html.H1("Widget"),
-    dcc.Dropdown(id="selection",
-                 options=[{"value": key, "label": dropdowndict[key]} for key in dropdowndict],
-                 value=list(dropdowndict.keys())[0]),
-    html.Div(id="timeline-chart-widget")
+layout = html.Div(id="configurator", children=[
+    dcc.Store(id='widgeturl', storage_type='memory'),
+    html.Img(id="title",
+             className="container",
+             src="../assets/logo.png",
+             alt="EveryoneCounts - Das Social Distancing Dashboard"),
+    html.H1("Widget Konfigurator"),
+    dcc.Dropdown(
+        id="station",
+        options=[{"label": dropdowndict[x], "value": x} for x in dropdowndict.keys()],
+        value=list(dropdowndict.keys())[0]
+    ),
+    dcc.Tabs(id="tabs", value='tab-timeline', children=[
+        dcc.Tab(label='Zeitverlauf (Graph)',
+                value='tab-timeline',
+                children=[
+                    html.P("Zeigt den zeitlichen Verlauf der Messpunkte an einer Station."),
+                    dcc.Checklist(
+                        id="timeline_checklist",
+                        options=[
+                            {'label': 'Trendlinie', 'value': 'show_trend'},
+                            {'label': 'Gleitender Durchschnitt', 'value': 'show_rolling'},
+                        ],
+                        value=["show_rolling"]
+                    )
+                ]
+                ),
+        dcc.Tab(label='Auslastung (Zahl)',
+                value='tab-fill'
+                )
+    ]),
+    dcc.Textarea(
+        id='textarea',
+        value='',
+        style={'height': 200, 'width':'75%'},
+        readOnly=True,
+    ),
+    html.Iframe(
+        id="preview",
+        src="",
+        width="100%",
+        height=350
+    )
 ])
 
 
 @app.callback(
-    [Output('timeline-chart-widget', 'children')],
-    [Input('selection', 'value')]
+    Output('textarea', 'value'),
+    [Input('tabs', 'value'),
+     Input('station', 'value'),
+     Input('timeline_checklist', 'value')]
 )
-def update_widget(selection):
-    print("selection", selection)
-    CHART.update_figure("stations", selection, get_map_data(), False, [])
-    return [CHART.get_timeline_window()]
+def make_widget_url(tabs, station, timeline_checklist):
+    widgettype = tabs.replace("tab-", "")
+    widgeturl = f"{BASE_URL}/widget?widgettype={widgettype}&station={station}"
+    if widgettype == "timeline":
+        show_trend = "show_trend" in timeline_checklist
+        show_rolling = "show_rolling" in timeline_checklist
+        widgeturl += f"&show_trend={int(show_trend)}"
+        widgeturl += f"&show_rolling={int(show_rolling)}"
+
+    return widgeturl
+
+
+@app.callback(
+    Output('preview', 'src'),
+    [Input('textarea', 'value')]
+)
+def update_preview(url):
+    return url

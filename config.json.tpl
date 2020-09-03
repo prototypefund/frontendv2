@@ -14,5 +14,6 @@
   "CACHE_THRESHOLD": 500,
   "CACHE_DEFAULT_TIMEOUT": 1800
   },
-"LOG_LEVEL": "DEBUG"
+"LOG_LEVEL": "DEBUG",
+"BASE_URL": "https://everyonecounts.de"
 }

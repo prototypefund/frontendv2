@@ -20,6 +20,7 @@ MEASUREMENTS = CONFIG["measurements"]
 LOG_LEVEL = CONFIG["LOG_LEVEL"]
 BASE_URL = CONFIG["BASE_URL"]
 
+
 # WRAPPERS
 # ===============
 # Wrappers around some module functions so they can be cached
@@ -78,13 +79,34 @@ layout = html.Div(id="configurator", children=[
                 ]
                 ),
         dcc.Tab(label='Auslastung (Zahl)',
-                value='tab-fill'
-                )
+                value='tab-fill',
+                children=[
+                    dcc.Checklist(
+                        id="max_checklist",
+                        options=[
+                            {'label': 'Maximalen Wert angeben', 'value': 'max'},
+                        ],
+                        value=[]
+                    ),
+                    html.Div(id="max_selector",
+                             children=[html.Span("Maximaler Wert:"),
+                                       dcc.Input(id='max', type='number', min=0, step=1),
+                                       html.Span(" (leer lassen falls kein Maximalwert genutzt werden soll)"),
+                                       dcc.Dropdown(
+                                           id="show_number",
+                                           options=[
+                                               {"label": "Zahlenwert", "value": "total"},
+                                               {"label": "Prozentangabe", "value": "percentage"},
+                                               {"label": "Prozentangabe & Zahlenwert", "value": "both"},
+                                           ],
+                                           value="both")
+                                       ]),
+                ])
     ]),
     dcc.Textarea(
         id='textarea',
         value='',
-        style={'height': 200, 'width':'75%'},
+        style={'height': 200, 'width': '75%'},
         readOnly=True,
     ),
     html.Iframe(
@@ -100,9 +122,12 @@ layout = html.Div(id="configurator", children=[
     Output('widgeturl', 'value'),
     [Input('tabs', 'value'),
      Input('station', 'value'),
-     Input('timeline_checklist', 'value')]
+     Input('timeline_checklist', 'value'),
+     Input('max', 'value'),
+     Input('show_number', 'value'),
+     Input('max_checklist', 'value')]
 )
-def make_widget_url(tabs, station, timeline_checklist):
+def make_widget_url(tabs, station, timeline_checklist, max_value, show_number, max_checklist):
     widgettype = tabs.replace("tab-", "")
     widgeturl = f"{BASE_URL}/widget?widgettype={widgettype}&station={station}"
     if widgettype == "timeline":
@@ -110,20 +135,33 @@ def make_widget_url(tabs, station, timeline_checklist):
         show_rolling = "show_rolling" in timeline_checklist
         widgeturl += f"&show_trend={int(show_trend)}"
         widgeturl += f"&show_rolling={int(show_rolling)}"
+    elif widgettype == "fill":
+        if "max" in max_checklist and max_value is not None:
+            widgeturl += f"&max={int(max_value)}"
+            widgeturl += f"&show_number={show_number}"
     return widgeturl
 
 
 @app.callback(
+    Output('max_selector', 'style'),
+    [Input('max_checklist', 'value')])
+def show_hide_max_selector(max_checklist):
+    if "max" in max_checklist:
+        return {"display": "block"}
+    else:
+        return {"display": "none"}
+
+
+@app.callback(
     Output('textarea', 'value'),
-    [Input('widgeturl', 'value')]
-)
+    [Input('widgeturl', 'value')])
 def update_embed_code(url):
+    # TODO: show proper iframe embed code
     return url
 
 
 @app.callback(
     Output('preview', 'src'),
-    [Input('widgeturl', 'value')]
-)
+    [Input('widgeturl', 'value')])
 def update_preview(url):
     return url

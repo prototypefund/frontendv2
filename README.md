@@ -26,6 +26,6 @@ Possible widget types (`widgettype=`) and their parameters:
     - `show_rolling` (optional, 1 or 0)
 - `fill` (shows how filled a station is)
     - `station` (required)
-    - `max` (required)
-    - `show_number` (optional, one of 'total', 'percentage' or 'both')
+    - `max` (optional)
+    - `show_number` (required, one of 'total', 'percentage' or 'both')
 

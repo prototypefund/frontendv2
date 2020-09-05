@@ -80,7 +80,6 @@ def parse_url_params(url_search_str):
     urlparams = {}
     if url_search_str is not None:
         urlparams = parse_qs(url_search_str.replace("?", ""))
-        print(urlparams)
     if "widgettype" not in urlparams:
         return "You need to specify a widgettype. Either timeline or fill."
     elif "station" not in urlparams:

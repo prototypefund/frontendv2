@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   sodipodi:docname="ampel.svg"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   id="svg8"
+   version="1.1"
+   viewBox="0 0 105.83333 52.916668"
+   height="200"
+   width="400">
+  <defs
+     id="defs2">
+    <filter
+       height="1.6"
+       y="-0.30000001"
+       width="1.6"
+       x="-0.30000001"
+       id="filter1256"
+       style="color-interpolation-filters:sRGB"
+       inkscape:collect="always">
+      <feGaussianBlur
+         id="feGaussianBlur1258"
+         stdDeviation="1.3890625"
+         inkscape:collect="always" />
+    </filter>
+    <filter
+       height="1.6"
+       y="-0.30000001"
+       width="1.6"
+       x="-0.30000001"
+       id="filter1279"
+       style="color-interpolation-filters:sRGB"
+       inkscape:collect="always">
+      <feGaussianBlur
+         id="feGaussianBlur1281"
+         stdDeviation="1.3890625"
+         inkscape:collect="always" />
+    </filter>
+    <filter
+       height="1.6"
+       y="-0.30000001"
+       width="1.6"
+       x="-0.30000001"
+       id="filter1298"
+       style="color-interpolation-filters:sRGB"
+       inkscape:collect="always">
+      <feGaussianBlur
+         id="feGaussianBlur1300"
+         stdDeviation="1.3890625"
+         inkscape:collect="always" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     inkscape:window-maximized="1"
+     inkscape:window-y="-8"
+     inkscape:window-x="-8"
+     inkscape:window-height="1057"
+     inkscape:window-width="1820"
+     units="px"
+     showgrid="false"
+     inkscape:document-rotation="0"
+     inkscape:current-layer="layer1"
+     inkscape:document-units="mm"
+     inkscape:cy="177.07617"
+     inkscape:cx="242.19511"
+     inkscape:zoom="1.4"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:groupmode="layer"
+     inkscape:label="Ebene 1">
+    <g
+       transform="translate(-0.52916667,-0.96632755)"
+       id="g870">
+      <rect
+         style="opacity:0.995;fill:#efefef;fill-opacity:1;stroke:#dbdbdb;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;stroke-opacity:1;paint-order:markers stroke fill;stop-color:#000000"
+         id="rect833"
+         width="15.875"
+         height="47.625"
+         x="4.0090432"
+         y="3.2072341"
+         ry="2.946162" />
+      <circle
+         style="opacity:0.995;fill:#04652a;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000"
+         id="path835"
+         cx="11.946544"
+         cy="42.354324"
+         r="5.5562501" />
+      <circle
+         r="5.5562501"
+         cy="27.019735"
+         cx="11.946544"
+         id="path835-3"
+         style="opacity:0.995;fill:#f3b202;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000" />
+      <circle
+         r="5.5562501"
+         cy="11.685144"
+         cx="11.946544"
+         id="path835-1"
+         style="opacity:0.995;fill:#ff0101;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000" />
+    </g>
+    <g
+       inkscape:export-ydpi="104.19"
+       inkscape:export-xdpi="104.19"
+       inkscape:export-filename="E:\Dokumente\projects\everyonecounts\frontendv2\assets\ampel\ampel_0.png"
+       transform="translate(-0.25504136,-0.80717933)"
+       id="g981">
+      <rect
+         ry="2.946162"
+         y="3.0480859"
+         x="24.001209"
+         height="47.625"
+         width="15.875"
+         id="rect833-4"
+         style="opacity:0.995;fill:#efefef;fill-opacity:1;stroke:#dbdbdb;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;stroke-opacity:1;paint-order:markers stroke fill;stop-color:#000000" />
+      <circle
+         r="5.5562501"
+         cy="42.195179"
+         cx="31.938707"
+         id="path835-5"
+         style="opacity:0.995;fill:#dbdbdb;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000" />
+      <circle
+         style="opacity:0.995;fill:#dbdbdb;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000"
+         id="path835-3-2"
+         cx="31.938705"
+         cy="26.860588"
+         r="5.5562501" />
+      <circle
+         style="opacity:0.995;fill:#dbdbdb;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000"
+         id="path835-1-5"
+         cx="31.938707"
+         cy="11.525999"
+         r="5.5562501" />
+    </g>
+    <g
+       inkscape:export-ydpi="104.19"
+       inkscape:export-xdpi="104.19"
+       inkscape:export-filename="E:\Dokumente\projects\everyonecounts\frontendv2\assets\ampel\ampel_r.png"
+       transform="translate(20.388754,-0.80717933)"
+       id="g981-4">
+      <rect
+         style="opacity:0.995;fill:#efefef;fill-opacity:1;stroke:#dbdbdb;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;stroke-opacity:1;paint-order:markers stroke fill;stop-color:#000000"
+         id="rect833-4-4"
+         width="15.875"
+         height="47.625"
+         x="24.001209"
+         y="3.0480859"
+         ry="2.946162" />
+      <circle
+         style="opacity:0.995;fill:#dbdbdb;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000"
+         id="path835-5-0"
+         cx="31.938707"
+         cy="42.195179"
+         r="5.5562501" />
+      <circle
+         r="5.5562501"
+         cy="26.860588"
+         cx="31.938705"
+         id="path835-3-2-9"
+         style="opacity:0.995;fill:#dbdbdb;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000" />
+      <circle
+         r="5.5562501"
+         cy="11.525999"
+         cx="31.938707"
+         id="path835-1-5-9"
+         style="opacity:0.995;fill:#ff0101;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000" />
+      <circle
+         style="opacity:1;fill:#ff0101;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;filter:url(#filter1256);stop-color:#000000"
+         id="path835-1-5-9-8"
+         cx="31.938705"
+         cy="11.525999"
+         r="5.5562501" />
+    </g>
+    <g
+       inkscape:export-ydpi="104.19"
+       inkscape:export-xdpi="104.19"
+       inkscape:export-filename="E:\Dokumente\projects\everyonecounts\frontendv2\assets\ampel\ampel_g.png"
+       transform="translate(40.655047,-0.80717933)"
+       id="g981-6">
+      <rect
+         style="opacity:0.995;fill:#efefef;fill-opacity:1;stroke:#dbdbdb;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;stroke-opacity:1;paint-order:markers stroke fill;stop-color:#000000"
+         id="rect833-4-7"
+         width="15.875"
+         height="47.625"
+         x="24.001209"
+         y="3.0480859"
+         ry="2.946162" />
+      <circle
+         style="opacity:0.995;fill:#dbdbdb;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000"
+         id="path835-5-2"
+         cx="31.938707"
+         cy="42.195179"
+         r="5.5562501" />
+      <circle
+         r="5.5562501"
+         cy="26.860588"
+         cx="31.938705"
+         id="path835-3-2-5"
+         style="opacity:0.995;fill:#f3b202;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000" />
+      <circle
+         r="5.5562501"
+         cy="11.525999"
+         cx="31.938707"
+         id="path835-1-5-6"
+         style="opacity:0.995;fill:#dbdbdb;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000" />
+      <circle
+         style="opacity:0.995;fill:#f3b202;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;filter:url(#filter1279);stop-color:#000000"
+         id="path835-3-2-5-2"
+         cx="31.938705"
+         cy="26.860588"
+         r="5.5562501" />
+    </g>
+    <g
+       inkscape:export-ydpi="104.19"
+       inkscape:export-xdpi="104.19"
+       inkscape:export-filename="E:\Dokumente\projects\everyonecounts\frontendv2\assets\ampel\ampel_g.png"
+       transform="translate(60.921335,-0.80717933)"
+       id="g981-3">
+      <rect
+         style="opacity:0.995;fill:#efefef;fill-opacity:1;stroke:#dbdbdb;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;stroke-opacity:1;paint-order:markers stroke fill;stop-color:#000000"
+         id="rect833-4-5"
+         width="15.875"
+         height="47.625"
+         x="24.001209"
+         y="3.0480859"
+         ry="2.946162" />
+      <circle
+         style="opacity:0.995;fill:#04652a;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000"
+         id="path835-5-9"
+         cx="31.938707"
+         cy="42.195179"
+         r="5.5562501" />
+      <circle
+         r="5.5562501"
+         cy="26.860588"
+         cx="31.938705"
+         id="path835-3-2-2"
+         style="opacity:0.995;fill:#dbdbdb;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000" />
+      <circle
+         r="5.5562501"
+         cy="11.525999"
+         cx="31.938707"
+         id="path835-1-5-1"
+         style="opacity:0.995;fill:#dbdbdb;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;stop-color:#000000" />
+      <circle
+         r="5.5562501"
+         cy="42.195179"
+         cx="31.938709"
+         id="path835-5-9-4"
+         style="opacity:0.995;fill:#04652a;fill-opacity:1;stroke:none;stroke-width:1.15;stroke-linejoin:round;stroke-dashoffset:0.224882;paint-order:markers stroke fill;filter:url(#filter1298);stop-color:#000000" />
+    </g>
+  </g>
+</svg>

@@ -72,7 +72,7 @@ layout = html.Div(id="widget", children=[
 
 
 @app.callback(
-    [Output('widget-container', 'children')],
+    Output('widget-container', 'children'),
     [Input('url-widget', 'search')]
 )
 def parse_url_params(url_search_str):
@@ -81,14 +81,14 @@ def parse_url_params(url_search_str):
         urlparams = parse_qs(url_search_str.replace("?", ""))
         print(urlparams)
     if "widgettype" not in urlparams:
-        return ["You need to specify a widgettype. Either timeline or fill."]
+        return "You need to specify a widgettype. Either timeline or fill."
     elif "station" not in urlparams:
-        return ["You need to specify a station. Use the configurator."]
+        return "You need to specify a station. Use the configurator."
     widgettype = urlparams["widgettype"]
     station = urlparams["station"][0]
     map_data = get_map_data()
     if station not in map_data["c_id"].unique():
-        return [f"Unknown station {station}"]
+        return f"Unknown station {station}"
     if widgettype == ["timeline"]:
         show_trend = False  # default
         show_rolling = True  # default
@@ -97,7 +97,7 @@ def parse_url_params(url_search_str):
         if "show_rolling" in urlparams:
             show_rolling = urlparams["show_rolling"] == ["1"]
         CHART.update_figure("stations", station, map_data, False, [], show_trend, show_rolling)
-        return [CHART.get_timeline_window(show_api_text=False)]
+        return CHART.get_timeline_window(show_api_text=False)
     elif widgettype == ["fill"]:
         station_data = map_data[map_data["c_id"] == station]
         measurement = station_data["_measurement"].tolist()[0]
@@ -140,6 +140,6 @@ def parse_url_params(url_search_str):
                                        target="_blank")
                                ])
                       )
-        return [output]
+        return output
     else:
-        return ["Unknown widgettype"]
+        return "Unknown widgettype"

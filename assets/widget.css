@@ -68,3 +68,43 @@ h1#widget-title{
   border:12px solid white;
   background:white;
 }
+
+/*
+  WIDGET CONFIGURATOR
+*/
+#configurator{
+    overflow: scroll;
+    height: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+}
+
+#configurator iframe{
+    border: none;
+    margin-left:20px;
+    margin-right:20px;
+    border: 1px dashed #666;
+}
+
+#configurator>div,
+#configurator>h1,
+#configurator>h2,
+#configurator>p,
+#configurator>textarea{
+  padding:10px;
+  margin-left:10px;
+  max-width:600px;
+}
+
+#configurator>h2{
+    box-shadow:none;
+    border-top: 1px dashed #ccc;
+}
+
+#configurator .tab-content{
+  min-height:auto;
+}

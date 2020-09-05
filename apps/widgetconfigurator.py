@@ -58,14 +58,15 @@ layout = html.Div(id="configurator", children=[
              src="../assets/logo.png",
              alt="EveryoneCounts - Das Social Distancing Dashboard"),
     html.H1("Widget Konfigurator"),
+    html.H2("Auswahl der Messstation"),
+    html.P("Wähle hier die Messstation aus, deren Daten Du als Widget nutzen möchtest. Du kannst durch die Liste "
+           "scrollen oder mit der Tastatur suchen."),
     dcc.Dropdown(
         id="station",
         options=[{"label": dropdowndict[x], "value": x} for x in dropdowndict.keys()],
         value=list(dropdowndict.keys())[0]
     ),
-    html.Span("Breite des Widgets (Pixel):"),
-    dcc.Input(id='width', type='number', min=120, step=1),
-    html.Span(" (leer lassen falls keine Breite festgelegt werden soll)"),
+    html.H2("Typ des Widgets und Details"),
     dcc.Tabs(id="tabs", value='tab-timeline', children=[
         dcc.Tab(label='Zeitverlauf (Graph)',
                 value='tab-timeline',
@@ -106,18 +107,34 @@ layout = html.Div(id="configurator", children=[
                                        ]),
                 ])
     ]),
-    dcc.Textarea(
-        id='textarea',
-        value='',
-        style={'height': 200, 'width': '75%'},
-        readOnly=True,
-    ),
+    html.H2("Größe des Widgets (optional)"),
+    html.Div(id="width-select", children=[
+        html.P(children=[
+            html.Span("Breite:  "),
+            dcc.Input(id='width', type='number', min=120, step=1),
+            html.Span(" Pixel. Leer lassen falls keine Breite festgelegt werden soll.")
+        ]),
+        html.P(children=[
+            html.Span("Höhe:  "),
+            dcc.Input(id='height', type='number', min=400, step=1, value=600),
+            html.Span(" Pixel. Darf nicht leer sein.")
+        ]),
+    ]),
+    html.H2("Vorschau des Widgets"),
+    html.P("Der gestrichelte Rahmen ist nicht Teil des Widgets und zeigt lediglich die Größe des IFrames an."),
     html.Iframe(
         id="preview",
         src="",
-        width="100%",
-        height=350
-    )
+        # height=350,
+    ),
+    html.H2("Code zum Einbetten"),
+    html.P("Dies ist der Code den Du in deine Webseite einfügen müsst damit das Widget angezeigt wird."),
+    dcc.Textarea(
+        id='textarea',
+        value='',
+        style={'height': 150, 'width': '75%'},
+        readOnly=True,
+    ),
 ])
 
 
@@ -135,6 +152,7 @@ def make_widget_url(tabs, station, width, timeline_checklist, max_value, show_nu
     widgettype = tabs.replace("tab-", "")
     widgeturl = f"{BASE_URL}/widget?widgettype={widgettype}&station={station}"
     if width is not None:
+        width = width - 2*16  # subtract padding
         widgeturl += f"&width={width}"
     if widgettype == "timeline":
         show_trend = "show_trend" in timeline_checklist
@@ -171,3 +189,16 @@ def update_embed_code(url):
     [Input('widgeturl', 'value')])
 def update_preview(url):
     return url
+
+
+@app.callback(
+    [Output('preview', 'width'),
+     Output('preview', 'height')],
+    [Input('width', 'value'),
+     Input('height', 'value')])
+def width_height_preview(width, height):
+    if width is None:
+        width = "100%"
+    if height is None:
+        height = 600
+    return width, height

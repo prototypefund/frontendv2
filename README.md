@@ -19,13 +19,15 @@ Example URLs:
 - `https://everyonecounts.de/widget?widgettype=timeline&station=hystreet$110&show_rolling=0&show_trend=0`
 - `https://everyonecounts.de/widget?widgettype=fill&station=hystreet$110&max=5000&show_number=both`
 
+Parameters for all widget types:
+    - `station` (required, c_id of the station)
+    - `width` (optional, width of the widget in pixels)
+
 Possible widget types (`widgettype=`) and their parameters:
 - `timeline` (shows a timeline chart)
-    - `station` (required)
     - `show_trend` (optional, 1 or 0)
     - `show_rolling` (optional, 1 or 0)
 - `fill` (shows how filled a station is)
-    - `station` (required)
     - `max` (optional)
     - `show_number` (required, one of 'total', 'percentage' or 'both')
 - `trafficlight` (shows a trafficlight)

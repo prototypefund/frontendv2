@@ -5,6 +5,8 @@
     border-radius:10px;
     text-align:center;
     display:inline-block;
+    min-width:120px;
+    overflow:hidden;
 }
 
 #widget .plot-container{
@@ -12,8 +14,8 @@
 }
 
 #widget div{
-margin-left:auto;
-margin-right:auto;
+    margin-left:auto;
+    margin-right:auto;
 }
 
 #widget-percentage,

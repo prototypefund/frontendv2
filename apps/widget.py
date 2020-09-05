@@ -1,5 +1,6 @@
 import json
 import logging
+import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
@@ -167,3 +168,18 @@ def parse_url_params(url_search_str):
         return output
     else:
         return "Unknown widgettype"
+
+
+@app.callback(
+    Output('widget', 'style'),
+    [Input('url-widget', 'search')]
+)
+def set_widget_width(url_search_str):
+    try:
+        urlparams = parse_qs(url_search_str.replace("?", ""))
+        width = int(urlparams["width"][0])
+        width = width - 2 * 16  # subtract padding and border
+        return {"width": width}
+    except:
+        return dash.no_update
+    return dash.no_update

@@ -50,8 +50,10 @@ def get_map_data():
 
 
 map_data = get_map_data()
-map_data["name"] = map_data.apply(lambda x: f'{x["name"]} ({helpers.measurementtitles[x["_measurement"]]})', 1)
-dropdowndict = map_data[["name", "c_id"]].set_index("c_id").to_dict()["name"]
+map_data["ddname"] = map_data.apply(lambda x: f'{x["name"]} ({helpers.measurementtitles[x["_measurement"]]})', 1)
+map_data.loc[~map_data["city"].isna(), "ddname"] = map_data[~map_data["city"].isna()].apply(
+    lambda x: x["city"] + " " + x["ddname"], 1)
+dropdowndict = map_data[["ddname", "c_id"]].set_index("c_id").to_dict()["ddname"]
 layout = html.Div(id="configurator", children=[
     dcc.Store(id='widgeturl', storage_type='memory'),
     html.Img(id="title",

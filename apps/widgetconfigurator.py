@@ -1,5 +1,6 @@
 import json
 import logging
+import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
@@ -78,10 +79,25 @@ layout = html.Div(id="configurator", children=[
                             {'label': 'Trendlinie', 'value': 'show_trend'},
                             {'label': 'Gleitender Durchschnitt', 'value': 'show_rolling'},
                         ],
-                        value=["show_rolling"]
-                    )
-                ]
-                ),
+                        value=["show_rolling"])
+                ]),
+        dcc.Tab(label='Ampel',
+                value='tab-trafficlight',
+                children=[
+                    html.P("Zeigt eine Ampel an, die je nach Auslastung grün, gelb oder rot ist.  Es müssen zwei "
+                           "Schwellwerte angegeben werden. Der erste Wert definiert die Grenze zwischen grün und "
+                           "gelb, der zweite Wert die Grenze zwischen gelb und rot."),
+                    html.P(children=[
+                        html.Span("Schwellwert 1:  "),
+                        dcc.Input(id='t1', type='number', min=1, step=1, value=1000),
+                        html.Span(" (Die Ampel ist grün wenn der Wert an der Messstation kleiner als dieser Wert ist)")
+                    ]),
+                    html.P(children=[
+                        html.Span("Schwellwert 2:  "),
+                        dcc.Input(id='t2', type='number', min=2, step=1, value=2000),
+                        html.Span(" (Die Ampel ist rot wenn der Wert an der Messstation größer als dieser Wert ist)")
+                    ]),
+                ]),
         dcc.Tab(label='Auslastung (Zahl)',
                 value='tab-fill',
                 children=[
@@ -146,13 +162,15 @@ layout = html.Div(id="configurator", children=[
      Input('timeline_checklist', 'value'),
      Input('max', 'value'),
      Input('show_number', 'value'),
-     Input('max_checklist', 'value')]
+     Input('max_checklist', 'value'),
+     Input('t1', 'value'),
+     Input('t2', 'value')]
 )
-def make_widget_url(tabs, station, width, timeline_checklist, max_value, show_number, max_checklist):
+def make_widget_url(tabs, station, width, timeline_checklist, max_value, show_number, max_checklist, t1, t2):
     widgettype = tabs.replace("tab-", "")
     widgeturl = f"{BASE_URL}/widget?widgettype={widgettype}&station={station}"
     if width is not None:
-        width = width - 2*16  # subtract padding
+        width = width - 2 * 16  # subtract padding
         widgeturl += f"&width={width}"
     if widgettype == "timeline":
         show_trend = "show_trend" in timeline_checklist
@@ -163,6 +181,12 @@ def make_widget_url(tabs, station, width, timeline_checklist, max_value, show_nu
         if "max" in max_checklist and max_value is not None:
             widgeturl += f"&max={int(max_value)}"
             widgeturl += f"&show_number={show_number}"
+    elif widgettype == "trafficlight":
+        if t1 is not None and t2 is not None:
+            widgeturl += f"&t1={t1}"
+            widgeturl += f"&t2={t2}"
+        else:
+            return dash.no_update()
     return widgeturl
 
 

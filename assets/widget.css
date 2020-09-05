@@ -98,6 +98,7 @@ h1#widget-title{
   padding:10px;
   margin-left:10px;
   max-width:600px;
+  z-index:0;
 }
 
 #configurator>h2{

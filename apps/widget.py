@@ -84,12 +84,12 @@ def parse_url_params(url_search_str):
         return "You need to specify a widgettype. Either timeline or fill."
     elif "station" not in urlparams:
         return "You need to specify a station. Use the configurator."
-    widgettype = urlparams["widgettype"]
+    widgettype = urlparams["widgettype"][0]
     station = urlparams["station"][0]
     map_data = get_map_data()
     if station not in map_data["c_id"].unique():
         return f"Unknown station {station}"
-    if widgettype == ["timeline"]:
+    if widgettype == "timeline":
         show_trend = False  # default
         show_rolling = True  # default
         if "show_trend" in urlparams:
@@ -98,7 +98,7 @@ def parse_url_params(url_search_str):
             show_rolling = urlparams["show_rolling"] == ["1"]
         CHART.update_figure("stations", station, map_data, False, [], show_trend, show_rolling)
         return CHART.get_timeline_window(show_api_text=False)
-    elif widgettype == ["fill"]:
+    elif widgettype == "fill" or widgettype == "trafficlight":
         station_data = map_data[map_data["c_id"] == station]
         measurement = station_data["_measurement"].tolist()[0]
         unit = helpers.measurementtitles[measurement]
@@ -111,24 +111,48 @@ def parse_url_params(url_search_str):
         if city is not None and type(city) is str:
             name = f"{city} ({name})"
         output = [html.H1(id="widget-title", children=name)]
-        if "max" in urlparams:
+        if widgettype == "trafficlight":
+            if "t1" in urlparams and "t2" in urlparams:
+                t1 = int(urlparams["t1"][0])
+                t2 = int(urlparams["t2"][0])
+                imgsrc = "../assets/ampel/"
+                if t1 is None or t2 is None:
+                    return "Thresholds t1 and t2 need to be integers"
+                if last_value > t2:
+                    imgsrc += "ampel_r.png"  # red
+                    alt = "rote Ampel"
+                elif last_value > t1:
+                    imgsrc += "ampel_y.png"  # yellow
+                    alt = "gelbe Ampel"
+                else:
+                    imgsrc += "ampel_g.png"  # green
+                    alt = "grüne Ampel"
+                output.append(html.Img(id="trafficlight",
+                                       alt=alt,
+                                       src=imgsrc))
+            else:
+                return "No thresholds defined (t1 and t2)"
+        if widgettype == "fill" and "max" in urlparams:
             max_value = int(urlparams["max"][0])
             percentage = round(100 * last_value / max_value, 0)
             if "show_number" in urlparams and urlparams["show_number"][0] in ["total", "percentage", "both"]:
                 show_number = urlparams["show_number"][0]
             output.append(html.Div(id="widget-percentage",
-                                   className=show_number,
+                                   className=f"{show_number} {widgettype}",
                                    children=f"{round(percentage)}%"))
             output.append(html.Div(id="widget-total",
-                                   className=show_number,
+                                   className=f"{show_number} {widgettype}",
                                    children=f"{last_value} / {max_value}"))
+            # Hiding of the percentage value in case of show_number=="total" is done via CSS
         else:
-            output.append(html.Div(id="widget-total", children=last_value))
+            output.append(html.Div(id="widget-total",
+                                   className=f"{show_number} {widgettype}",
+                                   children=last_value))
         output.append(html.Div(id="widget-unit",
-                               className=show_number,
+                               className=f"{show_number} {widgettype}",
                                children=f"{unit}"))
         output.append(html.Div(id="widget-time",
-                               className=show_number,
+                               className=f"{show_number} {widgettype}",
                                children=last_time,
                                ))
         output.append(html.Div(id="widget_origin",

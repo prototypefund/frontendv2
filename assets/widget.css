@@ -27,7 +27,6 @@ margin-right:auto;
     border-radius:999px;
     background-color:var(--pink);
     padding:20px !important;
-    max-width:200px;
     text-align:center;
     color:#fff;
 }
@@ -35,6 +34,10 @@ margin-right:auto;
     font-size:20px;
     font-weight:normal;
     paddding:10px;
+    background-color:#fff;
+    color:var(--pink);
+}
+#widget-total.trafficlight{
     background-color:#fff;
     color:var(--pink);
 }
@@ -56,4 +59,10 @@ h1#widget-title{
     margin-top:0px !important;
     font-size:18px;
     text-align:center;
+}
+
+#trafficlight{
+  float:left;
+  border:12px solid white;
+  background:white;
 }

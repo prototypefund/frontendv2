@@ -28,4 +28,6 @@ Possible widget types (`widgettype=`) and their parameters:
     - `station` (required)
     - `max` (optional)
     - `show_number` (required, one of 'total', 'percentage' or 'both')
+- `trafficlight` (shows a trafficlight)
+    - `t1` and `t2` (required, thresholds for green/yellow and yellow/red boundary)
 

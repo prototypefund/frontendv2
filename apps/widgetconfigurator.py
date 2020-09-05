@@ -144,13 +144,26 @@ layout = html.Div(id="configurator", children=[
         # height=350,
     ),
     html.H2("Code zum Einbetten"),
-    html.P("Dies ist der Code den Du in deine Webseite einfügen müsst damit das Widget angezeigt wird."),
+    html.P("Dies ist der Code den Du in deine Webseite einfügen musst damit das Widget angezeigt wird."),
     dcc.Textarea(
         id='textarea',
         value='',
         style={'height': 150, 'width': '75%'},
         readOnly=True,
     ),
+    html.H2("Kontakt"),
+    html.P(children=[
+        "Für Fragen zur Nutzung oder bei Problemen kannst Du uns per Mail an ",
+        html.A(children="kontakt@everyonecounts.de",
+               href="mailto:kontakt@everyonecounts.de",
+               target="_blank"),
+        " oder auf Twitter unter ",
+        html.A(children="@_everyonecounts",
+               href="https://twitter.com/_everyonecounts/",
+               target="_blank"),
+        " erreichen."
+    ]),
+    html.P(html.A(children="Impressum", href="https://blog.everyonecounts.de/impressum/"))
 ])
 
 

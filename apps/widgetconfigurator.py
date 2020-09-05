@@ -76,7 +76,7 @@ layout = html.Div(id="configurator", children=[
                     dcc.Checklist(
                         id="timeline_checklist",
                         options=[
-                            {'label': 'Trendlinie', 'value': 'show_trend'},
+                            {'label': f'{TRENDWINDOW}-Tage-Trend', 'value': 'show_trend'},
                             {'label': 'Gleitender Durchschnitt', 'value': 'show_rolling'},
                         ],
                         value=["show_rolling"])

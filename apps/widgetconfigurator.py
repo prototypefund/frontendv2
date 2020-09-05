@@ -202,10 +202,16 @@ def show_hide_max_selector(max_checklist):
 
 @app.callback(
     Output('textarea', 'value'),
-    [Input('widgeturl', 'value')])
-def update_embed_code(url):
-    # TODO: show proper iframe embed code
-    return url
+    [Input('widgeturl', 'value'),
+     Input('width', 'value'),
+     Input('height', 'value')])
+def update_embed_code(url, width, height):
+    if width is None:
+        width = "100%"
+    if height is None:
+        height = 600
+    title = "EveryoneCounts Widget"
+    return f'<iframe src="{url}" width={width} height={height} title="{title}" style="border:none"></iframe>'
 
 
 @app.callback(

@@ -63,6 +63,9 @@ layout = html.Div(id="configurator", children=[
         options=[{"label": dropdowndict[x], "value": x} for x in dropdowndict.keys()],
         value=list(dropdowndict.keys())[0]
     ),
+    html.Span("Breite des Widgets (Pixel):"),
+    dcc.Input(id='width', type='number', min=120, step=1),
+    html.Span(" (leer lassen falls keine Breite festgelegt werden soll)"),
     dcc.Tabs(id="tabs", value='tab-timeline', children=[
         dcc.Tab(label='Zeitverlauf (Graph)',
                 value='tab-timeline',
@@ -89,7 +92,7 @@ layout = html.Div(id="configurator", children=[
                         value=[]
                     ),
                     html.Div(id="max_selector",
-                             children=[html.Span("Maximaler Wert:"),
+                             children=[html.Span("Maximaler Wert: "),
                                        dcc.Input(id='max', type='number', min=0, step=1),
                                        html.Span(" (leer lassen falls kein Maximalwert genutzt werden soll)"),
                                        dcc.Dropdown(
@@ -122,14 +125,17 @@ layout = html.Div(id="configurator", children=[
     Output('widgeturl', 'value'),
     [Input('tabs', 'value'),
      Input('station', 'value'),
+     Input('width', 'value'),
      Input('timeline_checklist', 'value'),
      Input('max', 'value'),
      Input('show_number', 'value'),
      Input('max_checklist', 'value')]
 )
-def make_widget_url(tabs, station, timeline_checklist, max_value, show_number, max_checklist):
+def make_widget_url(tabs, station, width, timeline_checklist, max_value, show_number, max_checklist):
     widgettype = tabs.replace("tab-", "")
     widgeturl = f"{BASE_URL}/widget?widgettype={widgettype}&station={station}"
+    if width is not None:
+        widgeturl += f"&width={width}"
     if widgettype == "timeline":
         show_trend = "show_trend" in timeline_checklist
         show_rolling = "show_rolling" in timeline_checklist

@@ -18,11 +18,12 @@ class TimelineChartWindow:
             locale="de-DE",
             displaylogo=False,
             modeBarButtonsToRemove=['lasso2d',
+                                    'zoom2d',
                                     'toggleSpikelines',
                                     'toggleHover',
                                     'select2d',
                                     'autoScale2d',
-                                    'resetScale2d',
+                                    #'resetScale2d',
                                     'resetViewMapbox'],
             displayModeBar=True,
             responsive=True
@@ -58,8 +59,7 @@ class TimelineChartWindow:
         self.chartlayout = dict(
             autosize=True,
             responsive=True,
-            #height=350,
-            #width=700,
+            dragmode='pan',
             title="",
             hovermode='x unified',
             yaxis=dict(

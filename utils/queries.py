@@ -64,18 +64,18 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
             print(query)
             continue
         influx_table.drop_duplicates(inplace=True)
+
+        columns = set(influx_table.columns)
+        if not required_columns.issubset(columns):
+            missing = required_columns.difference(columns)
+            print(f"Missing columns for {_measurement}: {missing}")
+            logging.warning(f"Missing columns for {_measurement}: {missing}")
+            continue
+
         if _measurement == "webcam-customvision":
             influx_table = helpers.filter_by_consent(influx_table)
         if influx_table.empty:
             continue
-
-        # drop rows with nans
-
-        len_before = len(influx_table)
-        influx_table = influx_table.dropna(how="any", subset=required_columns, axis=0)
-        if len(influx_table) < len_before:
-            print(f"Dropped {len_before-len(influx_table)} stations with NANs in {_measurement}")
-            logging.warning(f"Dropped {len_before - len(influx_table)} stations with NANs in {_measurement}")
 
         influx_table["c_id"] = compound_index(influx_table)
         influx_table["_value"] = pd.to_numeric((influx_table["_value"]))

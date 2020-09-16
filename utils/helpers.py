@@ -97,7 +97,7 @@ originnames = {
         "webcam": "öffentliche Webcam (alt)",
         "webcam-customvision": "öffentliche Webcam",
         "mdm": "Mobilitäts Daten Marktplatz (MDM)",
-        "writeapi": "Ereignisse",
+        "writeapi": "Gemeldete Ereignisse",
     }
 measurementtitles = {
         "airquality": "Luftqualitäts-Index",
@@ -106,7 +106,7 @@ measurementtitles = {
         "webcam": "Fußgänger auf Webcams (alt)",
         "webcam-customvision": "Fußgänger auf Webcams",
         "mdm": "Fahrzeuge",
-        "writeapi": "Personen",
+        "writeapi": "Ereignisse",
     }
 timeformats = {
         "airquality": "%d.%m.%Y %H:%M",

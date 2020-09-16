@@ -83,6 +83,14 @@ def get_map_traces(map_data, measurements):
 # ================
 CHART = timeline_chart.TimelineChartWindow(TRENDWINDOW, load_timeseries)
 
+# UPDATE MEASUREMENTS
+# ================
+# In case there are measurements that have no data
+# they should not be displayed
+map_data = get_map_data()
+CONFIG["measurements"] = list(map_data["_measurement"].unique())
+
+
 # SET UP DASH LAYOUT
 # ======================
 layout = html.Div(id="dash-layout", children=[

@@ -45,6 +45,7 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
               "origin"]
     geo_table = pd.DataFrame()
     tables = pd.DataFrame()
+    required_columns = {"_id", "ags", "bundesland", "districtType", "landkreis", "name", "origin"}
     for _measurement in measurements:
         query = f'''
         from(bucket: "{bucket}")
@@ -67,6 +68,15 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
             influx_table = helpers.filter_by_consent(influx_table)
         if influx_table.empty:
             continue
+
+        # drop rows with nans
+
+        len_before = len(influx_table)
+        influx_table = influx_table.dropna(how="any", subset=required_columns, axis=0)
+        if len(influx_table) < len_before:
+            print(f"Dropped {len_before-len(influx_table)} stations with NANs in {_measurement}")
+            logging.warning(f"Dropped {len_before - len(influx_table)} stations with NANs in {_measurement}")
+
         influx_table["c_id"] = compound_index(influx_table)
         influx_table["_value"] = pd.to_numeric((influx_table["_value"]))
         if tables.empty:
@@ -75,6 +85,7 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
             tables = tables.append(influx_table, ignore_index=True)
     # pivot table so that the lat/lon fields become named columns
     geo_table = tables[["_field", "_value", "c_id"]]
+    geo_table = geo_table.astype({'_value': 'float'})
     geo_table = geo_table.pivot_table(index='c_id', columns='_field', values='_value')
     geo_table = round(geo_table, 6)
     geo_table = gpd.GeoDataFrame(geo_table, geometry=gpd.points_from_xy(geo_table.lon, geo_table.lat))
@@ -91,10 +102,11 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
     geo_table["model"] = geo_table["c_id"].map(trenddict["model"])
     geo_table["last_value"] = geo_table["c_id"].map(trenddict["last_value"])
     geo_table["last_time"] = geo_table["c_id"].map(trenddict["last_time"])
-    geo_table["landkreis_label"] = geo_table.apply(lambda x: x["landkreis"] + " " + str(x["districtType"]), 1)
+    geo_table["landkreis_label"] = geo_table.apply(lambda x: str(x["landkreis"]) + " " + str(x["districtType"]), 1)
 
     print("Result of 'get_map_data():")
-    print(geo_table.columns)
+    print(geo_table.dtypes)
+    print("\nNumber of stations:")
     print(geo_table["_measurement"].value_counts())
 
     logging.info(f'Number of stations:\n{geo_table["_measurement"].value_counts()}')

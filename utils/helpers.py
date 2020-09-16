@@ -84,38 +84,38 @@ def tooltiptext(df, mode):
 fieldnames = {
         "airquality": "airquality_score",
         "bikes": "bike_count",
-        # "google_maps": "current_popularity",
         "hystreet": "pedestrian_count",
         "webcam": "personenzahl",
         "webcam-customvision": "personenzahl",
-        "mdm": "vehicleFlow"
+        "mdm": "vehicleFlow",
+        "writeapi": "count",
     }
 originnames = {
         "airquality": "World Air Quality Index",
         "bikes": "Eco Compteur",
-        # "google_maps": "Google Maps",
         "hystreet": "hystreet.com",
         "webcam": "öffentliche Webcam (alt)",
         "webcam-customvision": "öffentliche Webcam",
-        "mdm": "Mobilitäts Daten Marktplatz (MDM)"
+        "mdm": "Mobilitäts Daten Marktplatz (MDM)",
+        "writeapi": "Ereignisse",
     }
 measurementtitles = {
         "airquality": "Luftqualitäts-Index",
         "bikes": "Fahrräder",
-        # "google_maps": "Popularität",
         "hystreet": "Fußgänger (Laserscanner)",
         "webcam": "Fußgänger auf Webcams (alt)",
         "webcam-customvision": "Fußgänger auf Webcams",
-        "mdm": "Fahrzeuge"
+        "mdm": "Fahrzeuge",
+        "writeapi": "Personen",
     }
 timeformats = {
         "airquality": "%d.%m.%Y %H:%M",
         "bikes": "%d.%m.%Y",
-        # "google_maps": "Popularität",
         "hystreet": "%d.%m.%Y",
         "webcam": "%d.%m.%Y %H:%M",
         "webcam-customvision": "%d.%m.%Y %H:%M",
-        "mdm": "%d.%m.%Y %H:%M"
+        "mdm": "%d.%m.%Y %H:%M",
+        "writeapi": "%d.%m.%Y %H:%M",
     }
 
 
@@ -189,7 +189,7 @@ def filter_by_consent(df):
     webcams_df = webcams_df[["ID_Name", "consent"]]
     df = df.merge(webcams_df, on="ID_Name", how="left")
     df = df[df["consent"] == True]
-    df = df.drop(["consent", "ID_Name"], errors="ignore").reset_index(drop=True)
+    df = df.drop(["consent", "ID_Name"], errors="ignore", axis=1).reset_index(drop=True)
     return df
 
 

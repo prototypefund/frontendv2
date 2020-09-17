@@ -8,7 +8,7 @@ from influxdb_client import InfluxDBClient
 import json
 import logging
 from utils import helpers
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 
 def get_query_api(url, org, token):
@@ -42,7 +42,9 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
               "city",
               "name",
               "districtType",
-              "origin"]
+              "origin",
+              "start_date",
+              "end_date"]
     geo_table = pd.DataFrame()
     tables = pd.DataFrame()
     required_columns = {"_id", "ags", "bundesland", "districtType", "landkreis", "name", "origin"}
@@ -74,6 +76,13 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
 
         if _measurement == "webcam-customvision":
             influx_table = helpers.filter_by_consent(influx_table)
+        elif _measurement == "writeapi":
+            now = datetime.now()
+            influx_table["start_date"] = pd.to_datetime(influx_table["start_date"])
+            influx_table["end_date"] = pd.to_datetime(influx_table["end_date"])
+            # remove inactive events:
+            influx_table = influx_table[influx_table["end_date"] >= now]
+            influx_table = influx_table[influx_table["start_date"] <= now]
         if influx_table.empty:
             continue
 

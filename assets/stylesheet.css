@@ -1,5 +1,6 @@
 :root {
     --bggray: #efefef;
+    --lightgray: #d6d6d6;
     --lightgreen: #D3EECD;
     --darkgreen: #04652A;
     --pink: #F63366;
@@ -132,9 +133,9 @@ button{
 
 
 .tab-content {
-    border-left: 1px solid #d6d6d6;
-    border-right: 1px solid #d6d6d6;
-    border-bottom: 1px solid #d6d6d6;
+    border-left: 1px solid var(--lightgray);
+    border-right: 1px solid var(--lightgray);
+    border-bottom: 1px solid var(--lightgray);
     border-top: none;
     padding: 10px;
     border-radius:0px 0px 5px 5px;

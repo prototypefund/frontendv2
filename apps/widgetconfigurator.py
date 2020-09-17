@@ -82,34 +82,39 @@ layout = html.Div(id="configurator", children=[
                         ],
                         value=["show_rolling"])
                 ]),
-        dcc.Tab(label='Ampel',
-                value='tab-trafficlight',
-                children=[
-                    html.P("Zeigt eine Ampel an, die je nach Auslastung grün, gelb oder rot ist.  Es müssen zwei "
-                           "Schwellwerte angegeben werden. Der erste Wert definiert die Grenze zwischen grün und "
-                           "gelb, der zweite Wert die Grenze zwischen gelb und rot."),
-                    html.P(children=[
-                        html.Span("Schwellwert 1:  "),
-                        dcc.Input(id='t1', type='number', min=1, step=1, value=1000),
-                        html.Span(" (Die Ampel ist grün wenn der Wert an der Messstation kleiner als dieser Wert ist)")
-                    ]),
-                    html.P(children=[
-                        html.Span("Schwellwert 2:  "),
-                        dcc.Input(id='t2', type='number', min=2, step=1, value=2000),
-                        html.Span(" (Die Ampel ist rot wenn der Wert an der Messstation größer als dieser Wert ist)")
-                    ]),
-                ]),
-        dcc.Tab(label='Auslastung (Zahl)',
+        dcc.Tab(label='Aktuelle Auslastung',
                 value='tab-fill',
                 children=[
                     dcc.Checklist(
-                        id="max_checklist",
+                        id="fill_checklist",
                         options=[
+                            {'label': 'Ampel anzeigen', 'value': 'trafficlight'},
                             {'label': 'Maximalen Wert angeben', 'value': 'max'},
                         ],
                         value=[]
                     ),
+                    html.Div(id="trafficlight_selector",
+                             className="selector",
+                             children=[
+                                 html.P(
+                                     "Zeigt eine Ampel an, die je nach Auslastung grün, gelb oder rot ist.  Es müssen "
+                                     "zwei Schwellwerte angegeben werden. Der erste Wert definiert die Grenze "
+                                     "zwischen grün und gelb, der zweite Wert die Grenze zwischen gelb und rot."),
+                                 html.P(children=[
+                                     html.Span("Schwellwert 1:  "),
+                                     dcc.Input(id='t1', type='number', min=1, step=1, value=1000),
+                                     html.Span(
+                                         " (Die Ampel ist grün wenn der Wert an der Messstation kleiner als dieser Wert ist)")
+                                 ]),
+                                 html.P(children=[
+                                     html.Span("Schwellwert 2:  "),
+                                     dcc.Input(id='t2', type='number', min=2, step=1, value=2000),
+                                     html.Span(
+                                         " (Die Ampel ist rot wenn der Wert an der Messstation größer als dieser Wert ist)")
+                                 ]),
+                             ]),
                     html.Div(id="max_selector",
+                             className="selector",
                              children=[html.Span("Maximaler Wert: "),
                                        dcc.Input(id='max', type='number', min=0, step=1),
                                        html.Span(" (leer lassen falls kein Maximalwert genutzt werden soll)"),
@@ -128,7 +133,7 @@ layout = html.Div(id="configurator", children=[
     html.Div(id="width-select", children=[
         html.P(children=[
             html.Span("Breite:  "),
-            dcc.Input(id='width', type='number', min=120, step=1),
+            dcc.Input(id='width', type='number', min=120, step=1, value=600),
             html.Span(" Pixel. Leer lassen falls keine Breite festgelegt werden soll.")
         ]),
         html.P(children=[
@@ -176,11 +181,11 @@ layout = html.Div(id="configurator", children=[
      Input('timeline_checklist', 'value'),
      Input('max', 'value'),
      Input('show_number', 'value'),
-     Input('max_checklist', 'value'),
+     Input('fill_checklist', 'value'),
      Input('t1', 'value'),
      Input('t2', 'value')]
 )
-def make_widget_url(tabs, station, width, timeline_checklist, max_value, show_number, max_checklist, t1, t2):
+def make_widget_url(tabs, station, width, timeline_checklist, max_value, show_number, fill_checklist, t1, t2):
     widgettype = tabs.replace("tab-", "")
     widgeturl = f"{BASE_URL}/widget?widgettype={widgettype}&station={station}"
     if width is not None:
@@ -192,26 +197,30 @@ def make_widget_url(tabs, station, width, timeline_checklist, max_value, show_nu
         widgeturl += f"&show_trend={int(show_trend)}"
         widgeturl += f"&show_rolling={int(show_rolling)}"
     elif widgettype == "fill":
-        if "max" in max_checklist and max_value is not None:
+        if "max" in fill_checklist and max_value is not None:
             widgeturl += f"&max={int(max_value)}"
             widgeturl += f"&show_number={show_number}"
-    elif widgettype == "trafficlight":
-        if t1 is not None and t2 is not None:
-            widgeturl += f"&t1={t1}"
-            widgeturl += f"&t2={t2}"
-        else:
-            return dash.no_update()
+        if "trafficlight" in fill_checklist:
+            widgeturl += "&trafficlight=1"
+            if t1 is not None and t2 is not None:
+                widgeturl += f"&t1={t1}"
+                widgeturl += f"&t2={t2}"
+            else:
+                return dash.no_update
     return widgeturl
 
 
 @app.callback(
-    Output('max_selector', 'style'),
-    [Input('max_checklist', 'value')])
-def show_hide_max_selector(max_checklist):
-    if "max" in max_checklist:
-        return {"display": "block"}
-    else:
-        return {"display": "none"}
+    [Output('max_selector', 'style'),
+     Output('trafficlight_selector', 'style')],
+    [Input('fill_checklist', 'value')])
+def show_hide_fill_selector(fill_checklist):
+    output = [{"display": "none"}, {"display": "none"}]
+    if "max" in fill_checklist:
+        output[0]["display"] = "block"
+    if "trafficlight" in fill_checklist:
+        output[1]["display"] = "block"
+    return output
 
 
 @app.callback(

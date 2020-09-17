@@ -48,6 +48,10 @@
     display:none;
 }
 
+#widget-unit{
+    margin-top: 5px;
+}
+
 #ec-attribution,
 #widget_origin{
     font-size:0.8em;
@@ -67,6 +71,14 @@ h1#widget-title{
   float:left;
   border:12px solid white;
   background:white;
+}
+
+#widget #flex_container {
+  display:flex;
+  justify-content:space-evenly;
+  align-items: center;
+  border-bottom: 1px solid var(--lightgray);
+  padding-bottom: 8px;
 }
 
 /*
@@ -109,3 +121,11 @@ h1#widget-title{
 #configurator .tab-content{
   min-height:auto;
 }
+
+#configurator .selector {
+    border: 1px solid var(--lightgray);
+    border-radius: var(--boxradius);
+    margin-top:10px;
+    padding:10px;
+}
+

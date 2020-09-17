@@ -98,7 +98,7 @@ def parse_url_params(url_search_str):
             show_rolling = urlparams["show_rolling"] == ["1"]
         CHART.update_figure("stations", station, map_data, False, [], show_trend, show_rolling)
         return CHART.get_timeline_window(show_api_text=False)
-    elif widgettype == "fill" or widgettype == "trafficlight":
+    elif widgettype == "fill":
         station_data = map_data[map_data["c_id"] == station]
         measurement = station_data["_measurement"].tolist()[0]
         unit = helpers.measurementtitles[measurement]
@@ -110,8 +110,8 @@ def parse_url_params(url_search_str):
         show_number = "total"  # default
         if city is not None and type(city) is str:
             name = f"{city} ({name})"
-        output = [html.H1(id="widget-title", children=name)]
-        if widgettype == "trafficlight":
+        flex_container = []
+        if "trafficlight" in urlparams and urlparams["trafficlight"] == ["1"]:
             if "t1" in urlparams and "t2" in urlparams:
                 t1 = int(urlparams["t1"][0])
                 t2 = int(urlparams["t2"][0])
@@ -127,43 +127,52 @@ def parse_url_params(url_search_str):
                 else:
                     imgsrc += "ampel_g.png"  # green
                     alt = "grüne Ampel"
-                output.append(html.Img(id="trafficlight",
-                                       alt=alt,
-                                       src=imgsrc))
+                flex_container.append(
+                    html.Div(children=[
+                        html.Img(id="trafficlight",
+                                 alt=alt,
+                                 src=imgsrc)]))
             else:
                 return "No thresholds defined (t1 and t2)"
-        if widgettype == "fill" and "max" in urlparams:
+        fill_text_output = []
+        if "max" in urlparams:
             max_value = int(urlparams["max"][0])
             percentage = round(100 * last_value / max_value, 0)
             if "show_number" in urlparams and urlparams["show_number"][0] in ["total", "percentage", "both"]:
                 show_number = urlparams["show_number"][0]
-            output.append(html.Div(id="widget-percentage",
-                                   className=f"{show_number} {widgettype}",
-                                   children=f"{round(percentage)}%"))
-            output.append(html.Div(id="widget-total",
-                                   className=f"{show_number} {widgettype}",
-                                   children=f"{last_value} / {max_value}"))
+            fill_text_output.append(html.Div(id="widget-percentage",
+                                             className=f"{show_number} {widgettype}",
+                                             children=f"{round(percentage)}%"))
+            fill_text_output.append(html.Div(id="widget-total",
+                                             className=f"{show_number} {widgettype}",
+                                             children=f"{last_value} / {max_value}"))
             # Hiding of the percentage value in case of show_number=="total" is done via CSS
         else:
-            output.append(html.Div(id="widget-total",
-                                   className=f"{show_number} {widgettype}",
-                                   children=last_value))
-        output.append(html.Div(id="widget-unit",
-                               className=f"{show_number} {widgettype}",
-                               children=f"{unit}"))
-        output.append(html.Div(id="widget-time",
-                               className=f"{show_number} {widgettype}",
-                               children=last_time,
-                               ))
-        output.append(html.Div(id="widget_origin",
-                               children=[
-                                   "Datenquelle: ",
-                                   html.A(
-                                       children=helpers.originnames[measurement],
-                                       href=station_data["origin"].tolist()[0],
-                                       target="_blank")
-                               ])
-                      )
+            fill_text_output.append(html.Div(id="widget-total",
+                                             className=f"{show_number} {widgettype}",
+                                             children=last_value))
+        fill_text_output.append(html.Div(id="widget-unit",
+                                         className=f"{show_number} {widgettype}",
+                                         children=f"{unit}"))
+        fill_text_output.append(html.Div(id="widget-time",
+                                         className=f"{show_number} {widgettype}",
+                                         children=last_time,
+                                         ))
+        fill_text_output.append(html.Div(id="widget_origin",
+                                         children=[
+                                             "Datenquelle: ",
+                                             html.A(
+                                                 children=helpers.originnames[measurement],
+                                                 href=station_data["origin"].tolist()[0],
+                                                 target="_blank")
+                                         ])
+                                )
+        flex_container.append(html.Div(children=fill_text_output))
+        output = [
+            html.H1(id="widget-title", children=name),
+            html.Div(id="flex_container", children=flex_container)
+        ]
+
         return output
     else:
         return "Unknown widgettype"
@@ -174,6 +183,7 @@ def parse_url_params(url_search_str):
     [Input('url-widget', 'search')]
 )
 def set_widget_width(url_search_str):
+    # noinspection PyBroadException
     try:
         urlparams = parse_qs(url_search_str.replace("?", ""))
         width = int(urlparams["width"][0])
@@ -181,4 +191,3 @@ def set_widget_width(url_search_str):
         return {"width": width}
     except:
         return dash.no_update
-    return dash.no_update

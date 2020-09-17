@@ -7,7 +7,7 @@ from datetime import timedelta
 from numpy import nan
 import pandas as pd
 import logging
-
+import pytz
 
 def trend2color(trendvalue, alpha=1):
     """
@@ -192,4 +192,11 @@ def filter_by_consent(df):
     df = df.drop(["consent", "ID_Name"], errors="ignore", axis=1).reset_index(drop=True)
     return df
 
+
+local_tz = pytz.timezone('Europe/Berlin')
+
+
+def utc_to_local(utc_dt):
+    local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
+    return local_tz.normalize(local_dt)
 

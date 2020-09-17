@@ -164,6 +164,7 @@ def load_trend(query_api, measurements, trend_window=3, bucket="sdd"):
         "last_value": {},
         "last_time": {}
     }
+    df["_time"] = df["_time"].apply(helpers.utc_to_local, 1)
     df["unixtime"] = df["_time"].apply(lambda x: int(x.timestamp()), 1)  # unixtime in s
     for cid in set(df["c_id"]):
         # get sub-dataframe for this id
@@ -241,7 +242,7 @@ def load_timeseries(query_api, c_id, daysback=90, bucket="sdd"):
     if tables.empty:
         print(f"Warning: No data for {c_id} (load_timeseries)")
         return None
-
+    tables["_time"] = tables["_time"].apply(helpers.utc_to_local, 1)
     tables["rolling"] = tables.set_index("_time")["_value"].rolling("3d").mean().values
     # import ipdb
     # ipdb.set_trace()

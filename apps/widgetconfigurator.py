@@ -16,7 +16,7 @@ DISABLE_CACHE = not CONFIG["ENABLE_CACHE"]  # set to true to disable caching
 CLEAR_CACHE_ON_STARTUP = CONFIG["CLEAR_CACHE_ON_STARTUP"]  # for testing
 CACHE_CONFIG = CONFIG["CACHE_CONFIG"]
 TRENDWINDOW = CONFIG["TRENDWINDOW"]
-MEASUREMENTS = CONFIG["measurements"]
+MEASUREMENTS = CONFIG["measurements_widget"]
 LOG_LEVEL = CONFIG["LOG_LEVEL"]
 BASE_URL = CONFIG["BASE_URL"]
 
@@ -40,18 +40,19 @@ query_api = get_query_api()
 
 
 @cache.memoize(unless=DISABLE_CACHE)
-def get_map_data():
+def get_map_data(measurements=MEASUREMENTS):
     logging.debug("CACHE MISS")
     return queries.get_map_data(
         query_api=query_api,
-        measurements=MEASUREMENTS,
+        measurements=measurements,
         trend_window=TRENDWINDOW)
 
 
 map_data = get_map_data()
 map_data["ddname"] = map_data.apply(lambda x: f'{x["name"]} ({helpers.measurementtitles[x["_measurement"]]})', 1)
-map_data.loc[~map_data["city"].isna(), "ddname"] = map_data[~map_data["city"].isna()].apply(
-    lambda x: x["city"] + " " + x["ddname"], 1)
+if "city" in map_data.columns:
+    map_data.loc[~map_data["city"].isna(), "ddname"] = map_data[~map_data["city"].isna()].apply(
+        lambda x: x["city"] + " " + x["ddname"], 1)
 dropdowndict = map_data[["ddname", "c_id"]].set_index("c_id").to_dict()["ddname"]
 layout = html.Div(id="configurator", children=[
     dcc.Store(id='widgeturl', storage_type='memory'),

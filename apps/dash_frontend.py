@@ -38,7 +38,7 @@ DISABLE_CACHE = not CONFIG["ENABLE_CACHE"]  # set to true to disable caching
 CLEAR_CACHE_ON_STARTUP = CONFIG["CLEAR_CACHE_ON_STARTUP"]  # for testing
 CACHE_CONFIG = CONFIG["CACHE_CONFIG"]
 TRENDWINDOW = CONFIG["TRENDWINDOW"]
-MEASUREMENTS = CONFIG["measurements"]
+MEASUREMENTS = CONFIG["measurements_dashboard"]
 LOG_LEVEL = CONFIG["LOG_LEVEL"]
 
 # WRAPPERS
@@ -47,7 +47,7 @@ LOG_LEVEL = CONFIG["LOG_LEVEL"]
 # Note: using cache.cached instead of cache.memoize
 # yields "RuntimeError: Working outside of request context."
 
-@cache.memoize(unless=DISABLE_CACHE)
+
 def get_query_api():
     url = CONFIG["influx_url"]
     org = CONFIG["influx_org"]
@@ -59,11 +59,11 @@ query_api = get_query_api()
 
 
 @cache.memoize(unless=DISABLE_CACHE)
-def get_map_data():
+def get_map_data(measurements=MEASUREMENTS):
     logging.debug("CACHE MISS")
     return queries.get_map_data(
         query_api=query_api,
-        measurements=MEASUREMENTS,
+        measurements=measurements,
         trend_window=TRENDWINDOW)
 
 

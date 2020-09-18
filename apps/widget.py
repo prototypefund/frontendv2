@@ -17,7 +17,7 @@ DISABLE_CACHE = not CONFIG["ENABLE_CACHE"]  # set to true to disable caching
 CLEAR_CACHE_ON_STARTUP = CONFIG["CLEAR_CACHE_ON_STARTUP"]  # for testing
 CACHE_CONFIG = CONFIG["CACHE_CONFIG"]
 TRENDWINDOW = CONFIG["TRENDWINDOW"]
-MEASUREMENTS = CONFIG["measurements"]
+MEASUREMENTS = CONFIG["measurements_widget"]
 LOG_LEVEL = CONFIG["LOG_LEVEL"]
 
 
@@ -40,11 +40,11 @@ query_api = get_query_api()
 
 
 @cache.memoize(unless=DISABLE_CACHE)
-def get_map_data():
+def get_map_data(measurements=MEASUREMENTS):
     logging.debug("CACHE MISS")
     return queries.get_map_data(
         query_api=query_api,
-        measurements=MEASUREMENTS,
+        measurements=measurements,
         trend_window=TRENDWINDOW)
 
 
@@ -105,11 +105,12 @@ def parse_url_params(url_search_str):
         last_value = int(station_data["last_value"])
         last_time = station_data["last_time"].tolist()[0]
         last_time = last_time.strftime(helpers.timeformats[measurement])
-        city = station_data['city'].tolist()[0]
         name = station_data['name'].tolist()[0]
         show_number = "total"  # default
-        if city is not None and type(city) is str:
-            name = f"{city} ({name})"
+        if 'city' in station_data.columns:
+            city = station_data['city'].tolist()[0]
+            if city is not None and type(city) is str:
+                name = f"{city} ({name})"
         flex_container = []
         if "trafficlight" in urlparams and urlparams["trafficlight"] == ["1"]:
             if "t1" in urlparams and "t2" in urlparams:

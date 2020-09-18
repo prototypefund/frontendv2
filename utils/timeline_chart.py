@@ -149,6 +149,10 @@ class TimelineChartWindow:
 
         elif detail_radio == "stations":
             c_id = selection
+            print("aaaaaa")
+            print(type(map_data))
+            print(map_data.columns)
+            print("c_id" in map_data.columns)
             station_data = map_data[map_data["c_id"] == c_id].iloc[0]
             name = station_data['name']
             if "city" in station_data:
@@ -174,7 +178,7 @@ class TimelineChartWindow:
             if show_trend:
                 model = station_data['model']
                 df_timeseries = helpers.apply_model_fit(df_timeseries, model, self.TRENDWINDOW)
-                
+
             self.figure["data"] = [
                 dict(  # datapoints
                     x=df_timeseries["_time"],

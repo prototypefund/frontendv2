@@ -1,54 +1,21 @@
 import json
-import logging
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-from utils import queries, helpers
-from app import app, cache
+from utils import helpers
+from utils.cached_functions import get_map_data
+from app import app
 
 # READ CONFIG
 # ===========
 with open("config.json", "r") as f:
     CONFIG = json.load(f)
-DISABLE_CACHE = not CONFIG["ENABLE_CACHE"]  # set to true to disable caching
-CLEAR_CACHE_ON_STARTUP = CONFIG["CLEAR_CACHE_ON_STARTUP"]  # for testing
-CACHE_CONFIG = CONFIG["CACHE_CONFIG"]
-TRENDWINDOW = CONFIG["TRENDWINDOW"]
-MEASUREMENTS = CONFIG["measurements_widget"]
-LOG_LEVEL = CONFIG["LOG_LEVEL"]
 BASE_URL = CONFIG["BASE_URL"]
+MEASUREMENTS_WIDGET = CONFIG["measurements_widget"]
 
-
-# WRAPPERS
-# ===============
-# Wrappers around some module functions so they can be cached
-# Note: using cache.cached instead of cache.memoize
-# yields "RuntimeError: Working outside of request context."
-
-
-@cache.memoize(unless=DISABLE_CACHE)
-def get_query_api():
-    url = CONFIG["influx_url"]
-    org = CONFIG["influx_org"]
-    token = CONFIG["influx_token"]
-    return queries.get_query_api(url, org, token)
-
-
-query_api = get_query_api()
-
-
-@cache.memoize(unless=DISABLE_CACHE)
-def get_map_data(measurements=MEASUREMENTS):
-    logging.debug("CACHE MISS")
-    return queries.get_map_data(
-        query_api=query_api,
-        measurements=measurements,
-        trend_window=TRENDWINDOW)
-
-
-map_data = get_map_data()
+map_data = get_map_data(MEASUREMENTS_WIDGET)
 map_data["ddname"] = map_data.apply(lambda x: f'{x["name"]} ({helpers.measurementtitles[x["_measurement"]]})', 1)
 if "city" in map_data.columns:
     map_data.loc[~map_data["city"].isna(), "ddname"] = map_data[~map_data["city"].isna()].apply(
@@ -104,13 +71,15 @@ layout = html.Div(id="configurator", children=[
                                      html.Span("Schwellwert 1:  "),
                                      dcc.Input(id='t1', type='number', min=1, step=1, value=1000),
                                      html.Span(
-                                         " (Die Ampel ist grün wenn der Wert an der Messstation kleiner als dieser Wert ist)")
+                                         " (Die Ampel ist grün wenn der Wert an der Messstation kleiner als dieser "
+                                         "Wert ist)")
                                  ]),
                                  html.P(children=[
                                      html.Span("Schwellwert 2:  "),
                                      dcc.Input(id='t2', type='number', min=2, step=1, value=2000),
                                      html.Span(
-                                         " (Die Ampel ist rot wenn der Wert an der Messstation größer als dieser Wert ist)")
+                                         " (Die Ampel ist rot wenn der Wert an der Messstation größer als dieser Wert "
+                                         "ist)")
                                  ]),
                              ]),
                     html.Div(id="max_selector",

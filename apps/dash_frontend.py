@@ -2,26 +2,21 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
-from flask_caching import Cache
 import numpy as np
 import json
-import logging
-import os
 
 from geopy.geocoders import Nominatim
 from urllib.parse import parse_qs
-from datetime import datetime
 
-from utils import queries
 from utils import helpers
-from utils import map_traces
 from utils import timeline_chart
 from utils import dash_elements
 from utils.filter_by_radius import filter_by_radius
 from utils.get_outline_coords import get_outline_coords
 from utils.ec_analytics import matomo_tracking
+from utils.cached_functions import get_map_data, load_timeseries, get_map_traces
 
-from app import app, cache
+from app import app, slow_cache
 
 with open("config.json", "r") as f:
     CONFIG = json.load(f)
@@ -35,48 +30,9 @@ default_radius = 60
 # UNPACK CONFIG
 # =============
 DISABLE_CACHE = not CONFIG["ENABLE_CACHE"]  # set to true to disable caching
-CLEAR_CACHE_ON_STARTUP = CONFIG["CLEAR_CACHE_ON_STARTUP"]  # for testing
-CACHE_CONFIG = CONFIG["CACHE_CONFIG"]
 TRENDWINDOW = CONFIG["TRENDWINDOW"]
 MEASUREMENTS = CONFIG["measurements_dashboard"]
 LOG_LEVEL = CONFIG["LOG_LEVEL"]
-
-# WRAPPERS
-# ===============
-# Wrappers around some module functions so they can be cached
-# Note: using cache.cached instead of cache.memoize
-# yields "RuntimeError: Working outside of request context."
-
-
-def get_query_api():
-    url = CONFIG["influx_url"]
-    org = CONFIG["influx_org"]
-    token = CONFIG["influx_token"]
-    return queries.get_query_api(url, org, token)
-
-
-query_api = get_query_api()
-
-
-@cache.memoize(unless=DISABLE_CACHE)
-def get_map_data(measurements=MEASUREMENTS):
-    logging.debug("CACHE MISS")
-    return queries.get_map_data(
-        query_api=query_api,
-        measurements=measurements,
-        trend_window=TRENDWINDOW)
-
-
-@cache.memoize(unless=DISABLE_CACHE)
-def load_timeseries(_id):
-    logging.debug(f"CACHE MISS ({_id})")
-    return queries.load_timeseries(query_api, _id)
-
-
-@cache.memoize(unless=DISABLE_CACHE)
-def get_map_traces(map_data, measurements):
-    logging.debug("CACHE MISS")
-    return map_traces.get_map_traces(map_data, measurements)
 
 
 # INITIALIZE CHART OBJECT
@@ -85,8 +41,8 @@ CHART = timeline_chart.TimelineChartWindow(TRENDWINDOW, load_timeseries)
 
 # UPDATE MEASUREMENTS
 # ================
-# In case there are measurements that have no data
-# they should not be displayed
+# In case there are measurements that have no data they
+# should not be displayed in the layout in the next step
 map_data = get_map_data()
 CONFIG["measurements"] = list(map_data["_measurement"].unique())
 
@@ -112,7 +68,7 @@ layout = html.Div(id="dash-layout", children=[
     [Input('map', 'clickData'),
      Input('chart-container', 'n_clicks'),
      Input('chart-close', 'n_clicks')])
-def show_hide_timeline(clickDataMap, clickDataChart, n_clicks):
+def show_hide_timeline(clickDataMap, _clickDataChart, _n_clicks):
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update
@@ -138,7 +94,7 @@ def show_hide_timeline(clickDataMap, clickDataChart, n_clicks):
 @app.callback(
     Output("map", "clickData"),
     [Input("dash-layout", "n_clicks")])
-def reset_map_clickdata(n_clicks):
+def reset_map_clickdata(_n_clicks):
     return None
 
 
@@ -148,7 +104,7 @@ def reset_map_clickdata(n_clicks):
     [Input('map', 'clickData'),
      Input('timeline-avg-check', 'value')],
     [State('detail_radio', 'value'),
-     State('trace_visibility_checklist','value')])
+     State('trace_visibility_checklist', 'value')])
 def display_click_data(clickData, avg_checkbox, detail_radio, trace_visibility):
     # print(clickData)
     avg = len(avg_checkbox) > 0
@@ -157,6 +113,7 @@ def display_click_data(clickData, avg_checkbox, detail_radio, trace_visibility):
         return dash.no_update
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)
     if clickData is not None or "timeline-avg-check" in prop_ids:
+        selection = ""
         if detail_radio == "stations" and clickData["points"][0]['curveNumber'] == 0:
             # exclude selection marker
             return dash.no_update
@@ -213,7 +170,7 @@ def update_from_url(urlbar_str):
         lat=default_lat,
         lon=default_lon,
         radius=default_radius)
-    if urlbar_str != None:
+    if urlbar_str is not None:
         urlparams = parse_qs(urlbar_str.replace("?", ""))
         for key in paramsdict:
             try:
@@ -241,7 +198,7 @@ def update_from_url(urlbar_str):
 )
 def update_latlon_local_storage(urlbar_storage, clientside_callback_storage,
                                 nominatim_storage,
-                                mapposition_lookup_button,
+                                _mapposition_lookup_button,
                                 latlon_local_storage,
                                 fig,
                                 urlbar_str):
@@ -431,7 +388,7 @@ def update_map(highlight_polygon, detail_radio, trace_visibilty, fig):
     if not ctx.triggered:
         return dash.no_update
     prop_ids = helpers.dash_callback_get_prop_ids(ctx)
-    traces = map_traces.get_map_traces(get_map_data(), trace_visibilty)
+    traces = get_map_traces(trace_visibilty)
     fig["data"] = traces[detail_radio]  # Update map
     if detail_radio == "stations":
         highlight_x, highlight_y = highlight_polygon
@@ -465,7 +422,7 @@ def style_mean_trend(mean_str):
     [Input('nominatim_lookup_button', 'n_clicks'),
      Input('nominatim_lookup_edit', 'n_submit')],
     [State('nominatim_lookup_edit', 'value')])
-def nominatim_lookup_callback(button, submit, query):
+def nominatim_lookup_callback(_button, _submit, query):
     return nominatim_lookup(query)
 
 
@@ -479,7 +436,7 @@ def hide_feedback_box(n_clicks):
         return dash.no_update
 
 
-@cache.memoize(unless=DISABLE_CACHE)
+@slow_cache.memoize(unless=DISABLE_CACHE)
 def nominatim_lookup(query):
     # Location name --> lat,lon
     geolocator = Nominatim(user_agent="everyonecounts")
@@ -493,10 +450,10 @@ def nominatim_lookup(query):
         address = ""
         lat = default_lat
         lon = default_lon
-    return (lat, lon, address)
+    return lat, lon, address
 
 
-@cache.memoize(unless=DISABLE_CACHE)
+@slow_cache.memoize(unless=DISABLE_CACHE)
 def nominatim_reverse_lookup(lat, lon):
     # lat,lon --> location name
     geolocator = Nominatim(user_agent="everyonecounts")
@@ -513,6 +470,3 @@ def nominatim_reverse_lookup(lat, lon):
                 addresslist.append(addressparts[part])
         address = ", ".join(addresslist[-4:])  # dont make name too long
     return address
-
-
-

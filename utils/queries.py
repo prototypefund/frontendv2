@@ -1,5 +1,6 @@
 """
 utility functions for the frontend that query the InfluxDB
+for cached version of these functions, see cached_functions.py
 """
 import pandas as pd
 import numpy as np
@@ -15,6 +16,13 @@ def get_query_api(url, org, token):
     # set up InfluxDB query API
     client = InfluxDBClient(url=url, token=token, org=org)
     return client.query_api()
+
+
+def get_query_api_from_config(CONFIG):
+    url = CONFIG["influx_url"]
+    org = CONFIG["influx_org"]
+    token = CONFIG["influx_token"]
+    return get_query_api(url, org, token)
 
 
 CID_SEP = "$"  # separator symbol for compound index
@@ -241,9 +249,10 @@ def load_timeseries(query_api, c_id, daysback=90, bucket="sdd"):
       '''
     tables = query_api.query_data_frame(query)
     if isinstance(tables, list):
-        tables = tables[0]
-    assert isinstance(tables,
-                      pd.DataFrame), f"Warning: tables type is not DataFrame but {type(tables)} (load_timeseries)"
+        tables = pd.concat(tables)
+        tables = tables.sort_values(by="_time", axis=0)
+    assert isinstance(tables, pd.DataFrame), \
+        f"Warning: tables type is not DataFrame but {type(tables)} (load_timeseries)"
     if tables.empty:
         print(f"Warning: No data for {c_id} (load_timeseries)")
         return None
@@ -268,6 +277,15 @@ def load_last_datapoint(query_api, c_id, bucket="sdd"):
       |> filter(fn: (r) => r["unverified"] != "True")
       |> last()
       '''
-    df = query_api.query_data_frame(query)
-    df["c_id"] = c_id
-    return df
+    tables = query_api.query_data_frame(query)
+    if isinstance(tables, list):
+        tables = pd.concat(tables)
+        tables = tables.sort_values(by="_time", axis=0)
+    last = tables.iloc[-1:].copy()
+    last["c_id"] = c_id
+    if isinstance(last, pd.Series):
+        last = pd.DataFrame(last)
+    assert isinstance(last, pd.DataFrame), \
+        f"Warning: 'last' type is not DataFrame but {type(last)} (load_last_datapoint)"
+    return last
+

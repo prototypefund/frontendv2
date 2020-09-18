@@ -1,5 +1,4 @@
 import json
-import logging
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -7,42 +6,14 @@ from dash.dependencies import Input, Output
 from urllib.parse import parse_qs
 
 from utils import queries, timeline_chart, helpers
-from app import app, cache
+from utils.cached_functions import load_timeseries, load_last_datapoint
+from app import app
 
 # READ CONFIG
 # ===========
 with open("config.json", "r") as f:
     CONFIG = json.load(f)
-DISABLE_CACHE = not CONFIG["ENABLE_CACHE"]  # set to true to disable caching
-CLEAR_CACHE_ON_STARTUP = CONFIG["CLEAR_CACHE_ON_STARTUP"]  # for testing
-CACHE_CONFIG = CONFIG["CACHE_CONFIG"]
 TRENDWINDOW = CONFIG["TRENDWINDOW"]
-MEASUREMENTS = CONFIG["measurements_widget"]
-LOG_LEVEL = CONFIG["LOG_LEVEL"]
-
-
-# WRAPPERS
-# ===============
-# Wrappers around some module functions so they can be cached
-# Note: using cache.cached instead of cache.memoize
-# yields "RuntimeError: Working outside of request context."
-
-
-def get_query_api():
-    url = CONFIG["influx_url"]
-    org = CONFIG["influx_org"]
-    token = CONFIG["influx_token"]
-    return queries.get_query_api(url, org, token)
-
-
-query_api = get_query_api()
-
-
-
-@cache.memoize(unless=DISABLE_CACHE)
-def load_timeseries(_id):
-    logging.debug(f"CACHE MISS ({_id})")
-    return queries.load_timeseries(query_api, _id)
 
 
 # INITIALIZE CHART OBJECT
@@ -77,7 +48,7 @@ def build_widget(url_search_str):
         return "You need to specify a station. Use the configurator."
     widgettype = urlparams["widgettype"][0]
     c_id = urlparams["station"][0]
-    last = queries.load_last_datapoint(query_api, c_id)
+    last = load_last_datapoint(c_id)
     if last.empty:
         return f"No data for station {c_id}"
     if widgettype == "timeline":

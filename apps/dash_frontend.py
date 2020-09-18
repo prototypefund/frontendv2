@@ -43,8 +43,8 @@ CHART = timeline_chart.TimelineChartWindow(TRENDWINDOW, load_timeseries)
 # ================
 # In case there are measurements that have no data they
 # should not be displayed in the layout in the next step
-map_data = get_map_data()
-CONFIG["measurements"] = list(map_data["_measurement"].unique())
+mapdata = get_map_data()
+CONFIG["measurements"] = list(mapdata["_measurement"].unique())
 
 
 # SET UP DASH LAYOUT

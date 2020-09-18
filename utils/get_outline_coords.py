@@ -10,7 +10,6 @@ Alternatively, get them from github by web request:
     geojson_lk = requests.get(url_lk).json()
 """
 
-
 import json
 
 if __name__ == '__main__':
@@ -26,17 +25,15 @@ with open(file_bk, "r") as f:
     geojson_bl = json.load(f)
 
 
-
-
-def get_outline_coords(type, ags):
+def get_outline_coords(detail, ags):
     """
     Helper function to get outline coordinates for bundesland or landkreis
     type: either "bundesland" or "landkreis"
     ags: Amtlicher Gemeindeschlüssel , e.g. "08212"
     """
-    if type == "bundesland":
+    if detail == "bundesland":
         geojson = geojson_bl
-    elif type == "landkreis":
+    elif detail == "landkreis":
         geojson = geojson_lk
     else:
         raise NameError

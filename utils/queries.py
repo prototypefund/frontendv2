@@ -59,7 +59,6 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
               "origin",
               "start_date",
               "end_date"]
-    geo_table = pd.DataFrame()
     tables = pd.DataFrame()
     required_columns = {"_id", "ags", "bundesland", "districtType", "landkreis", "name", "origin"}
     for _measurement in measurements:
@@ -288,4 +287,3 @@ def load_last_datapoint(query_api, c_id, bucket="sdd"):
     assert isinstance(last, pd.DataFrame), \
         f"Warning: 'last' type is not DataFrame but {type(last)} (load_last_datapoint)"
     return last
-

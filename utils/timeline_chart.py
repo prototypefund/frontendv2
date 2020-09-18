@@ -21,7 +21,6 @@ class TimelineChartWindow:
                                     'toggleSpikelines',
                                     'toggleHover',
                                     'select2d',
-                                    #'resetScale2d',
                                     'resetViewMapbox'],
             displayModeBar=True,
             responsive=True
@@ -32,11 +31,6 @@ class TimelineChartWindow:
                     "step": 'all',
                     "label": 'Gesamt'
                 }, {
-                #     "step": 'year',
-                #     "stepmode": 'backward',
-                #     "count": 1,
-                #     "label": 'Jahr'
-                # }, {
                     "step": 'month',
                     "stepmode": 'backward',
                     "count": 3,
@@ -149,10 +143,6 @@ class TimelineChartWindow:
 
         elif detail_radio == "stations":
             c_id = selection
-            print("aaaaaa")
-            print(type(map_data))
-            print(map_data.columns)
-            print("c_id" in map_data.columns)
             station_data = map_data[map_data["c_id"] == c_id].iloc[0]
             name = station_data['name']
             if "city" in station_data:

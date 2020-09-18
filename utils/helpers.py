@@ -3,18 +3,19 @@ utility functions for the frontend
 """
 
 from math import isnan, log
-from datetime import timedelta, datetime
+from datetime import timedelta
 from numpy import nan
 import pandas as pd
 import logging
 import pytz
+
 
 def trend2color(trendvalue, alpha=1):
     """
     return a color code for a given trend value
     """
     if isnan(trendvalue):
-        return f"rgba(180, 180, 180, {alpha*0.7})"
+        return f"rgba(180, 180, 180, {alpha * 0.7})"
     elif trendvalue > 1:  # +100%
         # red
         return f"rgba(230, 0, 0, {alpha})"
@@ -32,6 +33,7 @@ def tooltiptext(df, mode):
     unfortunately, styling needs to be done here
     because css class attributes are stripped by Dash
     """
+
     def format_trend_str(trend_float):
         if isnan(trend_float):
             return '<i>nicht verfügbar</i>'
@@ -39,6 +41,7 @@ def tooltiptext(df, mode):
         if trend_float > 0:
             trend_str = '+' + trend_str
         return trend_str
+
     if mode == "stations":
         def make_string(row):
             if isnan(row["last_value"]):
@@ -64,7 +67,7 @@ def tooltiptext(df, mode):
                 f"<span style='font-size:1em'>{last_value}</span><br>"
                 f"<span style='font-size:0.85em; opacity:0.8;'>{last_time}</span>"
                 f"<br><br><span style='font-size:0.85em; opacity:0.8;'>Punkt anklicken um mehr Informationen zu erhalten!</span>"
-                )
+            )
             return s
     else:
         def make_string(row):
@@ -82,41 +85,41 @@ def tooltiptext(df, mode):
 
 
 fieldnames = {
-        "airquality": "airquality_score",
-        "bikes": "bike_count",
-        "hystreet": "pedestrian_count",
-        "webcam": "personenzahl",
-        "webcam-customvision": "personenzahl",
-        "mdm": "vehicleFlow",
-        "writeapi": "count",
-    }
+    "airquality": "airquality_score",
+    "bikes": "bike_count",
+    "hystreet": "pedestrian_count",
+    "webcam": "personenzahl",
+    "webcam-customvision": "personenzahl",
+    "mdm": "vehicleFlow",
+    "writeapi": "count",
+}
 originnames = {
-        "airquality": "World Air Quality Index",
-        "bikes": "Eco Compteur",
-        "hystreet": "hystreet.com",
-        "webcam": "öffentliche Webcam (alt)",
-        "webcam-customvision": "öffentliche Webcam",
-        "mdm": "Mobilitäts Daten Marktplatz (MDM)",
-        "writeapi": "Gemeldete Ereignisse",
-    }
+    "airquality": "World Air Quality Index",
+    "bikes": "Eco Compteur",
+    "hystreet": "hystreet.com",
+    "webcam": "öffentliche Webcam (alt)",
+    "webcam-customvision": "öffentliche Webcam",
+    "mdm": "Mobilitäts Daten Marktplatz (MDM)",
+    "writeapi": "Gemeldete Ereignisse",
+}
 measurementtitles = {
-        "airquality": "Luftqualitäts-Index",
-        "bikes": "Fahrräder",
-        "hystreet": "Fußgänger (Laserscanner)",
-        "webcam": "Fußgänger auf Webcams (alt)",
-        "webcam-customvision": "Fußgänger auf Webcams",
-        "mdm": "Fahrzeuge",
-        "writeapi": "Ereignisse",
-    }
+    "airquality": "Luftqualitäts-Index",
+    "bikes": "Fahrräder",
+    "hystreet": "Fußgänger (Laserscanner)",
+    "webcam": "Fußgänger auf Webcams (alt)",
+    "webcam-customvision": "Fußgänger auf Webcams",
+    "mdm": "Fahrzeuge",
+    "writeapi": "Ereignisse",
+}
 timeformats = {
-        "airquality": "%d.%m.%Y %H:%M",
-        "bikes": "%d.%m.%Y",
-        "hystreet": "%d.%m.%Y",
-        "webcam": "%d.%m.%Y %H:%M",
-        "webcam-customvision": "%d.%m.%Y %H:%M",
-        "mdm": "%d.%m.%Y %H:%M",
-        "writeapi": "%d.%m.%Y %H:%M",
-    }
+    "airquality": "%d.%m.%Y %H:%M",
+    "bikes": "%d.%m.%Y",
+    "hystreet": "%d.%m.%Y",
+    "webcam": "%d.%m.%Y %H:%M",
+    "webcam-customvision": "%d.%m.%Y %H:%M",
+    "mdm": "%d.%m.%Y %H:%M",
+    "writeapi": "%d.%m.%Y %H:%M",
+}
 
 
 def measurement2field(measurement):
@@ -150,9 +153,9 @@ def calc_zoom(lat, lon):
     width_x = max(lon) - min(lon)
     centerlat = min(lat) + width_y / 2
     centerlon = min(lon) + width_x / 2
-    zoom_y = -1.446*log(width_y) + 7.2753
-    zoom_x = -1.415*log(width_x) + 8.7068
-    return min(round(zoom_y,2),round(zoom_x,2)), centerlat, centerlon
+    zoom_y = -1.446 * log(width_y) + 7.2753
+    zoom_x = -1.415 * log(width_x) + 8.7068
+    return min(round(zoom_y, 2), round(zoom_x, 2)), centerlat, centerlon
 
 
 def apply_model_fit(df, model, trend_window):
@@ -168,7 +171,8 @@ def apply_model_fit(df, model, trend_window):
     except TypeError:
         return df
     day0 = max(df["_time"]) - timedelta(days=trend_window - 1)
-    df.loc[df["_time"] >= day0, "fit"] = df[df["_time"] >= day0].apply(lambda x: a * int(x["_time"].timestamp()) + b, axis=1)
+    df.loc[df["_time"] >= day0, "fit"] = df[df["_time"] >= day0].apply(lambda x: a * int(x["_time"].timestamp()) + b,
+                                                                       axis=1)
     return df
 
 
@@ -184,7 +188,7 @@ def filter_by_consent(df):
     except ValueError:
         logging.warning("Cannot read webcam JSON")
         return pd.DataFrame()  # empty dataframe
-    webcams_df["ID_Name"] = webcams_df.apply(lambda x: str(x["ID"])+"_"+x["Name"], 1)
+    webcams_df["ID_Name"] = webcams_df.apply(lambda x: str(x["ID"]) + "_" + x["Name"], 1)
     df["ID_Name"] = df.apply(lambda x: x["_id"].split("_")[0] + "_" + x["name"], 1)
     webcams_df = webcams_df[["ID_Name", "consent"]]
     df = df.merge(webcams_df, on="ID_Name", how="left")

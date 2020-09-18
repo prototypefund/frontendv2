@@ -3,9 +3,8 @@ Function to filter a GeoDataFrame by a circle around a
 latitude/longitude point and a given radius
 """
 
-from math import radians, degrees, pi, cos, sin, asin, acos, sqrt
+from math import radians, degrees, cos, sin
 from shapely.geometry import Polygon, Point
-import pandas as pd
 import geopandas as gpd
 
 

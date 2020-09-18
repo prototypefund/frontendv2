@@ -145,12 +145,13 @@ class TimelineChartWindow:
             c_id = selection
             station_data = map_data[map_data["c_id"] == c_id].iloc[0]
             name = station_data['name']
+            city = None
             if "city" in station_data:
                 city = station_data['city']
-                if city is None or type(city) is not str:
-                    self.figure["layout"]["title"] = f"{name}"
-                else:
-                    self.figure["layout"]["title"] = f"{city} ({name})"
+            if city is None or type(city) is not str:
+                self.figure["layout"]["title"] = f"{name}"
+            else:
+                self.figure["layout"]["title"] = f"{city} ({name})"
 
             self.origin_url = station_data["origin"]
             measurement = station_data['_measurement']

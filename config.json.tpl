@@ -9,11 +9,17 @@
 "measurements_widget": ["hystreet", "webcam-customvision", "bikes", "writeapi"],
 "ENABLE_CACHE" : true,
 "CLEAR_CACHE_ON_STARTUP" : true,
-"CACHE_CONFIG": {
+"SLOW_CACHE_CONFIG": {
   "CACHE_TYPE": "filesystem",
   "CACHE_DIR": "cache",
-  "CACHE_THRESHOLD": 500,
+  "CACHE_THRESHOLD": 100,
   "CACHE_DEFAULT_TIMEOUT": 1800
+  },
+"FAST_CACHE_CONFIG": {
+  "CACHE_TYPE": "filesystem",
+  "CACHE_DIR": "cache2",
+  "CACHE_THRESHOLD": 200,
+  "CACHE_DEFAULT_TIMEOUT": 120
   },
 "LOG_LEVEL": "DEBUG",
 "BASE_URL": "https://everyonecounts.de"

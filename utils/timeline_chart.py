@@ -170,9 +170,11 @@ class TimelineChartWindow:
             first_date = min(df_timeseries["_time"])
 
             # Add "fit" column based on model
-            model = station_data['model']
-            df_timeseries = helpers.apply_model_fit(df_timeseries, model, self.TRENDWINDOW)
-
+            show_trend = show_trend and "model" in station_data
+            if show_trend:
+                model = station_data['model']
+                df_timeseries = helpers.apply_model_fit(df_timeseries, model, self.TRENDWINDOW)
+                
             self.figure["data"] = [
                 dict(  # datapoints
                     x=df_timeseries["_time"],

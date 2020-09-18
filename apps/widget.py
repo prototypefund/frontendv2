@@ -28,7 +28,6 @@ LOG_LEVEL = CONFIG["LOG_LEVEL"]
 # yields "RuntimeError: Working outside of request context."
 
 
-@cache.memoize(unless=DISABLE_CACHE)
 def get_query_api():
     url = CONFIG["influx_url"]
     org = CONFIG["influx_org"]
@@ -38,14 +37,6 @@ def get_query_api():
 
 query_api = get_query_api()
 
-
-@cache.memoize(unless=DISABLE_CACHE)
-def get_map_data(measurements=MEASUREMENTS):
-    logging.debug("CACHE MISS")
-    return queries.get_map_data(
-        query_api=query_api,
-        measurements=measurements,
-        trend_window=TRENDWINDOW)
 
 
 @cache.memoize(unless=DISABLE_CACHE)
@@ -76,7 +67,7 @@ layout = html.Div(id="widget", children=[
     Output('widget-container', 'children'),
     [Input('url-widget', 'search')]
 )
-def parse_url_params(url_search_str):
+def build_widget(url_search_str):
     urlparams = {}
     if url_search_str is not None:
         urlparams = parse_qs(url_search_str.replace("?", ""))
@@ -85,10 +76,10 @@ def parse_url_params(url_search_str):
     elif "station" not in urlparams:
         return "You need to specify a station. Use the configurator."
     widgettype = urlparams["widgettype"][0]
-    station = urlparams["station"][0]
-    map_data = get_map_data()
-    if station not in map_data["c_id"].unique():
-        return f"Unknown station {station}"
+    c_id = urlparams["station"][0]
+    last = queries.load_last_datapoint(query_api, c_id)
+    if last.empty:
+        return f"No data for station {c_id}"
     if widgettype == "timeline":
         show_trend = False  # default
         show_rolling = True  # default
@@ -96,19 +87,18 @@ def parse_url_params(url_search_str):
             show_trend = urlparams["show_trend"] == ["1"]
         if "show_rolling" in urlparams:
             show_rolling = urlparams["show_rolling"] == ["1"]
-        CHART.update_figure("stations", station, map_data, False, [], show_trend, show_rolling)
+        CHART.update_figure("stations", c_id, last, False, [], show_trend, show_rolling)
         return CHART.get_timeline_window(show_api_text=False)
     elif widgettype == "fill":
-        station_data = map_data[map_data["c_id"] == station]
-        measurement = station_data["_measurement"].tolist()[0]
+        measurement, _id = queries.split_compound_index(c_id)
         unit = helpers.measurementtitles[measurement]
-        last_value = int(station_data["last_value"])
-        last_time = station_data["last_time"].tolist()[0]
+        last_value = float(last["_value"])
+        last_time = helpers.utc_to_local(last["_time"].iloc[0])
         last_time = last_time.strftime(helpers.timeformats[measurement])
-        name = station_data['name'].tolist()[0]
+        name = last['name'].iloc[0]
         show_number = "total"  # default
-        if 'city' in station_data.columns:
-            city = station_data['city'].tolist()[0]
+        if 'city' in last.columns:
+            city = last['city'].iloc[0]
             if city is not None and type(city) is str:
                 name = f"{city} ({name})"
         flex_container = []
@@ -164,7 +154,7 @@ def parse_url_params(url_search_str):
                                              "Datenquelle: ",
                                              html.A(
                                                  children=helpers.originnames[measurement],
-                                                 href=station_data["origin"].tolist()[0],
+                                                 href=last["origin"].tolist()[0],
                                                  target="_blank")
                                          ])
                                 )

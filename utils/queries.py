@@ -25,6 +25,12 @@ def compound_index(df):
     return df.apply(lambda x: x["_measurement"] + CID_SEP + str(x["_id"]), axis=1)
 
 
+def split_compound_index(c_id):
+    # dismantle compound index
+    _measurement, _id = c_id.split(CID_SEP, 1)
+    return _measurement, _id
+
+
 def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
     """
     Load the data that is required for plotting the map.
@@ -223,9 +229,8 @@ def load_timeseries(query_api, c_id, daysback=90, bucket="sdd"):
     """
     logging.debug(f"Influx DB query for load_timeseries(..., {c_id})")
     print("load_timeseries", c_id)
-    _measurement, _id = c_id.split(CID_SEP, 1)
+    _measurement, _id = split_compound_index(c_id)
     _field = helpers.measurement2field(_measurement)
-    extra_lines = ''
     query = f'''
     from(bucket: "{bucket}")
       |> range(start: -{daysback}d) 
@@ -247,3 +252,22 @@ def load_timeseries(query_api, c_id, daysback=90, bucket="sdd"):
     # import ipdb
     # ipdb.set_trace()
     return tables[["_time", "_value", "rolling"]]
+
+
+def load_last_datapoint(query_api, c_id, bucket="sdd"):
+    logging.debug(f"Influx DB query for load_last_datapoint(..., {c_id})")
+    print("load_last_datapoint", c_id)
+    _measurement, _id = split_compound_index(c_id)
+    _field = helpers.measurement2field(_measurement)
+    query = f'''
+    from(bucket: "{bucket}")
+      |> range(start: -21d)
+      |> filter(fn: (r) => r["_measurement"] == "{_measurement}")
+      |> filter(fn: (r) => r["_id"] == "{_id}")  
+      |> filter(fn: (r) => r["_field"] == "{_field}")
+      |> filter(fn: (r) => r["unverified"] != "True")
+      |> last()
+      '''
+    df = query_api.query_data_frame(query)
+    df["c_id"] = c_id
+    return df

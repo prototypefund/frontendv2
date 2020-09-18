@@ -78,7 +78,6 @@ layout = html.Div(id="configurator", children=[
                     dcc.Checklist(
                         id="timeline_checklist",
                         options=[
-                            {'label': f'{TRENDWINDOW}-Tage-Trend', 'value': 'show_trend'},
                             {'label': 'Gleitender Durchschnitt', 'value': 'show_rolling'},
                         ],
                         value=["show_rolling"])
@@ -193,9 +192,7 @@ def make_widget_url(tabs, station, width, timeline_checklist, max_value, show_nu
         width = width - 2 * 16  # subtract padding
         widgeturl += f"&width={width}"
     if widgettype == "timeline":
-        show_trend = "show_trend" in timeline_checklist
         show_rolling = "show_rolling" in timeline_checklist
-        widgeturl += f"&show_trend={int(show_trend)}"
         widgeturl += f"&show_rolling={int(show_rolling)}"
     elif widgettype == "fill":
         if "max" in fill_checklist and max_value is not None:

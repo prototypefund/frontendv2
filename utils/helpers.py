@@ -3,7 +3,7 @@ utility functions for the frontend
 """
 
 from math import isnan, log
-from datetime import timedelta
+from datetime import timedelta, datetime
 from numpy import nan
 import pandas as pd
 import logging
@@ -199,4 +199,3 @@ local_tz = pytz.timezone('Europe/Berlin')
 def utc_to_local(utc_dt):
     local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
     return local_tz.normalize(local_dt)
-

@@ -25,7 +25,7 @@ The parameters in the config file are:
 - `measurements_widget`: Names of the measurements that can be used as widgets and are shown in the widget configurator
 - `ENABLE_CACHE` : Enable caching of calls to the InfluxDB (boolean)
 - `CLEAR_CACHE_ON_STARTUP` : Clear the cache upon webserver start (boolean)
-- `CACHE_CONFIG`: Configuration of the cache. See the [Flask-Caching](https://flask-caching.readthedocs.io/en/latest/) documentation for details. The most relevant options are:
+- `SLOW_CACHE_CONFIG` and `FAST_CACHE_CONFIG`: Configuration for two different caches. The "slow" cache caches data for longer periods of time (e.g. for all dashboard stations data) while the "fast" cache has a shorter timeout (e.g. for widgets which should update more frequently). See the [Flask-Caching](https://flask-caching.readthedocs.io/en/latest/) documentation for details. The most relevant options are:
     - `CACHE_TYPE`: Specifies which type of caching object to use (e.g. `filesystem`)
     - `CACHE_DIR`: Directory to store cache. Used only for FileSystemCache.
     - `CACHE_THRESHOLD`: The maximum number of items the cache will store before it starts deleting some. Used only for SimpleCache and FileSystemCache

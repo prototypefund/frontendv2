@@ -18,11 +18,9 @@ class TimelineChartWindow:
             locale="de-DE",
             displaylogo=False,
             modeBarButtonsToRemove=['lasso2d',
-                                    'zoom2d',
                                     'toggleSpikelines',
                                     'toggleHover',
                                     'select2d',
-                                    'autoScale2d',
                                     #'resetScale2d',
                                     'resetViewMapbox'],
             displayModeBar=True,
@@ -69,7 +67,7 @@ class TimelineChartWindow:
                 title="Zeitpunkt",
                 rangeselector=self.selectorOptions,
                 range=[datetime.now()-timedelta(days=14), datetime.now()+timedelta(hours=3)],
-                tickformat='%A<br>%e.%B, %H:%M'
+                tickformat='%A<br>%e.%b, %H:%M'  # https://github.com/d3/d3-time-format#locale_format
             ),
             legend=dict(
                 orientation="h",
@@ -103,6 +101,7 @@ class TimelineChartWindow:
         """
         self.mode = detail_radio
         self.avg = avg
+        first_date = helpers.utc_to_local(datetime.now()-timedelta(days=3))
         if detail_radio == "landkreis" or detail_radio == "bundesland":
             location = selection
             if detail_radio == "landkreis":
@@ -118,6 +117,8 @@ class TimelineChartWindow:
                 df_timeseries = self.load_timeseries(c_id)
                 if df_timeseries is None:
                     continue
+                if min(df_timeseries["_time"]) < first_date:
+                    first_date = min(df_timeseries["_time"])
                 if avg:
                     trace = dict(
                         x=df_timeseries["_time"],
@@ -166,6 +167,7 @@ class TimelineChartWindow:
             if df_timeseries is None:
                 self.figure["data"] = []
                 return
+            first_date = min(df_timeseries["_time"])
 
             # Add "fit" column based on model
             model = station_data['model']
@@ -203,6 +205,9 @@ class TimelineChartWindow:
                         line=dict(color="blue", width=2),
                     ))
             self.figure["layout"]["yaxis"]["title"] = helpers.measurementtitles[measurement]
+            self.figure["layout"]["xaxis"]["range"][0] = max(first_date,
+                                                             helpers.utc_to_local(datetime.now()-timedelta(days=14))
+                                                             )
             matomo_tracking(f"EC_Dash_Timeline_Stations_{measurement}")
 
     def get_timeline_window(self, show_api_text=True):

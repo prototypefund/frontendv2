@@ -60,7 +60,7 @@ class TimelineChartWindow:
             xaxis=dict(
                 title="Zeitpunkt",
                 rangeselector=self.selectorOptions,
-                range=[datetime.now()-timedelta(days=14), datetime.now()+timedelta(hours=3)],
+                range=[datetime.now() - timedelta(days=14), datetime.now() + timedelta(hours=3)],
                 tickformat='%A<br>%e.%b, %H:%M'  # https://github.com/d3/d3-time-format#locale_format
             ),
             legend=dict(
@@ -95,7 +95,7 @@ class TimelineChartWindow:
         """
         self.mode = detail_radio
         self.avg = avg
-        first_date = helpers.utc_to_local(datetime.now()-timedelta(days=3))
+        first_date = helpers.utc_to_local(datetime.now() - timedelta(days=3))
         if detail_radio == "landkreis" or detail_radio == "bundesland":
             location = selection
             if detail_radio == "landkreis":
@@ -157,6 +157,13 @@ class TimelineChartWindow:
             measurement = station_data['_measurement']
             self.origin_str = f"Datenquelle: {helpers.originnames[measurement]}"
 
+            if measurement == "writeapi" and \
+                    "measurement_unit" in station_data and \
+                    station_data["measurement_unit"] is not None:
+                unit = station_data["measurement_unit"]
+            else:
+                unit = helpers.measurementtitles[measurement]
+
             # Get timeseries data for this station
             df_timeseries = self.load_timeseries(c_id)
             if df_timeseries is None:
@@ -175,7 +182,7 @@ class TimelineChartWindow:
                     x=df_timeseries["_time"],
                     y=df_timeseries["_value"],
                     mode="lines+markers",
-                    name=helpers.measurementtitles[measurement],
+                    name=unit,
                     line=dict(color="#d9d9d9", width=1),
                     marker=dict(
                         size=6,
@@ -201,9 +208,9 @@ class TimelineChartWindow:
                         name=f"{self.TRENDWINDOW}-Tage-Trend",
                         line=dict(color="blue", width=2),
                     ))
-            self.figure["layout"]["yaxis"]["title"] = helpers.measurementtitles[measurement]
+            self.figure["layout"]["yaxis"]["title"] = unit
             self.figure["layout"]["xaxis"]["range"][0] = max(first_date,
-                                                             helpers.utc_to_local(datetime.now()-timedelta(days=14))
+                                                             helpers.utc_to_local(datetime.now() - timedelta(days=14))
                                                              )
             matomo_tracking(f"EC_Dash_Timeline_Stations_{measurement}")
 

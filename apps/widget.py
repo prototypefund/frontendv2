@@ -62,7 +62,12 @@ def build_widget(url_search_str):
         return CHART.get_timeline_window(show_api_text=False)
     elif widgettype == "fill":
         measurement, _id = queries.split_compound_index(c_id)
-        unit = helpers.measurementtitles[measurement]
+        if measurement == "writeapi" and \
+                "measurement_unit" in last and \
+                last["measurement_unit"] is not None:
+            unit = last["measurement_unit"].iloc[0]
+        else:
+            unit = helpers.measurementtitles[measurement]
         last_value = float(last["_value"])
         last_time = helpers.utc_to_local(last["_time"].iloc[0])
         last_time = last_time.strftime(helpers.timeformats[measurement])

@@ -385,12 +385,12 @@ a.supporter img:hover{
 }
 
 /* MOBILE */
-@media (max-width: 600px) {
+@media (max-width: 980px) {
   body {
-    font-size: 1.3em;
+    font-size: 1.6em;
   }
   button {
-    font-size: 0.7em;
+    font-size: 1em;
     padding:15px;
     width:95%;
   }
@@ -413,7 +413,7 @@ a.supporter img:hover{
     display:block;
   }
   #footer{
-    font-size: 0.6em;
+    font-size: 0.8em;
   }
   img#title {
     width:95%;

@@ -129,6 +129,7 @@ body {
 button{
     margin:5px;
     padding:5px;
+    font-size:0.8em;
 }
 
 
@@ -155,7 +156,7 @@ button{
     bottom:0px;
     left:0px;
     width:100vw;
-    z-index:9999;
+    z-index:8000;
 }
 
 #footer {
@@ -169,7 +170,6 @@ button{
     background:rgba(255,255,255,0.85);
     box-shadow:var(--boxshadow);
     border-radius: var(--boxradius) var(--boxradius) 0px 0px;
-    z-index:9999;
 }
 #footer a{
     margin-left: 9px;
@@ -225,7 +225,8 @@ h3 {
   padding-left:5px;
   padding-right:20px;
   padding-top: 5px;
-  height:100vh;
+  height:auto;
+  max-height:100vh;
   position:absolute;
   left:0px;
   top:0px;
@@ -303,7 +304,6 @@ input[type='radio']:checked {
   text-align: justify;
   line-height: 1.5em;
   padding:5px;
-
 }
 
 #legende{
@@ -360,7 +360,7 @@ input[type='radio']:checked {
   background-color: var(--lightyellow);
   animation-name: fadein;
   animation-duration: 1s;
-  animation-delay:30s;
+  animation-delay:60s;
   animation-fill-mode: both;
 }
 #feedback-container p{
@@ -377,4 +377,49 @@ a.supporter img {
 }
 a.supporter img:hover{
     background:white;
+}
+
+#btn-main-toolbar-container {
+    display:none;
+    text-align:center;
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  body {
+    font-size: 1.3em;
+  }
+  button {
+    font-size: 0.7em;
+    padding:15px;
+    width:95%;
+  }
+  #main_controls,
+  #chart-container,
+  div.container {
+    width: 95%;
+  }
+  #chart-container{
+    height: 100%;
+  }
+  #chart {
+    height:45vh;
+  }
+  #detail_container,
+  #trend_container{
+        display:none;
+  }
+  #btn-main-toolbar-container {
+    display:block;
+  }
+  #footer{
+    font-size: 0.6em;
+  }
+  img#title {
+    width:95%;
+    max-width:800px; /* 2x */
+  }
+  #info_container p{
+    text-align: left;
+  }
 }

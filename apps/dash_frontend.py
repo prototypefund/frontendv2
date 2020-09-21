@@ -326,16 +326,6 @@ def update_highlight(latlon_local_storage, radius, bundesland, landkreis, region
 
 
 @app.callback(
-    Output('trend_container', 'style'),
-    [Input('detail_radio', 'value')])
-def update_menu_item(detail_radio):
-    if detail_radio == "stations":
-        return {'display': 'block'}
-    else:
-        return {'display': 'none'}
-
-
-@app.callback(
     [Output("btn-region-select", "children"),
      Output("region_container", "style")],
     [Input("btn-region-select", "n_clicks")],
@@ -357,7 +347,7 @@ def show_hide_region_select(n_clicks, detail_radio):
      Output("infotext", "style")],
     [Input("btn-info", "n_clicks"),
      Input("btn-info-close", "n_clicks")])
-def show_hide_region_select(n_clicks, n_clicks_close):
+def show_hide_info(n_clicks, n_clicks_close):
     ctx = dash.callback_context
     if (n_clicks is None and n_clicks_close is None) or not ctx.triggered:
         return dash.no_update, dash.no_update
@@ -371,6 +361,44 @@ def show_hide_region_select(n_clicks, n_clicks_close):
         # show
         matomo_tracking("EC_Dash_Show_Infobox")
         return "Informationen ausblenden ↑", {'display': 'block'}
+
+
+@app.callback(
+    [Output("detail_container", "style"),
+     Output("btn-main-toolbar", "children")],
+    [Input("btn-main-toolbar", "n_clicks")])
+def show_hide_tools(n_clicks):
+    ctx = dash.callback_context
+    if n_clicks is None or not ctx.triggered:
+        return dash.no_update, dash.no_update
+    if n_clicks % 2 == 0:
+        # hide
+        return {'display': 'none'}, f"Optionen anzeigen ↓"
+    else:
+        # show
+        matomo_tracking("EC_Dash_Show_Infobox")
+        return {'display': 'block'}, f"Optionen ausblenden ↑"
+
+
+@app.callback(
+    Output('trend_container', 'style'),
+    [Input('detail_radio', 'value'),
+     Input("btn-main-toolbar", "n_clicks")])
+def update_trend_container_display(detail_radio, n_clicks):
+    ctx = dash.callback_context
+    prop_ids = helpers.dash_callback_get_prop_ids(ctx)
+    if "btn-main-toolbar" in prop_ids:
+        if n_clicks is None or not ctx.triggered:
+            return dash.no_update
+        if n_clicks % 2 == 0:
+            return {'display': 'none'}
+        else:
+            return {'display': 'block'}
+    if "detail_radio" in prop_ids:
+        if detail_radio == "stations":
+            return {'display': 'block'}
+        else:
+            return {'display': 'none'}
 
 
 @app.callback(

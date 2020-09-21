@@ -90,6 +90,9 @@ def main_controls(map_data, CONFIG):
                 html.Button(id="btn-info-close", children="Informationen ausblenden ↑"),
             ])
         ]),
+        html.Div(id="btn-main-toolbar-container", className="container", children=[
+            html.Button(id="btn-main-toolbar", children="Optionen anzeigen ↓"),
+        ]),
         html.Div(id="detail_container", className="container", children=[
             html.H3("Detailgrad"),
             dcc.RadioItems(
@@ -301,4 +304,4 @@ def feedback_window():
         html.A(children=">> Link zur Umfrage (Google Forms) <<",
                target="_blank",
                href="https://docs.google.com/forms/d/e/1FAIpQLSda91f1ewYx2y-Z7GOK8FqffThDIxUMe1OJ0bWaC0EuRiMxcA/viewform")
-        ])
+    ])

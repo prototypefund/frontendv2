@@ -342,9 +342,13 @@ input[type='radio']:checked {
     animation-iteration-count: 4;
     animation-delay: 1s;
 }
-@keyframes fadein {
+@keyframes fadein_slide {
       0% {opacity:0; right:-600px;}
       100% {opacity:1; right:5px;}
+}
+@keyframes fadein {
+      0% {opacity:0;}
+      100% {opacity:1;}
 }
 #feedback-container{
   z-index: 99999 !important;
@@ -357,7 +361,7 @@ input[type='radio']:checked {
   border-radius: var(--boxradius);
   box-shadow: var(--boxshadow);
   background-color: var(--lightyellow);
-  animation-name: fadein;
+  animation-name: fadein_slide;
   animation-duration: 1s;
   animation-delay:60s;
   animation-fill-mode: both;
@@ -420,5 +424,8 @@ a.supporter img:hover{
   }
   #info_container p{
     text-align: left;
+  }
+  #feedback-container{
+    animation-name: fadein;
   }
 }

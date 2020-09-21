@@ -139,6 +139,8 @@ class TimelineChartWindow:
                 self.figure["data"].append(trace)
             self.figure["layout"]["yaxis"]["title"] = "Wert"
             self.figure["layout"]["title"] = figtitle
+            self.figure["layout"]["xaxis"]["range"] = [datetime.now() - timedelta(days=14),
+                                                       datetime.now() + timedelta(hours=3)]
             matomo_tracking(f"EC_Dash_Timeline_{detail_radio}")
 
         elif detail_radio == "stations":
@@ -212,6 +214,7 @@ class TimelineChartWindow:
             self.figure["layout"]["xaxis"]["range"][0] = max(first_date,
                                                              helpers.utc_to_local(datetime.now() - timedelta(days=14))
                                                              )
+            self.figure["layout"]["xaxis"]["range"][1] = datetime.now() + timedelta(hours=3)
             matomo_tracking(f"EC_Dash_Timeline_Stations_{measurement}")
 
     def get_timeline_window(self, show_api_text=True):

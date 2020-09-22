@@ -68,7 +68,7 @@ def build_widget(url_search_str):
             unit = last["measurement_unit"].iloc[0]
         else:
             unit = helpers.measurementtitles[measurement]
-        last_value = float(last["_value"])
+        last_value = int(last["_value"])
         last_time = helpers.utc_to_local(last["_time"].iloc[0])
         last_time = last_time.strftime(helpers.timeformats[measurement])
         name = last['name'].iloc[0]

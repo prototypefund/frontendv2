@@ -389,7 +389,7 @@ a.supporter img:hover{
 
 /* MOBILE */
 @media (max-width: 980px) {
-  body {
+  body:not(#widget *)  {
     font-size: 1.6em;
   }
   button {

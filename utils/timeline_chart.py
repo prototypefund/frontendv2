@@ -54,6 +54,8 @@ class TimelineChartWindow:
             dragmode='pan',
             title="",
             hovermode='x unified',
+            plot_bgcolor="rgba(255, 255, 255, 0)",
+            paper_bgcolor="rgba(255, 255, 255, 0)",
             yaxis=dict(
                 title="Passanten"
             ),

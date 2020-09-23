@@ -111,8 +111,21 @@ layout = html.Div(id="configurator", children=[
             html.Span(" Pixel. Darf nicht leer sein.")
         ]),
     ]),
+    html.H2("Aussehen des Widgets (optional)"),
+    html.Div(id="width-select", children=[
+        html.P(children=[
+            html.Span("Hervorhebungs-Farbe:  "),
+            dcc.Input(id='color', type='text', value=""),
+            html.Span(" CSS-Farbcode. Leer lassen für Standardfarben.")
+        ]),
+        html.P(children=[
+            html.Span("Durchsichtiger Hintergrund:  "),
+            dcc.Input(id='bgtransparency', type='number', min=0, max=100, step=10, value=0),
+            html.Span(" Wert zwischen 0 (nicht transparent) bis 100 (komplett transparent).")
+        ]),
+    ]),
     html.H2("Vorschau des Widgets"),
-    html.P("Der gestrichelte Rahmen ist nicht Teil des Widgets und zeigt lediglich die Größe des IFrames an."),
+    html.P("Der gestrichelte Rahmen und der Schachbrett-Hintegrund sind nicht Teil des Widgets. Beides zeigt lediglich die Größe des IFrames an."),
     html.Iframe(
         id="preview",
         src="",
@@ -147,6 +160,8 @@ layout = html.Div(id="configurator", children=[
     [Input('tabs', 'value'),
      Input('station', 'value'),
      Input('width', 'value'),
+     Input('color', 'value'),
+     Input('bgtransparency', 'value'),
      Input('timeline_checklist', 'value'),
      Input('max', 'value'),
      Input('show_number', 'value'),
@@ -154,12 +169,19 @@ layout = html.Div(id="configurator", children=[
      Input('t1', 'value'),
      Input('t2', 'value')]
 )
-def make_widget_url(tabs, station, width, timeline_checklist, max_value, show_number, fill_checklist, t1, t2):
+def make_widget_url(tabs, station, width, color, bgtransparency, timeline_checklist,
+                    max_value, show_number, fill_checklist, t1, t2):
     widgettype = tabs.replace("tab-", "")
     widgeturl = f"{BASE_URL}/widget?widgettype={widgettype}&station={station}"
     if width is not None:
         width = width - 2 * 16  # subtract padding
         widgeturl += f"&width={width}"
+    if color is not None and color is not "":
+        color = color.replace("#", "%23")  # url-encode
+        widgeturl += f"&color={color}"
+    if bgtransparency is not None and bgtransparency != 0:
+        bgopacity = round(float(1-bgtransparency/100), 3)
+        widgeturl += f"&bgopacity={bgopacity}"
     if widgettype == "timeline":
         show_rolling = "show_rolling" in timeline_checklist
         widgeturl += f"&show_rolling={int(show_rolling)}"

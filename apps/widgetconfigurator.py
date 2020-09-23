@@ -123,9 +123,14 @@ layout = html.Div(id="configurator", children=[
             dcc.Input(id='bgtransparency', type='number', min=0, max=100, step=10, value=0),
             html.Span(" Wert zwischen 0 (nicht transparent) bis 100 (komplett transparent).")
         ]),
+        dcc.Checklist(
+            id="darkmode_checklist",
+            options=[{'label': 'Dunkler Stil', 'value': 'darkmode'}],
+            value=[]),
     ]),
     html.H2("Vorschau des Widgets"),
-    html.P("Der gestrichelte Rahmen und der Schachbrett-Hintegrund sind nicht Teil des Widgets. Beides zeigt lediglich die Größe des IFrames an."),
+    html.P(
+        "Der gestrichelte Rahmen und der Schachbrett-Hintegrund sind nicht Teil des Widgets. Beides zeigt lediglich die Größe des IFrames an."),
     html.Iframe(
         id="preview",
         src="",
@@ -163,13 +168,14 @@ layout = html.Div(id="configurator", children=[
      Input('color', 'value'),
      Input('bgtransparency', 'value'),
      Input('timeline_checklist', 'value'),
+     Input('darkmode_checklist', 'value'),
      Input('max', 'value'),
      Input('show_number', 'value'),
      Input('fill_checklist', 'value'),
      Input('t1', 'value'),
      Input('t2', 'value')]
 )
-def make_widget_url(tabs, station, width, color, bgtransparency, timeline_checklist,
+def make_widget_url(tabs, station, width, color, bgtransparency, timeline_checklist, darkmode_checklist,
                     max_value, show_number, fill_checklist, t1, t2):
     widgettype = tabs.replace("tab-", "")
     widgeturl = f"{BASE_URL}/widget?widgettype={widgettype}&station={station}"
@@ -180,8 +186,10 @@ def make_widget_url(tabs, station, width, color, bgtransparency, timeline_checkl
         color = color.replace("#", "%23")  # url-encode
         widgeturl += f"&color={color}"
     if bgtransparency is not None and bgtransparency != 0:
-        bgopacity = round(float(1-bgtransparency/100), 3)
+        bgopacity = round(float(1 - bgtransparency / 100), 3)
         widgeturl += f"&bgopacity={bgopacity}"
+    if darkmode_checklist is not None and len(darkmode_checklist) > 0:
+        widgeturl += f"&darkmode=1"
     if widgettype == "timeline":
         show_rolling = "show_rolling" in timeline_checklist
         widgeturl += f"&show_rolling={int(show_rolling)}"

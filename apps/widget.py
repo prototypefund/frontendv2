@@ -161,8 +161,12 @@ def set_widget_width(url_search_str):
         # overwrite default pink color
         color = urlparams["color"][0]
         style["--pink"] = color
+    bgopacity = 1
+    bgcolor = 255
     if "bgopacity" in urlparams:
         bgopacity = float(urlparams["bgopacity"][0])
-        bgcolor = f"rgba(255,255,255,{bgopacity})"  # transparent white
-        style["backgroundColor"] = bgcolor
+    if "darkmode" in urlparams and urlparams["darkmode"][0] == "1":
+        style["color"] = "#fff"
+        bgcolor = 0
+    style["backgroundColor"] = f"rgba({bgcolor},{bgcolor},{bgcolor},{bgopacity})"  # transparent white
     return style

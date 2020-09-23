@@ -150,11 +150,19 @@ def build_widget(url_search_str):
     [Input('url-widget', 'search')]
 )
 def set_widget_width(url_search_str):
-    # noinspection PyBroadException
-    try:
-        urlparams = parse_qs(url_search_str.replace("?", ""))
+    urlparams = parse_qs(url_search_str.replace("?", ""))
+    style = {}
+    print(urlparams)
+    if "width" in urlparams:
         width = int(urlparams["width"][0])
         width = width - 2 * 16  # subtract padding and border
-        return {"width": width}
-    except:
-        return dash.no_update
+        style["width"] = width
+    if "color" in urlparams:
+        # overwrite default pink color
+        color = urlparams["color"][0]
+        style["--pink"] = color
+    if "bgopacity" in urlparams:
+        bgopacity = float(urlparams["bgopacity"][0])
+        bgcolor = f"rgba(255,255,255,{bgopacity})"  # transparent white
+        style["backgroundColor"] = bgcolor
+    return style

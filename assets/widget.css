@@ -37,11 +37,10 @@
     font-size:20px;
     font-weight:normal;
     paddding:10px;
-    background-color:#fff;
+    background-color:transparent;
     color:var(--pink);
 }
 #widget-total.trafficlight{
-    background-color:#fff;
     color:var(--pink);
 }
 #widget-percentage.total,
@@ -61,6 +60,7 @@
 
 h1#widget-title{
     border:none;
+    background:transparent;
     box-shadow:none;
     padding-left:0px;
     margin-top:0px !important;
@@ -70,8 +70,8 @@ h1#widget-title{
 
 #trafficlight{
   float:left;
-  border:12px solid white;
-  background:white;
+  padding:12px;
+  background:transparent;
 }
 
 #widget #flex_container {

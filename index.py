@@ -49,13 +49,10 @@ dash_logger.setLevel(logging.WARNING)
               [Input('url', 'pathname')])
 def display_page(pathname):
     if pathname == '/widget':
-        app.title = 'EveryoneCounts Widget'
         return widget.layout
     if pathname == '/widget/configurator':
-        app.title = 'EveryoneCounts Widget Konfigurator'
         return widgetconfigurator.layout
     else:
-        app.title = 'EveryoneCounts Dashboard'
         return dash_frontend.layout
 
 

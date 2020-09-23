@@ -3,6 +3,7 @@ import json
 from flask_caching import Cache
 
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
+app.title = 'EveryoneCounts'
 
 with open("config.json", "r") as f:
     CONFIG = json.load(f)

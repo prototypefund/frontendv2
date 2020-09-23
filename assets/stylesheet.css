@@ -402,10 +402,10 @@ a.supporter img:hover{
   div.container {
     width: 95%;
   }
-  #chart-container{
+  #chart-container:not(#widget *){
     height: 100%;
   }
-  #chart {
+  #chart:not(#widget *) {
     height:45vh;
   }
   #detail_container,

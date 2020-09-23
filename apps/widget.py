@@ -125,11 +125,15 @@ def build_widget(url_search_str):
                                          className=f"{show_number} {widgettype}",
                                          children=last_time,
                                          ))
+        if measurement == "writeapi":
+            originname = name
+        else:
+            originname = helpers.originnames[measurement]
         fill_text_output.append(html.Div(id="widget_origin",
                                          children=[
                                              "Datenquelle: ",
                                              html.A(
-                                                 children=helpers.originnames[measurement],
+                                                 children=originname,
                                                  href=last["origin"].tolist()[0],
                                                  target="_blank")
                                          ])

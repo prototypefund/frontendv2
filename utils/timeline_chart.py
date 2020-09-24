@@ -159,7 +159,13 @@ class TimelineChartWindow:
 
             self.origin_url = station_data["origin"]
             measurement = station_data['_measurement']
-            self.origin_str = f"Datenquelle: {helpers.originnames[measurement]}"
+            if measurement == "writeapi":
+                if "datenquelle" in station_data and station_data["datenquelle"] is not None:
+                    self.origin_str = station_data["datenquelle"]
+                else:
+                    self.origin_str = name
+            else:
+                self.origin_str = helpers.originnames[measurement]
 
             if measurement == "writeapi" and \
                     "measurement_unit" in station_data and \
@@ -229,6 +235,7 @@ class TimelineChartWindow:
         )
         output.append(graph)
         if self.mode == "stations":
+            output.append("Datenquelle: ")
             origin = html.A(
                 id="chart_origin",
                 children=self.origin_str,

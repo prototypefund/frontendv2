@@ -102,12 +102,12 @@ layout = html.Div(id="configurator", children=[
     html.Div(id="width-select", children=[
         html.P(children=[
             html.Span("Breite:  "),
-            dcc.Input(id='width', type='number', min=120, step=1, value=600),
+            dcc.Input(id='width', type='number', min=120, step=10, value=600),
             html.Span(" Pixel. Leer lassen falls keine Breite festgelegt werden soll.")
         ]),
         html.P(children=[
             html.Span("Höhe:  "),
-            dcc.Input(id='height', type='number', min=400, step=1, value=600),
+            dcc.Input(id='height', type='number', min=200, step=10, value=600),
             html.Span(" Pixel. Darf nicht leer sein.")
         ]),
     ]),
@@ -121,7 +121,7 @@ layout = html.Div(id="configurator", children=[
         html.P(children=[
             html.Span("Durchsichtiger Hintergrund:  "),
             dcc.Input(id='bgtransparency', type='number', min=0, max=100, step=10, value=0),
-            html.Span(" Wert zwischen 0 (nicht transparent) bis 100 (komplett transparent).")
+            html.Span(" Wert zwischen 0 (nicht transparent) und 100 (komplett transparent).")
         ]),
         dcc.Checklist(
             id="darkmode_checklist",

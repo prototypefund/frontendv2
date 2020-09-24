@@ -159,7 +159,6 @@ def build_widget(url_search_str):
 def set_widget_width(url_search_str):
     urlparams = parse_qs(url_search_str.replace("?", ""))
     style = {}
-    print(urlparams)
     if "width" in urlparams:
         width = int(urlparams["width"][0])
         width = width - 2 * 16  # subtract padding and border
@@ -177,3 +176,17 @@ def set_widget_width(url_search_str):
         bgcolor = 0
     style["backgroundColor"] = f"rgba({bgcolor},{bgcolor},{bgcolor},{bgopacity})"  # transparent white
     return style
+
+
+@app.callback(
+    [Output('widget', 'className'),
+     Output('widget-container', 'className')],
+    [Input('url-widget', 'search')]
+)
+def set_classname(url_search_str):
+    urlparams = parse_qs(url_search_str.replace("?", ""))
+    if "widgettype" in urlparams:
+        widgettype = urlparams["widgettype"][0]
+        return widgettype, widgettype
+    else:
+        return dash.no_update, dash.no_update

@@ -126,7 +126,10 @@ def build_widget(url_search_str):
                                          children=last_time,
                                          ))
         if measurement == "writeapi":
-            originname = name
+            if "datenquelle" in last and last["datenquelle"].iloc[0] is not None:
+                originname = last["datenquelle"].iloc[0]
+            else:
+                originname = name
         else:
             originname = helpers.originnames[measurement]
         fill_text_output.append(html.Div(id="widget_origin",

@@ -14,6 +14,7 @@ from app import app
 with open("config.json", "r") as f:
     CONFIG = json.load(f)
 TRENDWINDOW = CONFIG["TRENDWINDOW"]
+BASE_URL = CONFIG["BASE_URL"]
 
 
 # INITIALIZE CHART OBJECT
@@ -40,12 +41,15 @@ layout = html.Div(id="widget", children=[
 )
 def build_widget(url_search_str):
     urlparams = {}
+    widget_error_message = html.P(children=[
+            "Fehlerhafte Parameter. Benutze den ",
+            html.A(children="Widget-Konfigurator", href=f"{BASE_URL}/widget/configurator", target="_blank"),
+            " um ein korrektes Widget zu generieren."
+            ])
     if url_search_str is not None:
         urlparams = parse_qs(url_search_str.replace("?", ""))
-    if "widgettype" not in urlparams:
-        return "You need to specify a widgettype. Either timeline or fill."
-    elif "station" not in urlparams:
-        return "You need to specify a station. Use the configurator."
+    if "widgettype" not in urlparams or "station" not in urlparams:
+        return widget_error_message
     widgettype = urlparams["widgettype"][0]
     c_id = urlparams["station"][0]
     last = load_last_datapoint(c_id)
@@ -149,7 +153,7 @@ def build_widget(url_search_str):
 
         return output
     else:
-        return "Unknown widgettype"
+        return widget_error_message
 
 
 @app.callback(

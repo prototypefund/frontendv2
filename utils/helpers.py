@@ -109,7 +109,7 @@ measurementtitles = {
     "webcam": "Fußgänger auf Webcams (alt)",
     "webcam-customvision": "Fußgänger auf Webcams",
     "mdm": "Fahrzeuge",
-    "writeapi": "Besucher",
+    "writeapi": "Gemeldete Ereignisse",
 }
 timeformats = {
     "airquality": "%d.%m.%Y %H:%M",
@@ -120,6 +120,9 @@ timeformats = {
     "mdm": "%d.%m.%Y %H:%M",
     "writeapi": "%d.%m.%Y %H:%M",
 }
+
+
+# TODO Move these dicts into a JSON config file
 
 
 def measurement2field(measurement):

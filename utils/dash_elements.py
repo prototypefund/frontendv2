@@ -113,7 +113,7 @@ def main_controls(map_data, CONFIG):
                     for key in helpers.measurementtitles
                     if key in MEASUREMENTS
                 ],
-                value=['hystreet', 'webcam-customvision', 'bikes'],
+                value=MEASUREMENTS,
                 labelStyle={'display': 'block'}
             ),
         ]),

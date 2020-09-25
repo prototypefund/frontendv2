@@ -1,6 +1,6 @@
 # EveryoneCounts Frontend 2
 
-New Dash frontend for https://everyonecounts.de. Work in progress.
+New Dash frontend for https://everyonecounts.de.
 
 ## Run
 The dash webserver is run on an AWC EC2 instance. For setup and deploy scripts see [this repo](https://github.com/socialdistancingdashboard/virushack/tree/master/dash-deploy).
@@ -31,6 +31,7 @@ The parameters in the config file are:
     - `CACHE_THRESHOLD`: The maximum number of items the cache will store before it starts deleting some. Used only for SimpleCache and FileSystemCache
     - `CACHE_DEFAULT_TIMEOUT`: The default timeout that is used if no timeout is specified. Unit of time is seconds.
   },
+- `AUTO_REFRESH_SLOW_CACHE_ENABLE`: Automatically repopulate the slow cache after it expires in the background (boolean).
 - `LOG_LEVEL`: Logging level, e.g. `DEBUG`,
 - `BASE_URL`: Base URL of the webserver, mostly used for the widgets. For example, this can be `http://localhost:8050` in development and `https:/everyonecounts.de` in deployment.
 

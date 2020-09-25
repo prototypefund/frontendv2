@@ -109,7 +109,7 @@ measurementtitles = {
     "webcam": "Fußgänger auf Webcams (alt)",
     "webcam-customvision": "Fußgänger auf Webcams",
     "mdm": "Fahrzeuge",
-    "writeapi": "Gemeldete Ereignisse",
+    "writeapi": "Veranstaltungen",
 }
 timeformats = {
     "airquality": "%d.%m.%Y %H:%M",

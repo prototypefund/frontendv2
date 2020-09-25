@@ -168,7 +168,8 @@ def load_trend(query_api, measurements, trend_window=3, bucket="sdd"):
           '''
     tables = query_api.query_data_frame(query)
     print("query executed")
-    df = pd.concat(tables)
+    if isinstance(tables, list):
+        df = pd.concat(tables)
     df["c_id"] = compound_index(df)
 
     output = {

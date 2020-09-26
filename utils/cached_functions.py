@@ -26,7 +26,7 @@ query_api = queries.get_query_api_from_config(CONFIG)
 
 @slow_cache.memoize(unless=DISABLE_CACHE)
 def get_map_data(measurements=MEASUREMENTS_DASHBOARD):
-    logging.debug("SLOW CACHE MISS")
+    logging.debug("SLOW CACHE MISS, get_map_data: ", DISABLE_CACHE)
     return queries.get_map_data(
         query_api=query_api,
         measurements=measurements,
@@ -35,7 +35,7 @@ def get_map_data(measurements=MEASUREMENTS_DASHBOARD):
 
 @slow_cache.memoize(unless=DISABLE_CACHE)
 def get_map_traces(measurements=MEASUREMENTS_DASHBOARD):
-    logging.debug("SLOW CACHE MISS")
+    logging.debug("SLOW CACHE MISS, get_map_traces: ", DISABLE_CACHE)
     map_data = get_map_data(measurements)
     return map_traces.get_map_traces(map_data, measurements)
 

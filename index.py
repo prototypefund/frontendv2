@@ -94,4 +94,3 @@ if __name__ == '__main__':
     logging.info(f"config file contents:\n\t{CONFIG}")
     app.run_server(debug=CONFIG["DEBUG"], host=CONFIG["dash_host"], threaded=False)
     logging.info("Webserver started")
-    auto_refresh_cached(0)  # initial refresh

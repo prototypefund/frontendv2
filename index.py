@@ -79,11 +79,11 @@ def auto_refresh_cached(n_intervals):
     Dash does not allow callbacks without an Output, that is why a dummy element
     is required.
     """
-    sleep(10)
-    logging.debug("Auto-refreshing slow cache...")
-    get_map_data()
-    get_map_traces()
-    logging.debug(f"Auto-refresh {n_intervals} finished.")
+    # sleep(10)
+    # logging.debug("Auto-refreshing slow cache...")
+    # get_map_data()
+    # get_map_traces()
+    # logging.debug(f"Auto-refresh {n_intervals} finished.")
     return n_intervals
 
 

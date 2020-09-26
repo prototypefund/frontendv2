@@ -170,8 +170,6 @@ def load_trend(query_api, measurements, trend_window=3, bucket="sdd"):
     print("query executed")
     if isinstance(tables, list):
         df = pd.concat(tables)
-    else:
-        df = tables
     df["c_id"] = compound_index(df)
 
     output = {

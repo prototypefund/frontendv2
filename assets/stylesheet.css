@@ -389,18 +389,45 @@ a.supporter img:hover{
 
 /* MOBILE */
 @media (max-width: 980px) {
-  body:not(#widget *)  {
-    font-size: 1.6em;
+  body:not(#widget *){
+    font-size: 2em;
+  }
+  #main_controls, #mean_trend_p {
+    font-size:2em;
+  }
+  #main_controls button{
+    font-size:1.2em;
+  }
+  #nominatim_lookup_edit{
+  min-width:70%;
+  font-size:1em;
+  }
+
+  #mean_trend_p {
+    width:80%;
+  }
+  #feedback-container {
+    display:none;
   }
   button {
-    font-size: 1em;
     padding:15px;
     width:95%;
   }
+
   #main_controls,
   #chart-container,
   div.container {
     width: 95%;
+  }
+  #radiusslider .rc-slider-handle{
+    width:30px;
+    height:60px;
+    border-radius:2px;
+    background: #57c5f7;
+    margin-top:-30px;
+  }
+  #radiusslider .rc-slider-mark{
+    font-size:1em;
   }
   #chart-container:not(#widget *){
     height: 100%;
@@ -416,7 +443,7 @@ a.supporter img:hover{
     display:block;
   }
   #footer{
-    font-size: 0.8em;
+    font-size: 1em;
   }
   img#title {
     width:95%;
@@ -427,5 +454,8 @@ a.supporter img:hover{
   }
   #feedback-container{
     animation-name: fadein;
+  }
+  a.modebar-btn{
+    font-size:32px !important;
   }
 }

@@ -207,6 +207,7 @@ def mainmap():
         displaylogo=False,
         modeBarButtonsToRemove=['lasso2d',
                                 'toggleSpikelines',
+                                'toImage',
                                 'toggleHover',
                                 'select2d',
                                 'autoScale2d',

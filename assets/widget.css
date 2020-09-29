@@ -6,6 +6,7 @@
     text-align:center;
     display:inline-block;
     min-width:120px;
+    max-width:95%;
     overflow:hidden;
     backdrop-filter: blur(5px);
 }

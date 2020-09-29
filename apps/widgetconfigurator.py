@@ -231,7 +231,8 @@ def update_embed_code(url, width, height):
     if height is None:
         height = 600
     title = "EveryoneCounts Widget"
-    return f'<iframe src="{url}" width={width} height={height} title="{title}" style="border:none"></iframe>'
+    style = "border:none; min-height:400px;"
+    return f'<iframe src="{url}" width={width} height={height} title="{title}" style="{style}"></iframe>'
 
 
 @app.callback(

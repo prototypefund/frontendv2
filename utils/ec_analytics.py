@@ -11,7 +11,6 @@ def matomo_tracking(action_name):
     return
 
 
-def tracking_pixel_img():
-    action_name = "EC_Dash_Pixel"
+def tracking_pixel_img(action_name="EC_Dash_Pixel"):
     url = f"https://matomo.everyonecounts.de/matomo.php?idsite=1&rec=1&action_name={action_name}"
     return Img(src=url, style={"border": 0}, alt="")

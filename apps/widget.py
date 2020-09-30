@@ -7,7 +7,7 @@ from urllib.parse import parse_qs
 
 from utils import queries, timeline_chart, helpers
 from utils.cached_functions import load_timeseries, load_last_datapoint
-from utils.ec_analytics import matomo_tracking
+from utils.ec_analytics import tracking_pixel_img
 from app import app
 
 # READ CONFIG
@@ -32,7 +32,8 @@ layout = html.Div(id="widget", children=[
             children="EveryoneCounts",
             href="https://everyonecounts.de",
             target="_blank")
-    ])
+    ]),
+    tracking_pixel_img("EC_Widget_Pixel")
 ])
 
 
@@ -151,7 +152,6 @@ def build_widget(url_search_str):
             html.H1(id="widget-title", children=name),
             html.Div(id="flex_container", children=flex_container)
         ]
-        matomo_tracking(f"EC_Widget_{c_id}_{widgettype}")
         return output
     else:
         return widget_error_message

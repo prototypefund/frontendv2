@@ -5,7 +5,7 @@ from dash_html_components import Img
 def matomo_tracking(action_name):
     url = f"https://matomo.everyonecounts.de/matomo.php?idsite=1&rec=1&action_name={action_name}"
     try:
-        requests.get(url)
+        requests.get(url, timeout=2)
     except:
         pass
     return

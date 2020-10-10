@@ -18,6 +18,12 @@ def main_controls(map_data, CONFIG):
                  className="container",
                  src="assets/logo.png",
                  alt="EveryoneCounts - Das Social Distancing Dashboard"),
+        html.Div(id="navigation_container",
+                 className="container",
+                 children=[
+                     html.A(href="https://blog.everyonecounts.de", children="Blog"),
+                     html.A(href="https://blog.everyonecounts.de/die-loesung/", children="Die Lösung")
+                 ]),
         html.Div(id="info_container", className="container", children=[
             html.Button(id="btn-info", children="Informationen anzeigen ↓"),
             html.Div(id="infotext", style={"display": "none"}, children=[
@@ -49,8 +55,8 @@ def main_controls(map_data, CONFIG):
                              children="zu wenig Daten für die Trendbestimmung"),
                 ]),
                 dcc.Markdown(f"""Du kannst auf jede Station klicken um mehr 
-                Informationen zu erhalten. Außerdem kannst Du den **Detailgrad** ändern um verschiedene Landkreise oder 
-                Bundesländer mit einander zu vergleichen. In der "Punkte"-Ansicht kannst Du den Trend über die 
+                Informationen zu erhalten. Außerdem kannst Du den **Detailgrad** ändern um verschiedene Landkreise mit 
+                einander zu vergleichen. In der "Punkte"-Ansicht kannst Du den Trend über die 
                 Mess-Stationen in deiner Umgebung (hellblauer Bereich auf der Karte) mitteln lassen. Diesen Bereich 
                 kannst Du über eine Umkreis-Auswahl oder mit der Landkreis- oder Bundesland-Suche weiter unten im Menü 
                 festlegen.
@@ -99,8 +105,7 @@ def main_controls(map_data, CONFIG):
                 id="detail_radio",
                 options=[
                     {'label': 'Punkte', 'value': 'stations'},
-                    {'label': 'Landkreise', 'value': 'landkreis'},
-                    {'label': 'Bundesländer', 'value': 'bundesland'}
+                    {'label': 'Landkreise', 'value': 'landkreis'}
                 ],
                 value='stations',
                 labelStyle={'display': 'inline-block'}
@@ -186,12 +191,9 @@ def main_controls(map_data, CONFIG):
                 html.P([
                     html.Span("EveryoneCounts 2020"),
                     html.A(children="Impressum", href="https://blog.everyonecounts.de/impressum/", target="_blank"),
-                    html.A(children="Blog", href="https://blog.everyonecounts.de/", target="_blank"),
-                    html.A(children="Widgets", href="https://everyonecounts.de/widget/configurator", target="_blank"),
                     html.A(children="Kontakt", href="mailto:kontakt@everyonecounts.de", target="_blank"),
                     html.A(children="Twitter", href="https://twitter.com/_everyonecounts", target="_blank"),
                     html.A(children="Github", href="https://github.com/socialdistancingdashboard/", target="_blank"),
-                    #  html.A(id="permalink", children="Permalink", href="xyz"),
                 ]),
             ]),
         ]),

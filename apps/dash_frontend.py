@@ -117,7 +117,7 @@ def display_click_data(clickData, avg_checkbox, detail_radio, trace_visibility):
         if detail_radio == "stations" and clickData["points"][0]['curveNumber'] == 0:
             # exclude selection marker
             return dash.no_update
-        elif detail_radio == "landkreis" or detail_radio == "bundesland":
+        elif detail_radio == "landkreis":
             selection = clickData["points"][0]['location']
         elif detail_radio == "stations":
             selection = clickData["points"][0]["customdata"]

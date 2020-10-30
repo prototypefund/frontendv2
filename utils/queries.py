@@ -259,9 +259,8 @@ def load_timeseries(query_api, c_id, daysback=90, bucket="sdd"):
         print(f"Warning: No data for {c_id} (load_timeseries)")
         return None
     tables["_time"] = tables["_time"].apply(helpers.utc_to_local, 1)
+    tables = tables.sort_values(by="_time")
     tables["rolling"] = tables.set_index("_time")["_value"].rolling("3d").mean().values
-    # import ipdb
-    # ipdb.set_trace()
     return tables[["_time", "_value", "rolling"]]
 
 

@@ -419,11 +419,15 @@ def update_map(highlight_polygon, detail_radio, trace_visibilty, fig):
     traces = get_map_traces(trace_visibilty)
     fig["data"] = traces[detail_radio]  # Update map
     if detail_radio == "stations":
-        highlight_x, highlight_y = highlight_polygon
+        if trace_visibilty:
+            highlight_x, highlight_y = highlight_polygon
+        else:
+            # hide when nothing is selected in trace_visibility
+            highlight_x, highlight_y = [], []
         # draw highligth into trace0
         fig["data"][0]["lat"] = highlight_y
         fig["data"][0]["lon"] = highlight_x
-        if "highlight_polygon" in prop_ids:
+        if trace_visibilty and "highlight_polygon" in prop_ids:
             # center and zoom map
             zoom, centerlat, centerlon = helpers.calc_zoom(highlight_y, highlight_x)
             fig["layout"]["mapbox"]["center"]["lat"] = centerlat

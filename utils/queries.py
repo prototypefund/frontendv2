@@ -44,6 +44,14 @@ def get_map_data(query_api, measurements, trend_window=3, bucket="sdd"):
     Load the data that is required for plotting the map.
     Return a GeoDataFrame with all tags and latitude/longitude fields and the trend
     """
+    # noinspection PySimplifyBooleanCheck
+    if measurements == []:
+        # nothing selected? return empty dataframe with all the columns
+        return pd.DataFrame(columns=['c_id', 'lat', 'lon', 'geometry',
+                                     '_id', '_measurement', 'ags', 'bundesland',
+                                     'city', 'districtType', 'landkreis', 'name',
+                                     'origin', 'trend', 'model', 'last_value',
+                                     'last_time', 'landkreis_label'])
     logging.debug("Influx DB query for get_map_data()")
     fields = ["_field",
               "_value",

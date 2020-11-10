@@ -58,9 +58,13 @@ def get_map_traces(map_data, measurements):
         traces["stations"].append(trace)
 
     # Prepare landkreis choropleth maps
+    region = "landkreis"
+    if map_data.empty:
+        traces[region] = [go.Choroplethmapbox()]
+        return traces
     choropleth_df_original = map_data.copy()
     choropleth_df_original = choropleth_df_original[choropleth_df_original["_measurement"].isin(measurements)]
-    region = "landkreis"
+
     choropleth_df = choropleth_df_original.copy()
     # if region == "bundesland":
     #     choropleth_df["ags"] = choropleth_df["ags"].str[:-3]

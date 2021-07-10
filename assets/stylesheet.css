@@ -413,9 +413,13 @@ a.supporter img:hover{
 
 /* MOBILE */
 @media (max-width: 980px) {
-  body:not(#widget *){
+  body{
     font-size: 2em;
   }
+  #widget{
+    font-size:0.5em !important;
+  }
+
   #main_controls, #mean_trend_p {
     font-size:2em;
   }

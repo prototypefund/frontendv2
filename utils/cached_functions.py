@@ -50,6 +50,6 @@ def load_timeseries(_id):
 
 
 @fast_cache.memoize(unless=DISABLE_CACHE)
-def load_last_datapoint(c_id):
+def load_last_datapoint(c_id, _field=None):
     logging.debug(f"FAST CACHE MISS ({c_id})")
-    return queries.load_last_datapoint(query_api, c_id)
+    return queries.load_last_datapoint(query_api, c_id, _field=_field)

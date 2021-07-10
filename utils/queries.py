@@ -272,11 +272,12 @@ def load_timeseries(query_api, c_id, daysback=90, bucket="sdd"):
     return tables[["_time", "_value", "rolling"]]
 
 
-def load_last_datapoint(query_api, c_id, bucket="sdd"):
+def load_last_datapoint(query_api, c_id, bucket="sdd", _field=None):
     logging.debug(f"Influx DB query for load_last_datapoint(..., {c_id})")
     print("load_last_datapoint", c_id)
     _measurement, _id = split_compound_index(c_id)
-    _field = helpers.measurement2field(_measurement)
+    if _field is None:
+        _field = helpers.measurement2field(_measurement)
     query = f'''
     from(bucket: "{bucket}")
       |> range(start: -21d)

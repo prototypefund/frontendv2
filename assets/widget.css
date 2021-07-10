@@ -74,7 +74,7 @@ h1#widget-title{
     box-shadow:none;
     padding-left:0px;
     margin-top:0px !important;
-    font-size:18px;
+    fsont-size:18px;
     text-align:center;
 }
 
@@ -90,6 +90,12 @@ h1#widget-title{
   align-items: center;
   border-bottom: 1px solid var(--lightgray);
   padding-bottom: 8px;
+}
+
+#widget #widget_open{
+  font-weight:normal;
+  margin-top:-12px;
+  margin-bottom:4px;
 }
 
 /*

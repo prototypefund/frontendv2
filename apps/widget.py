@@ -131,6 +131,19 @@ def build_widget(url_search_str):
                                          className=f"{show_number} {widgettype}",
                                          children=last_time,
                                          ))
+        # read and display "open" state (if it exists)
+        last_open = load_last_datapoint(c_id, _field="open")
+        open_div = html.Div(id="widget_open", style={"display": "none"})
+        if not last_open.empty and "_value" in last_open and int(last_open["_value"].iloc[-1]) != 2:
+            open_state = int(last_open["_value"].iloc[-1])
+            open_text = None
+            if open_state == 0:
+                open_text = "geschlossen"
+            elif open_state == 1:
+                open_text = "geöffnet"
+            if open_text is not None:
+                open_div = html.Div(id="widget_open",
+                                    children=[open_text])
         if measurement == "writeapi":
             if "datenquelle" in last and last["datenquelle"].iloc[0] is not None:
                 originname = last["datenquelle"].iloc[0]
@@ -149,7 +162,8 @@ def build_widget(url_search_str):
                                 )
         flex_container.append(html.Div(children=fill_text_output))
         output = [
-            html.H1(id="widget-title", children=name),
+            html.H1(id="widget-title", children=[name]),
+            open_div,
             html.Div(id="flex_container", children=flex_container)
         ]
         return output

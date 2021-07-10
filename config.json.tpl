@@ -6,7 +6,7 @@
 "TRENDWINDOW" : 7,
 "DEBUG": false,
 "measurements_dashboard": ["webcam-customvision", "writeapi"],
-"measurements_widget": [webcam-customvision", "writeapi"],
+"measurements_widget": ["webcam-customvision", "writeapi"],
 "ENABLE_CACHE" : true,
 "CLEAR_CACHE_ON_STARTUP" : true,
 "SLOW_CACHE_CONFIG": {
